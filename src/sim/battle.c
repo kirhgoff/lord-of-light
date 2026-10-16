@@ -174,8 +174,9 @@ int battle_winner(const Battle *battle)
     return -1;
 }
 
-void battle_step(Battle *battle, const GameData *data)
+void battle_step(Battle *battle, const GameData *data, Decider *decider)
 {
+    (void)decider;
     battle_act(battle, data);
     battle_tick_effects(battle, data);
     battle_move_combatants(battle, data);

@@ -61,7 +61,7 @@ static void order(int c, const char *slot_id, OrderKind kind, int target)
 
 static void run(int ticks)
 {
-    for (int t = 0; t < ticks; t++) battle_step(&battle, &data);
+    for (int t = 0; t < ticks; t++) battle_step(&battle, &data, NULL);
 }
 
 static int cooldown(int c, const char *slot_id)
@@ -208,7 +208,7 @@ static void test_repeated_charm_wins_a_one_on_one(void)
     order(STRIKER, "lobe", ORDER_CAST, DUMMY);
     for (int t = 0; t < 400 && battle_winner(&battle) < 0; t++) {
         battle.combatants[STRIKER].parts[lobe].order = (Order){ORDER_CAST, DUMMY, 0, 0};
-        battle_step(&battle, &data);
+        battle_step(&battle, &data, NULL);
     }
     CHECK(battle_winner(&battle) == SIDE_PANTHEON && battle.tick < 400);
 }
@@ -585,7 +585,7 @@ static void test_effects_round_trip_and_resume(void)
     char *again = battle_save_json(&resumed, &data);
     CHECK(strcmp(midway, again) == 0);
     run(60);
-    for (int t = 0; t < 60; t++) battle_step(&resumed, &data);
+    for (int t = 0; t < 60; t++) battle_step(&resumed, &data, NULL);
     char *expected = battle_save_json(&battle, &data), *actual = battle_save_json(&resumed, &data);
     CHECK(strcmp(expected, actual) == 0);
     battle_free(&resumed);

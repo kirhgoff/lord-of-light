@@ -87,7 +87,7 @@ int main(int argc, char **argv)
         battle_setup(&battle, &data, seed);
     }
 
-    for (long t = 0; t < ticks && battle_winner(&battle) < 0; t++) battle_step(&battle, &data);
+    for (long t = 0; t < ticks && battle_winner(&battle) < 0; t++) battle_step(&battle, &data, NULL);
 
     if (dump_path) {
         char *json = battle_save_json(&battle, &data);

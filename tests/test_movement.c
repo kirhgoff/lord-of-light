@@ -42,7 +42,7 @@ static void send_to(int c, int x_millipx, int y_millipx)
 
 static void run(int ticks)
 {
-    for (int t = 0; t < ticks; t++) battle_step(&battle, &data);
+    for (int t = 0; t < ticks; t++) battle_step(&battle, &data, NULL);
 }
 
 static void give_vision(int c, int close, int medium, int far)

@@ -335,6 +335,7 @@
    "spawner": -1,
    "damage_bonus_percent": 0,
    "damage_bonus_ticks": 0,
+   "next_decision_tick": 0,
    "decision": {
     "stance": "none",
     "hurt_level": 0,
@@ -491,6 +492,7 @@
    "spawner": -1,
    "damage_bonus_percent": 0,
    "damage_bonus_ticks": 0,
+   "next_decision_tick": 0,
    "decision": {
     "stance": "none",
     "hurt_level": 0,
@@ -563,6 +565,7 @@
    "spawner": -1,
    "damage_bonus_percent": 0,
    "damage_bonus_ticks": 0,
+   "next_decision_tick": 0,
    "decision": {
     "stance": "none",
     "hurt_level": 0,
@@ -635,6 +638,7 @@
    "spawner": -1,
    "damage_bonus_percent": 0,
    "damage_bonus_ticks": 0,
+   "next_decision_tick": 0,
    "decision": {
     "stance": "none",
     "hurt_level": 0,
@@ -707,6 +711,7 @@
    "spawner": -1,
    "damage_bonus_percent": 0,
    "damage_bonus_ticks": 0,
+   "next_decision_tick": 0,
    "decision": {
     "stance": "none",
     "hurt_level": 0,

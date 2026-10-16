@@ -49,9 +49,13 @@ typedef struct {
     Order order;
 } PartState;
 
+typedef enum { HURT_UNHURT, HURT_WOUNDED, HURT_BADLY_WOUNDED, HURT_NEAR_DEATH, HURT_COUNT } HurtLevel;
+
+typedef enum { DECIDER_NONE, DECIDER_REFLEX, DECIDER_LAYA, DECIDER_COUNT } DeciderKind;
+
 typedef struct {
     Stance stance;
-    int hurt_level;
+    HurtLevel hurt_level;
     int vulnerable_element;
 } Decision;
 
@@ -76,6 +80,7 @@ typedef struct {
     int spawner;
     int damage_bonus_percent;
     int damage_bonus_ticks;
+    int next_decision_tick;
     Decision decision;
 } Combatant;
 
@@ -103,7 +108,10 @@ typedef struct {
     int element;
     int amount;
     int detail;
+    DeciderKind decider;
 } Event;
+
+typedef struct Decider Decider;
 
 typedef struct {
     uint32_t seed;
@@ -131,7 +139,7 @@ int rng_below(uint32_t *state, int bound);
 /* A Battle must be zero-initialised (Battle b = {0};) before its first setup or load. */
 void battle_setup(Battle *battle, const GameData *data, uint32_t seed);
 int battle_add_combatant(Battle *battle, const GameData *data, const char *name, Side side, const Body *body, int x_millipx, int y_millipx);
-void battle_step(Battle *battle, const GameData *data);
+void battle_step(Battle *battle, const GameData *data, Decider *decider);
 void battle_free(Battle *battle);
 bool battle_log_event(Battle *battle, Event event);
 int battle_winner(const Battle *battle);
