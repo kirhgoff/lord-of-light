@@ -10,7 +10,8 @@
 #define HUD_SEGMENT_GAP 4
 #define HUD_BAR_HEIGHT 8
 #define HUD_TEXT_SIZE 16
-#define LINEUP_ZOOMED_ROW_HEIGHT 140
+#define LINEUP_MAX_ZOOM 2
+#define LINEUP_SPRITE_HEIGHT 70
 #define LINEUP_FEET_INSET 8
 #define DIALOG_WIDTH 320
 #define DIALOG_HEIGHT 120
@@ -299,10 +300,11 @@ static void draw_lineup(const Battle *b, const GameData *data, const Scene *scen
     int tick = (int)(GetTime() * TICKS_PER_SECOND);
     Rectangle boxes[MAX_COMBATANTS];
     bool shown[MAX_COMBATANTS];
-    float zoom = 2;
+    float zoom = LINEUP_MAX_ZOOM;
     for (int c = 0; c < b->combatant_count; c++) {
         shown[c] = ui_lineup_box(c, &boxes[c]);
-        if (shown[c] && boxes[c].height < LINEUP_ZOOMED_ROW_HEIGHT) zoom = 1;
+        float fitting = boxes[c].height / LINEUP_SPRITE_HEIGHT;
+        if (shown[c] && fitting < zoom) zoom = fitting;
     }
     for (int c = 0; c < b->combatant_count; c++) {
         if (!shown[c]) continue;
