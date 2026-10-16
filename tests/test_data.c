@@ -242,6 +242,12 @@ static void test_other_file_errors(void)
 {
     check_error(load_elements(&data, FIXTURE("elements_missing_element.json"), err, ERR_SIZE),
                 "elements: missing element \"void\"");
+    check_error(load_elements(&data, FIXTURE("elements_negative_dot_ticks.json"), err, ERR_SIZE),
+                "elements[1].dot_ticks: must be between 0 and 1000000");
+    check_error(load_elements(&data, FIXTURE("elements_slow_percent_over_100.json"), err, ERR_SIZE),
+                "elements[2].slow_percent: must be between 0 and 100");
+    check_error(load_elements(&data, FIXTURE("elements_huge_chain_range.json"), err, ERR_SIZE),
+                "elements[3].chain_range: must be between 0 and 1000000");
     check_error(load_power(&data, FIXTURE("power_missing_weight.json"), err, ERR_SIZE), "vision: missing");
     check_error(load_arena_objects(&data, FIXTURE("arena_objects_unknown_element.json"), err, ERR_SIZE),
                 "traps[0].element: unknown element \"steam\"");
@@ -297,6 +303,8 @@ static void test_number_and_range_errors(void)
                 "parts[1].vision: bands must satisfy close <= medium <= far");
     check_error(load_parts(&data, FIXTURE("parts_negative_damage.json"), err, ERR_SIZE),
                 "parts[6].abilities[0].damage: must not be negative");
+    check_error(load_parts(&data, FIXTURE("parts_huge_damage.json"), err, ERR_SIZE),
+                "parts[6].abilities[0].damage: must be between 0 and 1000000");
 }
 
 static void test_duplicate_and_empty_errors(void)

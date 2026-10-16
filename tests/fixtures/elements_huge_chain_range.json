@@ -1,0 +1,61 @@
+{
+  "elements": [
+    {
+      "id": "kinetic",
+      "hit_sound": "kinetic_hit",
+      "effect_sound": "kinetic_effect"
+    },
+    {
+      "id": "fire",
+      "dot_damage": 2,
+      "dot_ticks": 60,
+      "hit_sound": "fire_hit",
+      "effect_sound": "fire_effect"
+    },
+    {
+      "id": "frost",
+      "slow_percent": 40,
+      "slow_ticks": 60,
+      "hit_sound": "frost_hit",
+      "effect_sound": "frost_effect"
+    },
+    {
+      "id": "lightning",
+      "chain_targets": 2,
+      "chain_range": 2000000,
+      "hit_sound": "lightning_hit",
+      "effect_sound": "lightning_effect"
+    },
+    {
+      "id": "radiance",
+      "pierce_targets": 3,
+      "hit_sound": "radiance_hit",
+      "effect_sound": "radiance_effect"
+    },
+    {
+      "id": "venom",
+      "dot_damage": 1,
+      "dot_ticks": 200,
+      "internal_first": true,
+      "hit_sound": "venom_hit",
+      "effect_sound": "venom_effect"
+    },
+    {
+      "id": "mind",
+      "charm_ticks": 100,
+      "hit_sound": "mind_hit",
+      "effect_sound": "mind_effect"
+    },
+    {
+      "id": "void",
+      "buff_strip_count": 2,
+      "hit_sound": "void_hit",
+      "effect_sound": "void_effect"
+    }
+  ],
+  "cues": {
+    "death": "cue_death",
+    "part_destroyed": "cue_part_destroyed",
+    "spawn_appear": "cue_spawn_appear"
+  }
+}

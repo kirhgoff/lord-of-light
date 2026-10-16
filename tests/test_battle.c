@@ -115,6 +115,13 @@ static void test_round_trip_is_identical(void)
     battle.combatants[2].decision = (Decision){STANCE_FIGHT, 40, ELEMENT_FIRE};
     battle.combatants[5].charm_ticks = 9;
     battle.combatants[5].charm_side = SIDE_PANTHEON;
+    battle.combatants[5].dot_damage = 2;
+    battle.combatants[5].dot_element = ELEMENT_FIRE;
+    battle.combatants[5].dot_source = 1;
+    battle.combatants[5].slow_percent = 40;
+    battle.combatants[5].spawner = 2;
+    battle.combatants[5].damage_bonus_percent = 50;
+    battle.combatants[5].damage_bonus_ticks = 7;
     battle.remains[0] = (Remains){5000, 6000, 2, {1, 2}};
     battle.remains_count = 1;
     char *json = battle_save_json(&battle, &data);
@@ -225,6 +232,9 @@ static void test_load_rejects_bad_input(void)
     check_rejected(json, "\"actor_part\":0", "\"actor_part\":24");
     check_rejected(json, "\"amount\":5", "\"amount\":2000000000");
     check_rejected(json, "\"kind\":\"hit\"", "\"kind\":7");
+    check_rejected(json, "\"dot_element\":-1", "\"dot_element\":8");
+    check_rejected(json, "\"spawner\":-1", "\"spawner\":99");
+    check_rejected(json, "\"slow_percent\":0", "\"slow_percent\":101");
     test_silent_failure_gets_generic_message(json);
     CHECK(!battle_load_json(&loaded, &data, "{", err, ERR_SIZE));
     CHECK(!battle_load_json(&loaded, &data, "{}", err, ERR_SIZE) && err[0] != '\0');

@@ -11,7 +11,7 @@
 
 static const char *const SIDE_IDS[SIDE_COUNT] = {"pantheon", "horde"};
 static const char *const STANCE_IDS[STANCE_COUNT] = {"none", "fight", "retreat", "support", "collect"};
-static const char *const EVENT_IDS[EVENT_KIND_COUNT] = {"decision", "hit", "pickup", "death"};
+static const char *const EVENT_IDS[EVENT_KIND_COUNT] = {"decision", "hit", "pickup", "death", "effect", "spawn"};
 
 static const char *object_id(const ArenaObjectDef *defs, int index)
 {
@@ -85,6 +85,13 @@ static cJSON *save_combatant(const Combatant *c, const GameData *data)
     cJSON_AddNumberToObject(o, "dot_ticks", c->dot_ticks);
     cJSON_AddNumberToObject(o, "charm_ticks", c->charm_ticks);
     cJSON_AddStringToObject(o, "charm_side", SIDE_IDS[c->charm_side]);
+    cJSON_AddNumberToObject(o, "dot_damage", c->dot_damage);
+    cJSON_AddNumberToObject(o, "dot_element", c->dot_element);
+    cJSON_AddNumberToObject(o, "dot_source", c->dot_source);
+    cJSON_AddNumberToObject(o, "slow_percent", c->slow_percent);
+    cJSON_AddNumberToObject(o, "spawner", c->spawner);
+    cJSON_AddNumberToObject(o, "damage_bonus_percent", c->damage_bonus_percent);
+    cJSON_AddNumberToObject(o, "damage_bonus_ticks", c->damage_bonus_ticks);
     cJSON *decision = cJSON_AddObjectToObject(o, "decision");
     cJSON_AddStringToObject(decision, "stance", STANCE_IDS[c->decision.stance]);
     cJSON_AddNumberToObject(decision, "hurt_level", c->decision.hurt_level);
@@ -353,7 +360,14 @@ static bool load_combatant(Context *ctx, const cJSON *obj, Combatant *c)
            read_int(ctx, obj, "vitality_max", 0, 1000000, &c->vitality_max) &&
            read_int(ctx, obj, "slow_ticks", 0, 1000000, &c->slow_ticks) &&
            read_int(ctx, obj, "dot_ticks", 0, 1000000, &c->dot_ticks) &&
-           read_int(ctx, obj, "charm_ticks", 0, 1000000, &c->charm_ticks);
+           read_int(ctx, obj, "charm_ticks", 0, 1000000, &c->charm_ticks) &&
+           read_int(ctx, obj, "dot_damage", 0, 1000000, &c->dot_damage) &&
+           read_int(ctx, obj, "dot_element", -1, ELEMENT_COUNT - 1, &c->dot_element) &&
+           read_combatant_ref(ctx, obj, "dot_source", &c->dot_source) &&
+           read_int(ctx, obj, "slow_percent", 0, 100, &c->slow_percent) &&
+           read_combatant_ref(ctx, obj, "spawner", &c->spawner) &&
+           read_int(ctx, obj, "damage_bonus_percent", 0, 1000, &c->damage_bonus_percent) &&
+           read_int(ctx, obj, "damage_bonus_ticks", 0, 1000000, &c->damage_bonus_ticks);
 }
 
 static bool read_object_def(Context *ctx, const cJSON *obj, const ArenaObjectDef *defs, int def_count, int *out)

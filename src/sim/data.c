@@ -302,7 +302,14 @@ static bool get_sound(Context *ctx, const cJSON *obj, const char *parent, const 
     return valid || fail(ctx, path, "invalid sound id \"%s\"", out);
 }
 
-static bool read_element_def(Context *ctx, const cJSON *obj, const char *path, ElementDef *def)
+static bool check_range(Context *ctx, const char *path, const char *key, int value, int low, int high)
+{
+    char field_path[PATH_LEN];
+    join_key(field_path, path, key);
+    return (value >= low && value <= high) || fail(ctx, field_path, "must be between %d and %d", low, high);
+}
+
+static bool read_element_numbers(Context *ctx, const cJSON *obj, const char *path, ElementDef *def)
 {
     return get_int(ctx, obj, path, "dot_damage", &def->dot_damage, false)
         && get_int(ctx, obj, path, "dot_ticks", &def->dot_ticks, false)
@@ -313,7 +320,26 @@ static bool read_element_def(Context *ctx, const cJSON *obj, const char *path, E
         && get_int(ctx, obj, path, "pierce_targets", &def->pierce_targets, false)
         && get_bool(ctx, obj, path, "internal_first", &def->internal_first)
         && get_int(ctx, obj, path, "charm_ticks", &def->charm_ticks, false)
-        && get_int(ctx, obj, path, "buff_strip_count", &def->buff_strip_count, false)
+        && get_int(ctx, obj, path, "buff_strip_count", &def->buff_strip_count, false);
+}
+
+static bool check_element_ranges(Context *ctx, const char *path, const ElementDef *def)
+{
+    return check_range(ctx, path, "dot_damage", def->dot_damage, 0, ABILITY_AMOUNT_LIMIT)
+        && check_range(ctx, path, "dot_ticks", def->dot_ticks, 0, ABILITY_AMOUNT_LIMIT)
+        && check_range(ctx, path, "slow_percent", def->slow_percent, 0, 100)
+        && check_range(ctx, path, "slow_ticks", def->slow_ticks, 0, ABILITY_AMOUNT_LIMIT)
+        && check_range(ctx, path, "chain_targets", def->chain_targets, 0, ABILITY_AMOUNT_LIMIT)
+        && check_range(ctx, path, "chain_range", def->chain_range, 0, ABILITY_AMOUNT_LIMIT)
+        && check_range(ctx, path, "pierce_targets", def->pierce_targets, 0, ABILITY_AMOUNT_LIMIT)
+        && check_range(ctx, path, "charm_ticks", def->charm_ticks, 0, ABILITY_AMOUNT_LIMIT)
+        && check_range(ctx, path, "buff_strip_count", def->buff_strip_count, 0, ABILITY_AMOUNT_LIMIT);
+}
+
+static bool read_element_def(Context *ctx, const cJSON *obj, const char *path, ElementDef *def)
+{
+    return read_element_numbers(ctx, obj, path, def)
+        && check_element_ranges(ctx, path, def)
         && get_sound(ctx, obj, path, "hit_sound", def->hit_sound, true)
         && get_sound(ctx, obj, path, "effect_sound", def->effect_sound, true);
 }
@@ -664,13 +690,6 @@ static bool body_plans_from_root(Context *ctx, const cJSON *root, GameData *data
     return resolve_body_plans(ctx, data);
 }
 
-static bool check_non_negative(Context *ctx, const char *path, const char *key, int value)
-{
-    char field_path[PATH_LEN];
-    join_key(field_path, path, key);
-    return value >= 0 || fail(ctx, field_path, "must not be negative");
-}
-
 static bool read_ability(Context *ctx, const cJSON *obj, const char *path, Ability *ability)
 {
     char order[ID_LEN];
@@ -685,8 +704,8 @@ static bool read_ability(Context *ctx, const cJSON *obj, const char *path, Abili
         && get_count(ctx, obj, path, "cooldown", &ability->cooldown_ticks, false)
         && get_count(ctx, obj, path, "area", &ability->area, false)
         && get_sound(ctx, obj, path, "sound", ability->sound, true)
-        && check_non_negative(ctx, path, "damage", ability->damage)
-        && check_non_negative(ctx, path, "heal", ability->heal);
+        && check_range(ctx, path, "damage", ability->damage, 0, ABILITY_AMOUNT_LIMIT)
+        && check_range(ctx, path, "heal", ability->heal, 0, ABILITY_AMOUNT_LIMIT);
 }
 
 static bool read_abilities(Context *ctx, const cJSON *obj, const char *path, Part *part)

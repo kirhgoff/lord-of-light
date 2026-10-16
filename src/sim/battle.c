@@ -1,5 +1,6 @@
 #include "battle.h"
 
+#include "combat.h"
 #include "movement.h"
 
 #include <stdio.h>
@@ -80,6 +81,9 @@ static void init_combatant(Combatant *c, const GameData *data, const char *name,
     c->y_millipx = y_millipx;
     c->body = *body;
     c->charm_side = side;
+    c->dot_element = -1;
+    c->dot_source = -1;
+    c->spawner = -1;
     c->decision.vulnerable_element = -1;
     for (int s = 0; s < body->slot_count; s++) {
         const Part *part = &data->parts[body->slots[s].part];
@@ -88,6 +92,13 @@ static void init_combatant(Combatant *c, const GameData *data, const char *name,
         c->vitality_max += part->vitality;
     }
     c->vitality = c->vitality_max;
+}
+
+int battle_add_combatant(Battle *battle, const GameData *data, const char *name, Side side, const Body *body, int x_millipx, int y_millipx)
+{
+    int index = battle->combatant_count++;
+    init_combatant(&battle->combatants[index], data, name, side, body, x_millipx, y_millipx);
+    return index;
 }
 
 static int random_part(Battle *battle, const GameData *data, const BodySlot *slot)
@@ -107,7 +118,7 @@ static void add_monster(Battle *battle, const GameData *data, int x_millipx, int
     const BodyPlan *plan = &data->body_plans[plans[rng_below(&battle->rng, count)]];
     Body body = plan->body;
     for (int s = 0; s < body.slot_count; s++) body.slots[s].part = random_part(battle, data, &body.slots[s]);
-    init_combatant(&battle->combatants[battle->combatant_count++], data, plan->id, SIDE_HORDE, &body, x_millipx, y_millipx);
+    battle_add_combatant(battle, data, plan->id, SIDE_HORDE, &body, x_millipx, y_millipx);
 }
 
 static int free_tile_column(Battle *battle, int row)
@@ -145,8 +156,8 @@ void battle_setup(Battle *battle, const GameData *data, uint32_t seed)
     }
     const Pantheon *pantheon = &data->pantheons[battle->pantheon];
     for (int d = 0; d < DEITIES_PER_PANTHEON; d++)
-        init_combatant(&battle->combatants[battle->combatant_count++], data, pantheon->deities[d].name, SIDE_PANTHEON,
-                       &pantheon->deities[d].body, 2 * TILE_MILLIPX, row_y(d));
+        battle_add_combatant(battle, data, pantheon->deities[d].name, SIDE_PANTHEON, &pantheon->deities[d].body,
+                             2 * TILE_MILLIPX, row_y(d));
     for (int m = 0; m < HORDE_SIZE; m++) add_monster(battle, data, (ARENA_WIDTH_TILES - 2) * TILE_MILLIPX, row_y(m));
     scatter_objects(battle, battle->pickups, &battle->pickup_count, data->pickup_count);
     scatter_objects(battle, battle->traps, &battle->trap_count, data->trap_count);
@@ -156,7 +167,8 @@ int battle_winner(const Battle *battle)
 {
     bool alive[SIDE_COUNT] = {false};
     for (int c = 0; c < battle->combatant_count; c++)
-        if (battle->combatants[c].alive) alive[battle->combatants[c].side] = true;
+        if (battle->combatants[c].alive && battle->combatants[c].charm_side == battle->combatants[c].side)
+            alive[battle->combatants[c].side] = true;
     if (alive[SIDE_PANTHEON] && !alive[SIDE_HORDE]) return SIDE_PANTHEON;
     if (alive[SIDE_HORDE] && !alive[SIDE_PANTHEON]) return SIDE_HORDE;
     return -1;
@@ -164,6 +176,8 @@ int battle_winner(const Battle *battle)
 
 void battle_step(Battle *battle, const GameData *data)
 {
+    battle_act(battle, data);
+    battle_tick_effects(battle, data);
     battle_move_combatants(battle, data);
     battle->tick++;
 }

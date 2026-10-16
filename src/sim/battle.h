@@ -29,8 +29,12 @@ typedef enum {
     EVENT_HIT,
     EVENT_PICKUP,
     EVENT_DEATH,
+    EVENT_EFFECT,
+    EVENT_SPAWN,
     EVENT_KIND_COUNT
 } EventKind;
+
+typedef enum { EFFECT_DOT, EFFECT_SLOW, EFFECT_CHARM, EFFECT_STRIP, EFFECT_HEAL } EffectKind;
 
 typedef struct {
     OrderKind kind;
@@ -65,6 +69,13 @@ typedef struct {
     int dot_ticks;
     int charm_ticks;
     Side charm_side;
+    int dot_damage;
+    int dot_element;
+    int dot_source;
+    int slow_percent;
+    int spawner;
+    int damage_bonus_percent;
+    int damage_bonus_ticks;
     Decision decision;
 } Combatant;
 
@@ -119,6 +130,7 @@ int rng_below(uint32_t *state, int bound);
 
 /* A Battle must be zero-initialised (Battle b = {0};) before its first setup or load. */
 void battle_setup(Battle *battle, const GameData *data, uint32_t seed);
+int battle_add_combatant(Battle *battle, const GameData *data, const char *name, Side side, const Body *body, int x_millipx, int y_millipx);
 void battle_step(Battle *battle, const GameData *data);
 void battle_free(Battle *battle);
 bool battle_log_event(Battle *battle, Event event);
