@@ -1,0 +1,4 @@
+#!/bin/sh
+staged=$(git diff --cached --name-only --diff-filter=ACM -- 'src/*.c' 'src/*.h' 'tests/*.c' 'tests/*.h')
+[ -z "$staged" ] && exit 0
+exec make --no-print-directory format-check FORMAT_FILES="$staged"
