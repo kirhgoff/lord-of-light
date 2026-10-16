@@ -4,6 +4,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+uint32_t scramble_seed(uint32_t seed)
+{
+    uint32_t z = seed + 0x9e3779b9u;
+    z = (z ^ (z >> 16)) * 0x85ebca6bu;
+    z = (z ^ (z >> 13)) * 0xc2b2ae35u;
+    z ^= z >> 16;
+    return z ? z : 1;
+}
+
 uint32_t rng_next(uint32_t *state)
 {
     uint32_t x = *state;
@@ -19,10 +28,25 @@ int rng_below(uint32_t *state, int bound)
     return (int)(rng_next(state) % (uint32_t)bound);
 }
 
-void battle_log_event(Battle *battle, EventKind kind, int a, int b, int value)
+void battle_free(Battle *battle)
 {
-    if (battle->log_count == MAX_EVENTS) return;
-    battle->log[battle->log_count++] = (Event){battle->tick, kind, a, b, value};
+    free(battle->log);
+    battle->log = NULL;
+    battle->log_count = battle->log_capacity = 0;
+}
+
+bool battle_log_event(Battle *battle, Event event)
+{
+    if (battle->log_count == battle->log_capacity) {
+        int capacity = battle->log_capacity ? battle->log_capacity * 2 : 256;
+        Event *grown = realloc(battle->log, sizeof(Event) * (size_t)capacity);
+        if (!grown) return false;
+        battle->log = grown;
+        battle->log_capacity = capacity;
+    }
+    event.tick = battle->tick;
+    battle->log[battle->log_count++] = event;
+    return true;
 }
 
 void body_working_parts(const Body *body, const PartState *parts, bool working[MAX_SLOTS])
@@ -44,14 +68,14 @@ void body_working_parts(const Body *body, const PartState *parts, bool working[M
     }
 }
 
-static void init_combatant(Combatant *c, const GameData *data, const char *name, Side side, const Body *body, int x, int y)
+static void init_combatant(Combatant *c, const GameData *data, const char *name, Side side, const Body *body, int x_millipx, int y_millipx)
 {
     memset(c, 0, sizeof *c);
     snprintf(c->name, sizeof c->name, "%s", name);
     c->side = side;
     c->alive = true;
-    c->x = x;
-    c->y = y;
+    c->x_millipx = x_millipx;
+    c->y_millipx = y_millipx;
     c->body = *body;
     c->charm_side = side;
     c->decision.vulnerable_element = -1;
@@ -81,7 +105,7 @@ static int random_part(Battle *battle, const GameData *data, const BodySlot *slo
     return eligible[rng_below(&battle->rng, count)];
 }
 
-static void add_monster(Battle *battle, const GameData *data, int x, int y)
+static void add_monster(Battle *battle, const GameData *data, int x_millipx, int y_millipx)
 {
     int plans[MAX_BODY_PLANS], count = 0;
     for (int p = 0; p < data->body_plan_count; p++)
@@ -89,7 +113,7 @@ static void add_monster(Battle *battle, const GameData *data, int x, int y)
     const BodyPlan *plan = &data->body_plans[plans[rng_below(&battle->rng, count)]];
     Body body = plan->body;
     for (int s = 0; s < body.slot_count; s++) body.slots[s].part = random_part(battle, data, &body.slots[s]);
-    init_combatant(&battle->combatants[battle->combatant_count++], data, plan->id, SIDE_HORDE, &body, x, y);
+    init_combatant(&battle->combatants[battle->combatant_count++], data, plan->id, SIDE_HORDE, &body, x_millipx, y_millipx);
 }
 
 static int free_tile_column(Battle *battle, int row)
@@ -105,20 +129,21 @@ static void scatter_objects(Battle *battle, FloorObject *objects, int *count, in
     for (int d = 0; d < defs; d++) {
         int row = rng_below(&battle->rng, ARENA_HEIGHT_TILES);
         int column = free_tile_column(battle, row);
-        objects[(*count)++] = (FloorObject){d, column * TILE_SIZE + TILE_SIZE / 2, row * TILE_SIZE + TILE_SIZE / 2, 0};
+        objects[(*count)++] = (FloorObject){d, column * TILE_MILLIPX + TILE_MILLIPX / 2, row * TILE_MILLIPX + TILE_MILLIPX / 2, 0};
     }
 }
 
 static int row_y(int index)
 {
-    return ((index * 2 + 1) * ARENA_HEIGHT_TILES / (DEITIES_PER_PANTHEON * 2)) * TILE_SIZE;
+    return ((index * 2 + 1) * ARENA_HEIGHT_TILES / (DEITIES_PER_PANTHEON * 2)) * TILE_MILLIPX;
 }
 
 void battle_setup(Battle *battle, const GameData *data, uint32_t seed)
 {
+    battle_free(battle);
     memset(battle, 0, sizeof *battle);
     battle->seed = seed;
-    battle->rng = seed ? seed : 1;
+    battle->rng = scramble_seed(seed);
     battle->pantheon = rng_below(&battle->rng, data->pantheon_count);
     for (int i = 0; i < 12; i++) {
         int row = rng_below(&battle->rng, ARENA_HEIGHT_TILES);
@@ -127,8 +152,8 @@ void battle_setup(Battle *battle, const GameData *data, uint32_t seed)
     const Pantheon *pantheon = &data->pantheons[battle->pantheon];
     for (int d = 0; d < DEITIES_PER_PANTHEON; d++)
         init_combatant(&battle->combatants[battle->combatant_count++], data, pantheon->deities[d].name, SIDE_PANTHEON,
-                       &pantheon->deities[d].body, 2 * TILE_SIZE, row_y(d));
-    for (int m = 0; m < HORDE_SIZE; m++) add_monster(battle, data, (ARENA_WIDTH_TILES - 2) * TILE_SIZE, row_y(m));
+                       &pantheon->deities[d].body, 2 * TILE_MILLIPX, row_y(d));
+    for (int m = 0; m < HORDE_SIZE; m++) add_monster(battle, data, (ARENA_WIDTH_TILES - 2) * TILE_MILLIPX, row_y(m));
     scatter_objects(battle, battle->pickups, &battle->pickup_count, data->pickup_count);
     scatter_objects(battle, battle->traps, &battle->trap_count, data->trap_count);
 }
@@ -148,10 +173,10 @@ static int step_toward(int from, int to)
     return from < to ? 1 : from > to ? -1 : 0;
 }
 
-static bool blocked(const Battle *battle, int x, int y)
+static bool blocked(const Battle *battle, int x_millipx, int y_millipx)
 {
-    int column = x / TILE_SIZE, row = y / TILE_SIZE;
-    if (column < 0 || row < 0 || column >= ARENA_WIDTH_TILES || row >= ARENA_HEIGHT_TILES) return true;
+    if (x_millipx < 0 || y_millipx < 0 || x_millipx >= ARENA_WIDTH_MILLIPX || y_millipx >= ARENA_HEIGHT_MILLIPX) return true;
+    int column = x_millipx / TILE_MILLIPX, row = y_millipx / TILE_MILLIPX;
     return battle->obstacle[row][column];
 }
 
@@ -162,7 +187,7 @@ static const Combatant *nearest_enemy(const Battle *battle, const Combatant *sel
     for (int c = 0; c < battle->combatant_count; c++) {
         const Combatant *other = &battle->combatants[c];
         if (!other->alive || other->side == self->side) continue;
-        int distance = abs(other->x - self->x) + abs(other->y - self->y);
+        int distance = abs(other->x_millipx - self->x_millipx) + abs(other->y_millipx - self->y_millipx);
         if (!best || distance < best_distance) best = other, best_distance = distance;
     }
     return best;
@@ -172,10 +197,10 @@ static void advance_toward_enemy(const Battle *battle, Combatant *self)
 {
     const Combatant *enemy = nearest_enemy(battle, self);
     if (!enemy) return;
-    int nx = self->x + step_toward(self->x, enemy->x);
-    int ny = self->y + step_toward(self->y, enemy->y);
-    if (!blocked(battle, nx, self->y)) self->x = nx;
-    if (!blocked(battle, self->x, ny)) self->y = ny;
+    int nx = self->x_millipx + MILLIPX_PER_PX * step_toward(self->x_millipx, enemy->x_millipx);
+    int ny = self->y_millipx + MILLIPX_PER_PX * step_toward(self->y_millipx, enemy->y_millipx);
+    if (!blocked(battle, nx, self->y_millipx)) self->x_millipx = nx;
+    if (!blocked(battle, self->x_millipx, ny)) self->y_millipx = ny;
 }
 
 void battle_step(Battle *battle, const GameData *data)

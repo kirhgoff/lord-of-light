@@ -9,6 +9,12 @@ static GameData data;
 static char err[ERR_SIZE];
 static Battle battle, loaded;
 
+static void reset(Battle *b)
+{
+    battle_free(b);
+    memset(b, 0, sizeof *b);
+}
+
 static void load_data(void)
 {
     CHECK(load_game_data(&data, "data", err, ERR_SIZE));
@@ -44,7 +50,7 @@ static void test_setup_places_both_sides(void)
         const Combatant *who = &battle.combatants[c];
         CHECK(who->alive && who->vitality > 0 && who->vitality == who->vitality_max);
         CHECK(who->decision.stance == STANCE_NONE && who->parts[0].order.kind == ORDER_IDLE);
-        bool on_left = who->x < ARENA_WIDTH_TILES * TILE_SIZE / 2;
+        bool on_left = who->x_millipx < ARENA_WIDTH_MILLIPX / 2;
         CHECK(on_left == (who->side == SIDE_PANTHEON));
         if (on_left) left++;
         else right++;
@@ -58,10 +64,10 @@ static void test_step_advances_tick_and_moves(void)
 {
     load_data();
     battle_setup(&battle, &data, 3);
-    int x = battle.combatants[0].x;
+    int x = battle.combatants[0].x_millipx;
     run(&battle, 10);
     CHECK(battle.tick == 10);
-    CHECK(battle.combatants[0].x > x);
+    CHECK(battle.combatants[0].x_millipx == x + 10 * MILLIPX_PER_PX);
 }
 
 static void test_round_trip_is_identical(void)
@@ -69,21 +75,23 @@ static void test_round_trip_is_identical(void)
     load_data();
     battle_setup(&battle, &data, 11);
     run(&battle, 30);
-    battle_log_event(&battle, EVENT_HIT, 1, 5, 12);
-    battle.combatants[2].parts[1].order = (Order){ORDER_STRIKE, 5, 10, 20};
+    CHECK(battle_log_event(&battle, (Event){0, EVENT_HIT, 1, 2, 5, 3, ELEMENT_FIRE, 12, -4}));
+    battle.combatants[2].parts[1].order = (Order){ORDER_STRIKE, 5, 10000, 20000};
     battle.combatants[2].decision = (Decision){STANCE_FIGHT, 40, ELEMENT_FIRE};
     battle.combatants[5].charm_ticks = 9;
     battle.combatants[5].charm_side = SIDE_PANTHEON;
-    battle.remains[0] = (Remains){5, 6, 2, {1, 2}};
+    battle.remains[0] = (Remains){5000, 6000, 2, {1, 2}};
     battle.remains_count = 1;
     char *json = battle_save_json(&battle, &data);
     CHECK(battle_load_json(&loaded, &data, json, err, ERR_SIZE));
     char *again = battle_save_json(&loaded, &data);
     CHECK(strcmp(json, again) == 0);
     CHECK(memcmp(loaded.obstacle, battle.obstacle, sizeof battle.obstacle) == 0);
-    CHECK(loaded.log_count == 1 && loaded.log[0].value == 12 && loaded.rng == battle.rng);
+    CHECK(loaded.log_count == 1 && loaded.log[0].amount == 12 && loaded.log[0].detail == -4 && loaded.log[0].tick == 30 && loaded.rng == battle.rng);
     free(json);
     free(again);
+    battle_free(&loaded);
+    battle_free(&battle);
 }
 
 static void test_resume_matches_uninterrupted_run(void)
@@ -99,6 +107,8 @@ static void test_resume_matches_uninterrupted_run(void)
     char *expected = battle_save_json(&straight, &data), *actual = battle_save_json(&resumed, &data);
     CHECK(strcmp(expected, actual) == 0);
     CHECK(resumed.tick == 170);
+    battle_free(&straight);
+    battle_free(&resumed);
     free(midway);
     free(expected);
     free(actual);
@@ -111,21 +121,106 @@ static void test_rng_is_deterministic_and_never_zero(void)
     CHECK(rng_below(&a, 7) < 7);
 }
 
+static char *saved_json(uint32_t seed)
+{
+    battle_setup(&battle, &data, seed);
+    battle_log_event(&battle, (Event){0, EVENT_HIT, 0, 0, 1, 0, ELEMENT_FIRE, 5, 0});
+    return battle_save_json(&battle, &data);
+}
+
+static char *replaced(const char *json, const char *from, const char *to)
+{
+    const char *at = strstr(json, from);
+    CHECK(at != NULL);
+    char *out = malloc(strlen(json) + strlen(to) + 1);
+    memcpy(out, json, (size_t)(at - json));
+    strcpy(out + (at - json), to);
+    strcpy(out + (at - json) + strlen(to), at + strlen(from));
+    return out;
+}
+
+static void check_rejected(const char *json, const char *from, const char *to)
+{
+    char *mutated = replaced(json, from, to);
+    err[0] = '\0';
+    loaded.tick = 99;
+    bool ok = battle_load_json(&loaded, &data, mutated, err, ERR_SIZE);
+    if (ok || err[0] == '\0' || loaded.tick != 99) printf("  not rejected cleanly: %s -> %s (err '%s')\n", from, to, err);
+    CHECK(!ok);
+    CHECK(err[0] != '\0');
+    CHECK(loaded.tick == 99);
+    free(mutated);
+}
+
 static void test_load_rejects_bad_input(void)
 {
     load_data();
-    battle_setup(&battle, &data, 3);
-    char *json = battle_save_json(&battle, &data);
-    char *broken = strdup(json);
-    char *at = strstr(broken, "\"side\":\"pantheon\"");
-    memcpy(at + 8, "nowhere ", 8);
-    loaded.tick = 99;
-    CHECK(!battle_load_json(&loaded, &data, broken, err, ERR_SIZE));
-    CHECK(loaded.tick == 99);
+    char *json = saved_json(3);
+    check_rejected(json, "\"side\":\"pantheon\"", "\"side\":\"nowhere\"");
+    check_rejected(json, "\"combatants\":[{", "\"combatants\":[5,{");
+    check_rejected(json, "\"pickups\":[{", "\"pickups\":[5,{");
+    check_rejected(json, "\"log\":[{", "\"log\":[5,{");
+    check_rejected(json, "\"decision\":{\"stance\"", "\"decisionx\":{\"stance\"");
+    check_rejected(json, "\"slots\":[{", "\"slots\":[5,{");
+    check_rejected(json, "\"def\":\"health_vial\"", "\"def\":\"no_such_pickup\"");
+    check_rejected(json, "\"seed\":3", "\"seed\":4294967296");
+    check_rejected(json, "\"rng\":", "\"rng\":0,\"old\":");
+    check_rejected(json, "\"tick\":0", "\"tick\":1e19");
+    check_rejected(json, "\"x_millipx\":", "\"x_millipx\":1e300,\"z\":");
+    check_rejected(json, "\"x_millipx\":", "\"x_millipx\":-1e999,\"z\":");
+    check_rejected(json, "\"edges\":[[", "\"edges\":[{\"a\":0},[");
+    check_rejected(json, "\"edges\":[[0,1]", "\"edges\":[[0,1e300]");
+    check_rejected(json, "\"target\":-1", "\"target\":64");
+    check_rejected(json, "\"actor\":0", "\"actor\":64");
+    check_rejected(json, "\"actor_part\":0", "\"actor_part\":24");
+    check_rejected(json, "\"amount\":5", "\"amount\":2000000000");
+    check_rejected(json, "\"kind\":\"hit\"", "\"kind\":7");
     CHECK(!battle_load_json(&loaded, &data, "{", err, ERR_SIZE));
-    CHECK(!battle_load_json(&loaded, &data, "{}", err, ERR_SIZE));
+    CHECK(!battle_load_json(&loaded, &data, "{}", err, ERR_SIZE) && err[0] != '\0');
+    CHECK(!battle_load_json(&loaded, &data, "[1]", err, ERR_SIZE) && err[0] != '\0');
     free(json);
-    free(broken);
+    battle_free(&battle);
+    battle_free(&loaded);
+}
+
+static void test_remains_and_floor_objects_are_saved_by_id(void)
+{
+    load_data();
+    battle_setup(&battle, &data, 3);
+    battle.remains[0] = (Remains){5000, 6000, 1, {find_part(&data, "heart")}};
+    battle.remains_count = 1;
+    char *json = battle_save_json(&battle, &data);
+    CHECK(strstr(json, "\"parts\":[\"heart\"]") != NULL);
+    CHECK(strstr(json, "\"def\":\"health_vial\"") != NULL);
+    CHECK(strstr(json, "\"def\":\"fire_vent\"") != NULL);
+    free(json);
+    battle_free(&battle);
+}
+
+static void test_log_grows_without_dropping(void)
+{
+    load_data();
+    reset(&battle);
+    battle_setup(&battle, &data, 3);
+    for (int i = 0; i < 5000; i++) CHECK(battle_log_event(&battle, (Event){0, EVENT_HIT, 0, 0, 1, 0, -1, i, 0}));
+    CHECK(battle.log_count == 5000 && battle.log[4999].amount == 4999);
+    char *json = battle_save_json(&battle, &data);
+    CHECK(battle_load_json(&loaded, &data, json, err, ERR_SIZE));
+    CHECK(loaded.log_count == 5000 && loaded.log[4999].amount == 4999);
+    free(json);
+    battle_free(&battle);
+    battle_free(&loaded);
+}
+
+static void test_seed_zero_differs_from_one(void)
+{
+    CHECK(scramble_seed(0) != scramble_seed(1));
+    CHECK(scramble_seed(0) != 0);
+    load_data();
+    static Battle zero, one;
+    battle_setup(&zero, &data, 0);
+    battle_setup(&one, &data, 1);
+    CHECK(zero.rng != one.rng);
 }
 
 static void test_core_connectivity_two_paths(void)
@@ -167,6 +262,9 @@ void run_battle_tests(void)
     test_resume_matches_uninterrupted_run();
     test_rng_is_deterministic_and_never_zero();
     test_load_rejects_bad_input();
+    test_remains_and_floor_objects_are_saved_by_id();
+    test_log_grows_without_dropping();
+    test_seed_zero_differs_from_one();
     test_core_connectivity_two_paths();
     test_winner_when_a_side_is_dead();
 }

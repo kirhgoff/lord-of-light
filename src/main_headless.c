@@ -1,3 +1,5 @@
+#include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,8 +17,9 @@ static char *read_text_file(const char *path)
     fseek(file, 0, SEEK_END);
     long size = ftell(file);
     rewind(file);
-    char *text = malloc((size_t)size + 1);
-    text[fread(text, 1, (size_t)size, file)] = '\0';
+    char *text = size < 0 ? NULL : malloc((size_t)size + 1);
+    if (text && fread(text, 1, (size_t)size, file) == (size_t)size) text[size] = '\0';
+    else free(text), text = NULL;
     fclose(file);
     return text;
 }
@@ -27,6 +30,16 @@ static bool write_text_file(const char *path, const char *text)
     if (!file) return false;
     fputs(text, file);
     return fclose(file) == 0;
+}
+
+static bool parse_seed(const char *text, uint32_t *seed)
+{
+    char *end;
+    errno = 0;
+    unsigned long long value = strtoull(text, &end, 10);
+    if (errno || end == text || *end || text[0] == '-' || value > UINT32_MAX) return false;
+    *seed = (uint32_t)value;
+    return true;
 }
 
 static int usage(void)
@@ -42,12 +55,14 @@ static const char *winner_name(int winner)
 
 int main(int argc, char **argv)
 {
-    unsigned long seed = 1;
+    uint32_t seed = 1;
     long ticks = DEFAULT_TICKS;
     const char *load_path = NULL, *dump_path = NULL;
     for (int i = 1; i < argc; i++) {
         bool has_value = i + 1 < argc;
-        if (strcmp(argv[i], "--seed") == 0 && has_value) seed = strtoul(argv[++i], NULL, 10);
+        if (strcmp(argv[i], "--seed") == 0 && has_value) {
+            if (!parse_seed(argv[++i], &seed)) return fprintf(stderr, "seed must be 0..%u\n", UINT32_MAX), 2;
+        }
         else if (strcmp(argv[i], "--ticks") == 0 && has_value) ticks = strtol(argv[++i], NULL, 10);
         else if (strcmp(argv[i], "--load") == 0 && has_value) load_path = argv[++i];
         else if (strcmp(argv[i], "--dump") == 0 && has_value) dump_path = argv[++i];
@@ -69,7 +84,7 @@ int main(int argc, char **argv)
         }
         free(json);
     } else {
-        battle_setup(&battle, &data, (uint32_t)seed);
+        battle_setup(&battle, &data, seed);
     }
 
     for (long t = 0; t < ticks && battle_winner(&battle) < 0; t++) battle_step(&battle, &data);
@@ -83,6 +98,7 @@ int main(int argc, char **argv)
             return 1;
         }
     }
+    battle_free(&battle);
     printf("Winner: %s after %d ticks\n", winner_name(battle_winner(&battle)), battle.tick);
     return 0;
 }

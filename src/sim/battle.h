@@ -8,11 +8,10 @@
 #include "arena.h"
 #include "data.h"
 
-#define MAX_COMBATANTS 16
-#define MAX_FLOOR_OBJECTS 16
-#define MAX_REMAINS 16
-#define MAX_EVENTS 1024
+#define MAX_COMBATANTS 64
+#define MAX_REMAINS MAX_COMBATANTS
 #define HORDE_SIZE 4
+#define EVENT_AMOUNT_LIMIT 1000000000
 
 typedef enum { SIDE_PANTHEON, SIDE_HORDE, SIDE_COUNT } Side;
 
@@ -36,8 +35,8 @@ typedef enum {
 typedef struct {
     OrderKind kind;
     int target;
-    int x;
-    int y;
+    int x_millipx;
+    int y_millipx;
 } Order;
 
 typedef struct {
@@ -56,8 +55,8 @@ typedef struct {
     char name[NAME_LEN];
     Side side;
     bool alive;
-    int x;
-    int y;
+    int x_millipx;
+    int y_millipx;
     Body body;
     PartState parts[MAX_SLOTS];
     int vitality;
@@ -71,14 +70,14 @@ typedef struct {
 
 typedef struct {
     int def;
-    int x;
-    int y;
+    int x_millipx;
+    int y_millipx;
     int respawn_in;
 } FloorObject;
 
 typedef struct {
-    int x;
-    int y;
+    int x_millipx;
+    int y_millipx;
     int part_count;
     int parts[MAX_SLOTS];
 } Remains;
@@ -86,9 +85,13 @@ typedef struct {
 typedef struct {
     int tick;
     EventKind kind;
-    int a;
-    int b;
-    int value;
+    int actor;
+    int actor_part;
+    int target;
+    int target_part;
+    int element;
+    int amount;
+    int detail;
 } Event;
 
 typedef struct {
@@ -99,22 +102,25 @@ typedef struct {
     unsigned char obstacle[ARENA_HEIGHT_TILES][ARENA_WIDTH_TILES];
     Combatant combatants[MAX_COMBATANTS];
     int combatant_count;
-    FloorObject pickups[MAX_FLOOR_OBJECTS];
+    FloorObject pickups[MAX_ARENA_OBJECTS];
     int pickup_count;
-    FloorObject traps[MAX_FLOOR_OBJECTS];
+    FloorObject traps[MAX_ARENA_OBJECTS];
     int trap_count;
     Remains remains[MAX_REMAINS];
     int remains_count;
-    Event log[MAX_EVENTS];
+    Event *log;
     int log_count;
+    int log_capacity;
 } Battle;
 
+uint32_t scramble_seed(uint32_t seed);
 uint32_t rng_next(uint32_t *state);
 int rng_below(uint32_t *state, int bound);
 
 void battle_setup(Battle *battle, const GameData *data, uint32_t seed);
 void battle_step(Battle *battle, const GameData *data);
-void battle_log_event(Battle *battle, EventKind kind, int a, int b, int value);
+void battle_free(Battle *battle);
+bool battle_log_event(Battle *battle, Event event);
 int battle_winner(const Battle *battle);
 
 void body_working_parts(const Body *body, const PartState *parts, bool working[MAX_SLOTS]);
