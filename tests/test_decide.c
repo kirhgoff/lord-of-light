@@ -415,6 +415,20 @@ static void test_seek_when_nothing_is_perceived(void)
     CHECK(order(zeus, "hand_right").kind == ORDER_IDLE);
 }
 
+static void test_support_stance_ignores_a_nearer_hurt_enemy(void)
+{
+    load_data();
+    fresh();
+    int apollo = add_deity("Greek", "Apollo", SIDE_PANTHEON, 100, 200);
+    int dagda = add_deity("Celtic", "Dagda", SIDE_HORDE, 150, 200);
+    int zeus = add_deity("Greek", "Zeus", SIDE_PANTHEON, 300, 200);
+    battle.combatants[zeus].vitality = 1;
+    battle.combatants[dagda].vitality = 1;
+    set_decision(apollo, STANCE_SUPPORT, HURT_UNHURT, -1);
+    tactics(apollo);
+    check_order(order(apollo, "legs"), ORDER_MOVE_TO, -1, 300, 200);
+}
+
 static void build_trap_duel(int trap_count)
 {
     fresh();
@@ -544,6 +558,7 @@ void run_decide_tests(void)
     test_retreat_flees_or_runs_to_a_healer();
     test_collect_walks_to_the_pickup_without_a_pick_up_order();
     test_seek_when_nothing_is_perceived();
+    test_support_stance_ignores_a_nearer_hurt_enemy();
     test_seen_trap_is_walked_around();
     test_tactics_are_deterministic();
     test_seed_one_runs_to_a_deterministic_winner();
