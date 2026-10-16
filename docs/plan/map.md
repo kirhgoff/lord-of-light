@@ -16,6 +16,7 @@ A playable raylib arena: a random Pantheon (from JSON) fights a Power-matched Ho
 
 ## Decisions so far
 
+- [Clay with raylib](issues/14-clay-raylib.md): pin v0.14, custom text measure, scroll/overlay pitfalls in `docs/research/clay-raylib.md`.
 - [How Laya behaves](issues/13-laya-behaviour.md): great at Appraisals, weak at picking Orders, ~230 ms per question → ADR 0003 hybrid (Stance + Appraisals, game Tactics).
 - [Skeleton](issues/01-skeleton.md): Makefile + vendored raylib 5.5 / Clay v0.14 / cJSON v1.7.19, header-tracked builds, tiny test runner.
 

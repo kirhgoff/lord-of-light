@@ -14,8 +14,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 02 Data schema | `02-data-schema` / `~/Projects/lord-of-light-02-data-schema` | executor running |
-| 14 Clay+raylib research | `research/clay` / `~/Projects/lord-of-light-research-clay` | researcher running |
+| 02 Data schema | `02-data-schema` / `~/Projects/lord-of-light-02-data-schema` | executor done (15f591f); opus review running. Known fix: commit trailer must be the Opus line from the brief |
 
 If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`, `git status`), then either spawn a new executor to finish from there or review what exists.
 
@@ -23,6 +22,7 @@ If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`
 
 - 01 Skeleton — merged.
 - 13 Laya behaviour — merged; led to ADR 0003 (Stance + Appraisals).
+- 14 Clay+raylib research — merged (`docs/research/clay-raylib.md`).
 
 ## Next up (once unblocked)
 
