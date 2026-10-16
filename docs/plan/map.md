@@ -15,6 +15,8 @@ A playable raylib arena: a random Pantheon (from JSON) fights a Power-matched Ho
 
 ## Decisions so far
 
+- [Skeleton](issues/01-skeleton.md): Makefile + vendored raylib 5.5 / Clay v0.14 / cJSON v1.7.19, header-tracked builds, tiny test runner.
+
 ## Not yet specified
 
 - Power weight values and Horde size limits: tuned once `make balance` exists and real Battles can be watched.
