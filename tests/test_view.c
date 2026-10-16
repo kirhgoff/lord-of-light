@@ -63,6 +63,8 @@ static void test_atlas_rejects_hostile_sidecars(void)
     CHECK(!parses("32", "8", "\"idle\":[1,0]"));
     CHECK(!parses("32", "8", "\"idle\":[-1]"));
     CHECK(!parses("32", "8", "\"idle\":[2000000000]"));
+    CHECK(!parses("32", "8", "\"idle\":[2147483647]"));
+    CHECK(!parses("32", "8", "\"idle\":[1000000]"));
     CHECK(!parses("32", "8", "\"idle\":[1.5]"));
     CHECK(!parses("32", "8", "\"idle\":[\"0\"]"));
     CHECK(!parses("32", "8", "\"idle\":[]"));
