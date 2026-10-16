@@ -65,7 +65,7 @@ static void test_valid_load(void)
     CHECK(data.body_plan_count == 9);
     CHECK(data.pantheon_count == 5);
     CHECK(find_pantheon("Egyptian") && find_pantheon("Norse") && find_pantheon("Celtic"));
-    CHECK(data.pickup_count == 2 && data.trap_count == 2);
+    CHECK(data.pickup_count == 6 && data.trap_count == 5);
     CHECK(data.elements[ELEMENT_FIRE].dot_damage > 0);
     CHECK(data.elements[ELEMENT_LIGHTNING].chain_targets > 0);
     CHECK(data.elements[ELEMENT_VENOM].internal_first);
@@ -341,6 +341,7 @@ static void test_negative_values_and_empty_parts(void)
         { load_arena_objects, FIXTURE("arena_objects_negative_heal.json"), "pickups[0].heal: must not be negative" },
         { load_arena_objects, FIXTURE("arena_objects_negative_radius.json"), "traps[0].radius: must not be negative" },
         { load_arena_objects, FIXTURE("arena_objects_negative_respawn.json"), "traps[1].respawn_ticks: must not be negative" },
+        { load_arena_objects, FIXTURE("arena_objects_huge_percent.json"), "pickups[5].ward_percent: must be between 0 and 1000" },
     };
     load_real_data();
     for (size_t i = 0; i < sizeof cases / sizeof cases[0]; i++)

@@ -2,6 +2,7 @@
 
 #include "combat.h"
 #include "decide.h"
+#include "floor.h"
 #include "movement.h"
 
 #include <stdio.h>
@@ -122,23 +123,6 @@ static void add_monster(Battle *battle, const GameData *data, int x_millipx, int
     battle_add_combatant(battle, data, plan->id, SIDE_HORDE, &body, x_millipx, y_millipx);
 }
 
-static int free_tile_column(Battle *battle, int row)
-{
-    int column;
-    do column = 6 + rng_below(&battle->rng, ARENA_WIDTH_TILES - 12);
-    while (battle->obstacle[row][column]);
-    return column;
-}
-
-static void scatter_objects(Battle *battle, FloorObject *objects, int *count, int defs)
-{
-    for (int d = 0; d < defs; d++) {
-        int row = rng_below(&battle->rng, ARENA_HEIGHT_TILES);
-        int column = free_tile_column(battle, row);
-        objects[(*count)++] = (FloorObject){d, column * TILE_MILLIPX + TILE_MILLIPX / 2, row * TILE_MILLIPX + TILE_MILLIPX / 2, 0};
-    }
-}
-
 static int row_y(int index)
 {
     return ((index * 2 + 1) * ARENA_HEIGHT_TILES / (DEITIES_PER_PANTHEON * 2)) * TILE_MILLIPX;
@@ -160,8 +144,7 @@ void battle_setup(Battle *battle, const GameData *data, uint32_t seed)
         battle_add_combatant(battle, data, pantheon->deities[d].name, SIDE_PANTHEON, &pantheon->deities[d].body,
                              2 * TILE_MILLIPX, row_y(d));
     for (int m = 0; m < HORDE_SIZE; m++) add_monster(battle, data, (ARENA_WIDTH_TILES - 2) * TILE_MILLIPX, row_y(m));
-    scatter_objects(battle, battle->pickups, &battle->pickup_count, data->pickup_count);
-    scatter_objects(battle, battle->traps, &battle->trap_count, data->trap_count);
+    battle_place_floor_objects(battle, data);
 }
 
 int battle_winner(const Battle *battle)
@@ -181,5 +164,6 @@ void battle_step(Battle *battle, const GameData *data, Decider *decider)
     battle_act(battle, data);
     battle_tick_effects(battle, data);
     battle_move_combatants(battle, data);
+    battle_tick_floor(battle, data);
     battle->tick++;
 }

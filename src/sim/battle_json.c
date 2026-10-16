@@ -11,7 +11,7 @@
 
 static const char *const SIDE_IDS[SIDE_COUNT] = {"pantheon", "horde"};
 static const char *const STANCE_IDS[STANCE_COUNT] = {"none", "fight", "retreat", "support", "collect"};
-static const char *const EVENT_IDS[EVENT_KIND_COUNT] = {"decision", "hit", "pickup", "death", "effect", "spawn"};
+static const char *const EVENT_IDS[EVENT_KIND_COUNT] = {"decision", "hit", "pickup", "death", "effect", "spawn", "trap"};
 
 static const char *object_id(const ArenaObjectDef *defs, int index)
 {
@@ -93,6 +93,12 @@ static cJSON *save_combatant(const Combatant *c, const GameData *data)
     cJSON_AddNumberToObject(o, "damage_bonus_percent", c->damage_bonus_percent);
     cJSON_AddNumberToObject(o, "damage_bonus_ticks", c->damage_bonus_ticks);
     cJSON_AddNumberToObject(o, "next_decision_tick", c->next_decision_tick);
+    cJSON_AddNumberToObject(o, "haste_percent", c->haste_percent);
+    cJSON_AddNumberToObject(o, "haste_ticks", c->haste_ticks);
+    cJSON_AddNumberToObject(o, "vision_percent", c->vision_percent);
+    cJSON_AddNumberToObject(o, "vision_ticks", c->vision_ticks);
+    cJSON_AddNumberToObject(o, "ward_percent", c->ward_percent);
+    cJSON_AddNumberToObject(o, "ward_ticks", c->ward_ticks);
     cJSON *decision = cJSON_AddObjectToObject(o, "decision");
     cJSON_AddStringToObject(decision, "stance", STANCE_IDS[c->decision.stance]);
     cJSON_AddNumberToObject(decision, "hurt_level", c->decision.hurt_level);
@@ -371,7 +377,13 @@ static bool load_combatant(Context *ctx, const cJSON *obj, Combatant *c)
            read_combatant_ref(ctx, obj, "spawner", &c->spawner) &&
            read_int(ctx, obj, "damage_bonus_percent", 0, 1000, &c->damage_bonus_percent) &&
            read_int(ctx, obj, "damage_bonus_ticks", 0, 1000000, &c->damage_bonus_ticks) &&
-           read_int(ctx, obj, "next_decision_tick", 0, MAX_TICK, &c->next_decision_tick);
+           read_int(ctx, obj, "next_decision_tick", 0, MAX_TICK, &c->next_decision_tick) &&
+           read_int(ctx, obj, "haste_percent", 0, 1000, &c->haste_percent) &&
+           read_int(ctx, obj, "haste_ticks", 0, 1000000, &c->haste_ticks) &&
+           read_int(ctx, obj, "vision_percent", 0, 1000, &c->vision_percent) &&
+           read_int(ctx, obj, "vision_ticks", 0, 1000000, &c->vision_ticks) &&
+           read_int(ctx, obj, "ward_percent", 0, 1000, &c->ward_percent) &&
+           read_int(ctx, obj, "ward_ticks", 0, 1000000, &c->ward_ticks);
 }
 
 static bool read_object_def(Context *ctx, const cJSON *obj, const ArenaObjectDef *defs, int def_count, int *out)

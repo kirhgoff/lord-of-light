@@ -14,3 +14,7 @@ Blocked by: 06, 13
 - Record each Decision with source and probabilities in the Battle Log; replay from the log reproduces the Battle.
 - `--decider laya|reflex` flag for both binaries; tests use a fake transport (canned responses), never the network.
 - Stats for the end screen: share of Decisions from Laya vs Reflex, mean confidence, mean latency.
+
+## Comments
+
+From the ticket 06 review: `most_vulnerable_element` reads the focus's true resistances even at Far Band. Fine for the Reflex, but the Laya Briefing must only expose what the Combatant perceives at that Band.

@@ -27,6 +27,19 @@ static void fresh(void)
     battle.rng = 1;
 }
 
+static int find_object_def(const ArenaObjectDef *defs, int count, const char *id)
+{
+    for (int d = 0; d < count; d++)
+        if (strcmp(defs[d].id, id) == 0) return d;
+    CHECK(!"object def not found");
+    return 0;
+}
+
+static int soma(void)
+{
+    return find_object_def(data.pickups, data.pickup_count, "soma");
+}
+
 static int add_deity(const char *pantheon, const char *deity, Side side, int x_px, int y_px)
 {
     for (int p = 0; p < data.pantheon_count; p++) {
@@ -170,7 +183,7 @@ static void test_reflex_collects_when_wounded_and_pickup_is_nearer(void)
     int zeus = add_deity("Greek", "Zeus", SIDE_PANTHEON, 300, 200);
     add_deity("Celtic", "Dagda", SIDE_HORDE, 450, 200);
     battle.combatants[zeus].vitality = 40;
-    battle.pickups[0] = (FloorObject){0, 200 * PX, 200 * PX, 0};
+    battle.pickups[0] = (FloorObject){soma(), 200 * PX, 200 * PX, 0};
     battle.pickup_count = 1;
     CHECK(decision(zeus).stance == STANCE_COLLECT);
     battle.pickups[0].x_millipx = 100 * PX;
@@ -377,7 +390,7 @@ static void test_collect_walks_to_the_pickup_without_a_pick_up_order(void)
     load_data();
     fresh();
     int zeus = add_deity("Greek", "Zeus", SIDE_PANTHEON, 100, 200);
-    battle.pickups[0] = (FloorObject){0, 300 * PX, 200 * PX, 0};
+    battle.pickups[0] = (FloorObject){soma(), 300 * PX, 200 * PX, 0};
     battle.pickup_count = 1;
     set_decision(zeus, STANCE_COLLECT, HURT_WOUNDED, -1);
     tactics(zeus);
@@ -410,38 +423,34 @@ static void build_trap_duel(int trap_count)
     Combatant *dummy = &battle.combatants[apollo];
     for (int s = 0; s < dummy->body.slot_count; s++)
         if (strcmp(dummy->body.slots[s].id, "torso") != 0 && strcmp(dummy->body.slots[s].id, "heart") != 0) dummy->parts[s].integrity = 0;
-    int snare = -1;
-    for (int t = 0; t < data.trap_count; t++)
-        if (strcmp(data.traps[t].id, "frost_snare") == 0) snare = t;
-    CHECK(snare >= 0 && data.traps[snare].radius == 20);
+    int snare = find_object_def(data.traps, data.trap_count, "spike_pit");
     battle.traps[0] = (FloorObject){snare, 168 * PX, 168 * PX, 0};
     battle.trap_count = trap_count;
 }
 
-static int64_t closest_approach_to_trap(bool *reaches_apollo)
+static int64_t closest_approach_to_trap(bool *killed_apollo)
 {
     int64_t closest = INT64_MAX;
-    *reaches_apollo = false;
     for (int t = 0; t < 200; t++) {
         battle_step(&battle, &data, &reflex);
         const Combatant *zeus = &battle.combatants[0];
         int64_t dx = zeus->x_millipx - battle.traps[0].x_millipx, dy = zeus->y_millipx - battle.traps[0].y_millipx;
         int64_t distance = isqrt(dx * dx + dy * dy);
         if (distance < closest) closest = distance;
-        if (combatant_in_reach(zeus, &battle.combatants[1], 24)) *reaches_apollo = true;
     }
+    *killed_apollo = !battle.combatants[1].alive;
     return closest;
 }
 
 static void test_seen_trap_is_walked_around(void)
 {
     load_data();
-    bool reaches_apollo;
+    bool killed_apollo;
     build_trap_duel(1);
-    CHECK(closest_approach_to_trap(&reaches_apollo) > 20 * PX);
-    CHECK(reaches_apollo);
+    CHECK(closest_approach_to_trap(&killed_apollo) > data.traps[find_object_def(data.traps, data.trap_count, "spike_pit")].radius * PX);
+    CHECK(killed_apollo);
     build_trap_duel(0);
-    CHECK(closest_approach_to_trap(&reaches_apollo) < 11 * PX);
+    CHECK(closest_approach_to_trap(&killed_apollo) < 11 * PX);
 }
 
 static void test_tactics_are_deterministic(void)

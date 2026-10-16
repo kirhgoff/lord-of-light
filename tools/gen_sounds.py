@@ -199,29 +199,66 @@ def step_levitate(rng):
     return apply(hum, swell(n))
 
 
-def pickup_health(rng):
+def pickup_soma(rng):
     n = count(0.15)
     low = apply(partials(contour(n, 784, 784), [(1, 1.0), (2, 0.3)], 12), envelope(n, 0.005, 0.08))
     high = apply(partials(contour(n, 1175, 1175), [(1, 1.0), (2, 0.3)], 12), envelope(n, 0.005, 0.1))
     return mix(low, [0.0] * count(0.12) + high)
 
 
-def pickup_rage(rng):
+def pickup_ember_seed(rng):
     n = count(0.35)
     growl = oscillator(contour(n, 90, 260), "saw")
     return apply(lowpass(growl, 1500), swell(n))
 
 
-def trap_fire_vent(rng):
-    n = count(0.4)
-    roar = apply(lowpass(noise(rng, n), 1800), swell(n))
-    return mix(roar, strike("fire", rng, 1.0, 0.4))
-
-
-def trap_frost_snare(rng):
+def trap_frost_rune(rng):
     n = count(0.3)
     snap = apply(highpass(noise(rng, n), 3000), envelope(n, 0.001, 0.015))
     return mix(snap, scale(strike("frost", rng, 1.0, 0.3), 0.7))
+
+
+def pickup_menders_moss(rng):
+    n = count(0.3)
+    return apply(partials(contour(n, 523, 659), [(1, 1.0), (2, 0.4), (3, 0.15)], 8), envelope(n, 0.01, 0.12))
+
+
+def pickup_quickening_leaf(rng):
+    n = count(0.2)
+    return apply(oscillator(contour(n, 600, 1800)), envelope(n, 0.005, 0.06))
+
+
+def pickup_eye_of_far_seeing(rng):
+    n = count(0.4)
+    wobble = oscillator([880 * (1 + 0.05 * math.sin(TAU * 6 * i / RATE)) for i in range(n)])
+    return apply(wobble, swell(n))
+
+
+def pickup_ward_stone(rng):
+    n = count(0.45)
+    return apply(partials(contour(n, 220, 220), [(1, 1.0), (2.76, 0.5), (5.4, 0.25)], 6), envelope(n, 0.005, 0.15))
+
+
+def trap_spike_pit(rng):
+    n = count(0.25)
+    snap = apply(lowpass(noise(rng, n), 900), envelope(n, 0.001, 0.03))
+    return mix(snap, strike("kinetic", rng, 1.0, 0.25))
+
+
+def trap_spore_pod(rng):
+    n = count(0.4)
+    puff = apply(lowpass(noise(rng, n), 1200), envelope(n, 0.02, 0.12))
+    return mix(puff, scale(strike("venom", rng, 1.0, 0.4), 0.6))
+
+
+def trap_lightning_pylon(rng):
+    return mix(strike("lightning", rng, 1.0, 0.3), scale(cast("lightning", rng), 0.5))
+
+
+def trap_void_rift(rng):
+    n = count(0.5)
+    drone = apply(oscillator(contour(n, 70, 35)), swell(n))
+    return mix(strike("void", rng, 1.0, 0.5), scale(drone, 0.7))
 
 
 def cue_death(rng):
@@ -253,8 +290,11 @@ def build_sounds():
     sounds.update({
         "step_feet": step_feet, "step_wings": step_wings,
         "step_slither": step_slither, "step_levitate": step_levitate,
-        "pickup_health": pickup_health, "pickup_rage": pickup_rage,
-        "trap_fire_vent": trap_fire_vent, "trap_frost_snare": trap_frost_snare,
+        "pickup_soma": pickup_soma, "pickup_menders_moss": pickup_menders_moss,
+        "pickup_ember_seed": pickup_ember_seed, "pickup_quickening_leaf": pickup_quickening_leaf,
+        "pickup_eye_of_far_seeing": pickup_eye_of_far_seeing, "pickup_ward_stone": pickup_ward_stone,
+        "trap_spike_pit": trap_spike_pit, "trap_frost_rune": trap_frost_rune, "trap_spore_pod": trap_spore_pod,
+        "trap_lightning_pylon": trap_lightning_pylon, "trap_void_rift": trap_void_rift,
         "cue_death": cue_death, "cue_part_destroyed": cue_part_destroyed,
         "cue_spawn_appear": cue_spawn_appear,
     })
