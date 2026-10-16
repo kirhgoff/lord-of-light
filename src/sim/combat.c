@@ -34,6 +34,7 @@ int combatant_resistance_percent(const Combatant *c, const GameData *data, Eleme
         const Part *part = &data->parts[c->body.slots[s].part];
         if (working[s] && (!internal_only || part->internal)) total += part->resistance_percent[element];
     }
+    if (c->ward_ticks > 0) total += c->ward_percent;
     return clamp_percent(total);
 }
 
@@ -150,22 +151,35 @@ static void apply_charm(Battle *battle, Combatant *victim, const ElementDef *def
     log_effect(battle, actor, actor_part, target, element, ticks, EFFECT_CHARM);
 }
 
-static void apply_strip(Battle *battle, Combatant *victim, const ElementDef *def, int actor, int actor_part, int target, Element element)
+static int strip_buffs(Combatant *victim, int count)
 {
-    if (def->buff_strip_count == 0 || victim->damage_bonus_ticks == 0) return;
-    victim->damage_bonus_ticks = 0;
-    victim->damage_bonus_percent = 0;
-    log_effect(battle, actor, actor_part, target, element, 1, EFFECT_STRIP);
+    int *ticks[] = {&victim->damage_bonus_ticks, &victim->haste_ticks, &victim->sight_ticks, &victim->ward_ticks};
+    int *percent[] = {&victim->damage_bonus_percent, &victim->haste_percent, &victim->sight_percent, &victim->ward_percent};
+    int stripped = 0;
+    for (int b = 0; b < 4 && stripped < count; b++) {
+        if (*ticks[b] == 0) continue;
+        *ticks[b] = 0;
+        *percent[b] = 0;
+        stripped++;
+    }
+    return stripped;
 }
 
-static int nearest_chain_target(const Battle *battle, int from, Side side, const bool struck[MAX_COMBATANTS], int range_px)
+static void apply_strip(Battle *battle, Combatant *victim, const ElementDef *def, int actor, int actor_part, int target, Element element)
+{
+    int stripped = strip_buffs(victim, def->buff_strip_count);
+    if (stripped == 0) return;
+    log_effect(battle, actor, actor_part, target, element, stripped, EFFECT_STRIP);
+}
+
+static int nearest_chain_target(const Battle *battle, int from, int side, const bool struck[MAX_COMBATANTS], int range_px)
 {
     int best = -1;
     int64_t best_distance = 0;
     const Combatant *origin = &battle->combatants[from];
     for (int c = 0; c < battle->combatant_count; c++) {
         const Combatant *candidate = &battle->combatants[c];
-        if (struck[c] || !candidate->alive || candidate->charm_side == side || !combatant_in_reach(origin, candidate, range_px)) continue;
+        if (struck[c] || !candidate->alive || (int)candidate->charm_side == side || !combatant_in_reach(origin, candidate, range_px)) continue;
         int64_t distance = squared(origin->x_millipx - candidate->x_millipx) + squared(origin->y_millipx - candidate->y_millipx);
         if (best < 0 || distance < best_distance) best = c, best_distance = distance;
     }
@@ -176,11 +190,12 @@ static void chain_lightning(Battle *battle, const GameData *data, int actor, int
 {
     bool struck[MAX_COMBATANTS] = {false};
     const ElementDef *def = &data->elements[ELEMENT_LIGHTNING];
+    int side = actor >= 0 ? (int)battle->combatants[actor].charm_side : -1;
     int previous = first;
     struck[first] = true;
     for (int hop = 0; hop < def->chain_targets && damage / 2 > 0; hop++) {
         damage /= 2;
-        int next = nearest_chain_target(battle, previous, battle->combatants[actor].charm_side, struck, def->chain_range);
+        int next = nearest_chain_target(battle, previous, side, struck, def->chain_range);
         if (next < 0) return;
         struck[next] = true;
         int resistance = combatant_resistance_percent(&battle->combatants[next], data, ELEMENT_LIGHTNING, false);
@@ -193,7 +208,7 @@ static void apply_element(Battle *battle, const GameData *data, int actor, int a
 {
     const ElementDef *def = &data->elements[element];
     Combatant *victim = &battle->combatants[target];
-    if (def->chain_targets > 0 && actor >= 0) chain_lightning(battle, data, actor, actor_part, target, damage);
+    if (def->chain_targets > 0) chain_lightning(battle, data, actor, actor_part, target, damage);
     if (!victim->alive) return;
     apply_burning(victim, def, actor, element, resistance);
     apply_slow(battle, victim, def, actor, actor_part, target, element, resistance);
@@ -310,6 +325,9 @@ void battle_tick_effects(Battle *battle, const GameData *data)
         Combatant *who = &battle->combatants[c];
         if (!who->alive) continue;
         if (who->damage_bonus_ticks > 0 && --who->damage_bonus_ticks == 0) who->damage_bonus_percent = 0;
+        if (who->haste_ticks > 0 && --who->haste_ticks == 0) who->haste_percent = 0;
+        if (who->sight_ticks > 0 && --who->sight_ticks == 0) who->sight_percent = 0;
+        if (who->ward_ticks > 0 && --who->ward_ticks == 0) who->ward_percent = 0;
         if (who->slow_ticks > 0 && --who->slow_ticks == 0) who->slow_percent = 0;
         if (who->charm_ticks > 0 && --who->charm_ticks == 0) who->charm_side = who->side;
         if (who->dot_ticks == 0) continue;

@@ -282,6 +282,7 @@ void battle_move_combatants(Battle *battle, const GameData *data)
         if (!me->alive || !combatant_move_target(me, &target_x, &target_y)) continue;
         int step = combatant_speed_px_per_second(me, data) * MILLIPX_PER_PX / TICKS_PER_SECOND;
         if (me->slow_ticks > 0) step = step * (100 - me->slow_percent) / 100;
+        if (me->haste_ticks > 0) step = (int)((int64_t)step * (100 + me->haste_percent) / 100);
         if (step > 0) advance(battle, c, target_x, target_y, step);
     }
 }
