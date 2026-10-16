@@ -339,7 +339,7 @@ def svg_ecdf(walls_by_backend, names):
     for tick in range(5):
         x = left + (width - left - 70) * tick / 4
         parts.append("<text class=axis x=%.1f y=%d text-anchor=middle>%.0f ms</text>" % (x, height - 8, top * tick / 4))
-    for n in names:
+    for label_row, n in enumerate(names):
         walls = sorted(walls_by_backend[n])
         if not walls:
             continue
@@ -347,7 +347,7 @@ def svg_ecdf(walls_by_backend, names):
                           for i, w in enumerate(walls))
         end_x = left + (width - left - 70) * walls[-1] / top
         parts.append("<polyline fill=none stroke='%s' stroke-width=2 points='%s'><title>%s</title></polyline>"
-                     "<text class=val x=%.1f y=%.1f>%s</text>" % (BACKEND_COLORS[n], points, n, end_x + 4, 24, n))
+                     "<text class=val x=%.1f y=%.1f>%s</text>" % (BACKEND_COLORS[n], points, n, end_x + 4, 24 + 14 * label_row, n))
     parts.append("</svg>")
     return "".join(parts)
 
