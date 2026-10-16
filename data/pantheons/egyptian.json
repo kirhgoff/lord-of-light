@@ -1,0 +1,333 @@
+{
+  "name": "Egyptian",
+  "deities": [
+    {
+      "name": "Ra",
+      "epithet": "Lord of the Noon Sun, whose Aspect is a crown of light.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "radiant_crown",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "sun_bow",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "healing_hand",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "large_heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "fire_gland",
+            "x": 0,
+            "y": 4
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Set",
+      "epithet": "Lord of the Red Desert, whose Aspect unmakes and poisons.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "head",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "void_maw",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "serpent_hand",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "large_heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "venom_gland",
+            "x": 0,
+            "y": 4
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Anubis",
+      "epithet": "Weigher of Hearts, whose Aspect judges and the mind obeys.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "judging_eye",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "gungnir",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "bow_hand",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "large_heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "void_gland",
+            "x": 0,
+            "y": 4
+          },
+          {
+            "id": "ganglion",
+            "part": "ganglion",
+            "x": 0,
+            "y": 7
+          },
+          {
+            "id": "lobe",
+            "part": "mind_lobe",
+            "x": -6,
+            "y": -8
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ],
+          [
+            "torso",
+            "ganglion"
+          ],
+          [
+            "torso",
+            "lobe"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Isis",
+      "epithet": "Lady of Wings, whose Aspect mends and shields.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "head",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "healing_hand",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "shield_hand",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "wings_of_light",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "large_heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "radiance_gland",
+            "x": 0,
+            "y": 4
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,343 @@
+{
+  "name": "Celtic",
+  "deities": [
+    {
+      "name": "Morrigan",
+      "epithet": "Queen of Crows, whose Aspect whispers and her ravens answer.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "head",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "mind_lobe",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "sword_hand",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "large_heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "mind_gland",
+            "x": 0,
+            "y": 4
+          },
+          {
+            "id": "ravens",
+            "part": "raven_sac",
+            "x": 0,
+            "y": 7
+          },
+          {
+            "id": "ganglion",
+            "part": "ganglion",
+            "x": -6,
+            "y": -8
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ],
+          [
+            "torso",
+            "ravens"
+          ],
+          [
+            "torso",
+            "ganglion"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Dagda",
+      "epithet": "Good God of the Cauldron, whose Aspect feeds the fallen and flattens the foe.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "head",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "war_club",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "healing_hand",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "large_heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "armour_plate",
+            "x": 0,
+            "y": 4
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Lugh",
+      "epithet": "Lord of the Long Spear, whose Aspect lights every craft.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "radiant_crown",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "gungnir",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "shield_hand",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "large_heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "radiance_gland",
+            "x": 0,
+            "y": 4
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Brigid",
+      "epithet": "Keeper of the Hearth, whose Aspect kindles and mends.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "head",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "hearth_hand",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "healing_hand",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "large_heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "fire_gland",
+            "x": 0,
+            "y": 4
+          },
+          {
+            "id": "ganglion",
+            "part": "ganglion",
+            "x": 0,
+            "y": 7
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ],
+          [
+            "torso",
+            "ganglion"
+          ]
+        ]
+      }
+    }
+  ]
+}

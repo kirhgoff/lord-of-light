@@ -3,7 +3,7 @@
   "deities": [
     {
       "name": "Agni",
-      "epithet": "Mouth of the gods, who eats the offering.",
+      "epithet": "Lord of Fire, whose Aspect burns through steel.",
       "body": {
         "core": "torso",
         "parts": [
@@ -39,7 +39,7 @@
           },
           {
             "id": "heart",
-            "part": "heart",
+            "part": "large_heart",
             "x": 0,
             "y": -2
           },
@@ -80,7 +80,7 @@
     },
     {
       "name": "Indra",
-      "epithet": "King of the gods, hurler of the thunderbolt.",
+      "epithet": "King of Storms, whose Aspect cracks the sky with a hammer.",
       "body": {
         "core": "torso",
         "parts": [
@@ -116,7 +116,7 @@
           },
           {
             "id": "heart",
-            "part": "heart",
+            "part": "large_heart",
             "x": 0,
             "y": -2
           },
@@ -157,7 +157,7 @@
     },
     {
       "name": "Kali",
-      "epithet": "Black one, devourer of time.",
+      "epithet": "Dark Mother, whose Aspect devours what is left.",
       "body": {
         "core": "torso",
         "parts": [
@@ -193,7 +193,7 @@
           },
           {
             "id": "heart",
-            "part": "heart",
+            "part": "large_heart",
             "x": 0,
             "y": -2
           },
@@ -234,7 +234,7 @@
     },
     {
       "name": "Shiva",
-      "epithet": "Destroyer, whose third eye opens on the end of worlds.",
+      "epithet": "Destroyer and Healer, whose third eye opens on the unworthy.",
       "body": {
         "core": "torso",
         "parts": [
@@ -270,7 +270,7 @@
           },
           {
             "id": "heart",
-            "part": "heart",
+            "part": "large_heart",
             "x": 0,
             "y": -2
           },
@@ -281,10 +281,10 @@
             "y": 4
           },
           {
-            "id": "extra",
+            "id": "third_eye",
             "part": "third_eye",
             "x": 0,
-            "y": -22
+            "y": 7
           }
         ],
         "edges": [
@@ -314,7 +314,7 @@
           ],
           [
             "torso",
-            "extra"
+            "third_eye"
           ]
         ]
       }

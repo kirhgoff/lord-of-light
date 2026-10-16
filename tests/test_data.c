@@ -20,13 +20,51 @@ static void check_error(bool loaded, const char *expected)
     CHECK(strstr(err, expected) != NULL);
 }
 
+static const Pantheon *find_pantheon(const char *name)
+{
+    for (int p = 0; p < data.pantheon_count; p++)
+        if (strcmp(data.pantheons[p].name, name) == 0) return &data.pantheons[p];
+    return NULL;
+}
+
+static bool part_acts_with(const Part *part, Element element)
+{
+    for (int a = 0; a < part->ability_count; a++)
+        if (part->abilities[a].element == element && part->abilities[a].order != ORDER_BLOCK) return true;
+    return false;
+}
+
+static void test_content_coverage(void)
+{
+    load_real_data();
+    for (int e = 0; e < ELEMENT_COUNT; e++) {
+        bool on_monster_part = false;
+        for (int i = 0; i < data.part_count; i++)
+            on_monster_part |= !data.parts[i].deity_only && part_acts_with(&data.parts[i], (Element)e);
+        CHECK(on_monster_part);
+    }
+    for (int p = 0; p < data.pantheon_count; p++) {
+        int covered = 0;
+        for (int e = 0; e < ELEMENT_COUNT; e++) {
+            bool found = false;
+            for (int d = 0; d < DEITIES_PER_PANTHEON; d++) {
+                const Body *body = &data.pantheons[p].deities[d].body;
+                for (int s = 0; s < body->slot_count; s++)
+                    found |= part_acts_with(&data.parts[body->slots[s].part], (Element)e);
+            }
+            covered += found;
+        }
+        CHECK(covered >= 4);
+    }
+}
+
 static void test_valid_load(void)
 {
     load_real_data();
-    CHECK(data.part_count >= 10);
-    CHECK(data.body_plan_count == 3);
-    CHECK(data.pantheon_count == 1);
-    CHECK(strcmp(data.pantheons[0].name, "Hindu") == 0);
+    CHECK(data.part_count >= 40);
+    CHECK(data.body_plan_count == 9);
+    CHECK(data.pantheon_count == 5);
+    CHECK(find_pantheon("Egyptian") && find_pantheon("Norse") && find_pantheon("Celtic"));
     CHECK(data.pickup_count == 2 && data.trap_count == 2);
     CHECK(data.elements[ELEMENT_FIRE].dot_damage > 0);
     CHECK(data.elements[ELEMENT_LIGHTNING].chain_targets > 0);
@@ -52,14 +90,17 @@ static void test_part_fields_resolved(void)
 static void test_deity_bodies_resolved(void)
 {
     load_real_data();
-    for (int d = 0; d < DEITIES_PER_PANTHEON; d++) {
-        const Body *body = &data.pantheons[0].deities[d].body;
-        CHECK(body->slot_count >= 7);
-        CHECK(strcmp(body->slots[body->core].id, "torso") == 0);
-        for (int s = 0; s < body->slot_count; s++) CHECK(body->slots[s].part >= 0);
+    for (int p = 0; p < data.pantheon_count; p++) {
+        for (int d = 0; d < DEITIES_PER_PANTHEON; d++) {
+            const Body *body = &data.pantheons[p].deities[d].body;
+            CHECK(body->slot_count >= 7);
+            CHECK(strcmp(body->slots[body->core].id, "torso") == 0);
+            CHECK(data.pantheons[p].deities[d].epithet[0] != '\0');
+            for (int s = 0; s < body->slot_count; s++) CHECK(body->slots[s].part >= 0);
+        }
     }
-    const Body *agni = &data.pantheons[0].deities[0].body;
-    CHECK(strcmp(data.parts[agni->slots[find_body_slot(agni, "heart")].part].id, "heart") == 0);
+    const Body *agni = &find_pantheon("Hindu")->deities[0].body;
+    CHECK(strcmp(data.parts[agni->slots[find_body_slot(agni, "heart")].part].id, "large_heart") == 0);
     CHECK(agni->slots[find_body_slot(agni, "gland")].internal);
 }
 
@@ -85,7 +126,7 @@ static void test_pantheon_errors(void)
                 "deities[2].body.core: unknown slot \"spine\"");
     check_error(load_pantheon(&data, FIXTURE("pantheon_wrong_deity_count.json"), err, ERR_SIZE),
                 "deities: expected 4 deities, found 3");
-    CHECK(data.pantheon_count == 1);
+    CHECK(data.pantheon_count == 5);
 }
 
 static void test_body_plan_errors(void)
@@ -226,6 +267,7 @@ void run_data_tests(void)
     test_valid_load();
     test_part_fields_resolved();
     test_deity_bodies_resolved();
+    test_content_coverage();
     test_body_plans_resolved();
     test_pantheon_errors();
     test_body_plan_errors();

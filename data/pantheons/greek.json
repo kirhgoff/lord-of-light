@@ -1,0 +1,323 @@
+{
+  "name": "Greek",
+  "deities": [
+    {
+      "name": "Zeus",
+      "epithet": "Lord of the Storm, whose Aspect hurls the sky itself.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "keen_head",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "thunderbolt_hand",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "sword_hand",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "large_heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "lightning_gland",
+            "x": 0,
+            "y": 4
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Poseidon",
+      "epithet": "Lord of Tides, whose Aspect freezes the deep to a spear.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "head",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "frost_trident",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "frost_fang",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "large_heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "frost_gland",
+            "x": 0,
+            "y": 4
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Apollo",
+      "epithet": "Lord of the Sun, whose Aspect mends the broken and blinds the proud.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "radiant_crown",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "sun_bow",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "healing_hand",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "large_heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "radiance_gland",
+            "x": 0,
+            "y": 4
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Hades",
+      "epithet": "Lord of the Pale Halls, whose Aspect unmakes what it touches.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "head",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "void_maw",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "void_tendril",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "large_heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "void_gland",
+            "x": 0,
+            "y": 4
+          },
+          {
+            "id": "ganglion",
+            "part": "ganglion",
+            "x": 0,
+            "y": 7
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ],
+          [
+            "torso",
+            "ganglion"
+          ]
+        ]
+      }
+    }
+  ]
+}
