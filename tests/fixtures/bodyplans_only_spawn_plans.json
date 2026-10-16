@@ -1,0 +1,133 @@
+{
+  "bodyplans": [
+    {
+      "id": "minion_imp",
+      "core": "body",
+      "slots": [
+        {
+          "id": "body",
+          "kind": "external",
+          "part": "imp_body",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "claw",
+          "kind": "external",
+          "role": "attack",
+          "part": "claw",
+          "x": 6,
+          "y": 0
+        },
+        {
+          "id": "heart",
+          "kind": "internal",
+          "role": "heart",
+          "part": "small_heart",
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "edges": [
+        [
+          "body",
+          "claw"
+        ],
+        [
+          "body",
+          "heart"
+        ]
+      ]
+    },
+    {
+      "id": "minion_crow",
+      "core": "body",
+      "slots": [
+        {
+          "id": "wing",
+          "kind": "external",
+          "role": "mover",
+          "part": "bat_wings",
+          "x": -6,
+          "y": -14
+        },
+        {
+          "id": "body",
+          "kind": "external",
+          "part": "crow_body",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "beak",
+          "kind": "external",
+          "role": "attack",
+          "part": "claw",
+          "x": 6,
+          "y": -2
+        },
+        {
+          "id": "heart",
+          "kind": "internal",
+          "role": "heart",
+          "part": "small_heart",
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "edges": [
+        [
+          "body",
+          "beak"
+        ],
+        [
+          "body",
+          "wing"
+        ],
+        [
+          "body",
+          "heart"
+        ]
+      ]
+    },
+    {
+      "id": "minion_wisp",
+      "core": "body",
+      "slots": [
+        {
+          "id": "body",
+          "kind": "external",
+          "part": "wisp_core",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "spark",
+          "kind": "external",
+          "role": "attack",
+          "part": "glow_lantern",
+          "x": 5,
+          "y": 0
+        },
+        {
+          "id": "heart",
+          "kind": "internal",
+          "role": "heart",
+          "part": "small_heart",
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "edges": [
+        [
+          "body",
+          "spark"
+        ],
+        [
+          "body",
+          "heart"
+        ]
+      ]
+    }
+  ]
+}

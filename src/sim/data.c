@@ -73,7 +73,7 @@ bool part_fits_role(const Part *part, SlotRole role)
     switch (role) {
     case SLOT_ROLE_HEART: return part->internal && part->vitality > 0;
     case SLOT_ROLE_MOVER: return part->move_speed_px_per_second > 0;
-    case SLOT_ROLE_ATTACK: return has_strike_or_cast(part);
+    case SLOT_ROLE_ATTACK: return has_strike_or_cast(part) && part->vision_far == 0;
     case SLOT_ROLE_SENSE: return part->vision_far > 0;
     default: return true;
     }
@@ -537,6 +537,20 @@ static bool resolve_fixed_part(Context *ctx, const GameData *data, bool spawn_pl
     return true;
 }
 
+static bool check_spawn_slots_fixed(Context *ctx, const GameData *data, int index)
+{
+    const Body *body = &data->body_plans[index].body;
+    for (int s = 0; s < body->slot_count; s++) {
+        if (body->slots[s].part >= 0) continue;
+        char path[PATH_LEN];
+        join_index(path, "bodyplans", index);
+        join_key(path, path, "slots");
+        join_index(path, path, s);
+        return fail(ctx, path, "spawn plan slot \"%s\" has no part", body->slots[s].id);
+    }
+    return true;
+}
+
 static bool has_eligible_part(const GameData *data, const BodySlot *slot)
 {
     for (int p = 0; p < data->part_count; p++)
@@ -547,7 +561,7 @@ static bool has_eligible_part(const GameData *data, const BodySlot *slot)
 static bool check_horde_slots_fillable(Context *ctx, const GameData *data, int index)
 {
     const Body *body = &data->body_plans[index].body;
-    if (is_spawn_plan(data, index)) return true;
+    if (is_spawn_plan(data, index)) return check_spawn_slots_fixed(ctx, data, index);
     for (int s = 0; s < body->slot_count; s++) {
         if (body->slots[s].part >= 0 || has_eligible_part(data, &body->slots[s])) continue;
         char path[PATH_LEN];
@@ -591,7 +605,9 @@ static bool resolve_body_plans(Context *ctx, GameData *data)
         if (!resolve_body_plan(ctx, data, p)) return false;
     for (int p = 0; p < data->body_plan_count; p++)
         if (!check_horde_slots_fillable(ctx, data, p)) return false;
-    return true;
+    for (int p = 0; p < data->body_plan_count; p++)
+        if (!is_spawn_plan(data, p)) return true;
+    return fail(ctx, "bodyplans", "no body plan for the Horde");
 }
 
 static bool body_plans_from_root(Context *ctx, const cJSON *root, GameData *data)

@@ -8,8 +8,8 @@
           "id": "arm_far",
           "kind": "external",
           "role": "attack",
-          "x": -1,
-          "y": -6
+          "x": 6,
+          "y": 4
         },
         {
           "id": "legs",
@@ -266,7 +266,7 @@
           "kind": "external",
           "role": "attack",
           "x": -2,
-          "y": -2
+          "y": -6
         },
         {
           "id": "mass",
@@ -286,8 +286,8 @@
           "id": "lash_near",
           "kind": "external",
           "role": "attack",
-          "x": 3,
-          "y": 2
+          "x": 4,
+          "y": 4
         },
         {
           "id": "heart_a",
@@ -367,7 +367,7 @@
           "kind": "external",
           "role": "attack",
           "x": 10,
-          "y": -1
+          "y": -4
         },
         {
           "id": "carapace",
@@ -389,7 +389,7 @@
           "kind": "external",
           "role": "attack",
           "x": 11,
-          "y": 1
+          "y": 3
         },
         {
           "id": "stinger",
@@ -469,7 +469,7 @@
           "kind": "external",
           "role": "attack",
           "x": -3,
-          "y": 6
+          "y": 2
         },
         {
           "id": "tentacle_mid",
@@ -497,7 +497,7 @@
           "kind": "external",
           "role": "attack",
           "x": 3,
-          "y": 8
+          "y": 13
         },
         {
           "id": "heart",
@@ -592,8 +592,8 @@
           "kind": "external",
           "role": "mover",
           "part": "bat_wings",
-          "x": -4,
-          "y": -4
+          "x": -6,
+          "y": -14
         },
         {
           "id": "body",
