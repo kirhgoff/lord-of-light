@@ -11,6 +11,7 @@
 
 static const char *const SIDE_IDS[SIDE_COUNT] = {"pantheon", "horde"};
 static const char *const STANCE_IDS[STANCE_COUNT] = {"none", "fight", "retreat", "support", "collect"};
+static const char *const FALLBACK_IDS[FALLBACK_COUNT] = {"none", "waiting", "unreachable", "timeout", "malformed", "low_confidence"};
 static const char *const EVENT_IDS[EVENT_KIND_COUNT] = {"decision", "hit", "pickup", "death", "effect", "spawn", "trap"};
 
 static const char *object_id(const ArenaObjectDef *defs, int index)
@@ -93,6 +94,7 @@ static cJSON *save_combatant(const Combatant *c, const GameData *data)
     cJSON_AddNumberToObject(o, "damage_bonus_percent", c->damage_bonus_percent);
     cJSON_AddNumberToObject(o, "damage_bonus_ticks", c->damage_bonus_ticks);
     cJSON_AddNumberToObject(o, "next_decision_tick", c->next_decision_tick);
+    cJSON_AddNumberToObject(o, "next_waiting_tick", c->next_waiting_tick);
     cJSON_AddNumberToObject(o, "haste_percent", c->haste_percent);
     cJSON_AddNumberToObject(o, "haste_ticks", c->haste_ticks);
     cJSON_AddNumberToObject(o, "vision_percent", c->vision_percent);
@@ -170,6 +172,12 @@ char *battle_save_json(const Battle *battle, const GameData *data)
         cJSON_AddNumberToObject(o, "amount", ev->amount);
         cJSON_AddNumberToObject(o, "detail", ev->detail);
         cJSON_AddNumberToObject(o, "decider", ev->decider);
+        if (ev->kind == EVENT_DECISION) {
+            cJSON_AddNumberToObject(o, "confidence_permille", ev->confidence_permille);
+            cJSON_AddNumberToObject(o, "answer_ms", ev->answer_ms);
+            cJSON_AddStringToObject(o, "fallback", FALLBACK_IDS[ev->fallback]);
+            cJSON_AddItemToObject(o, "stance_permille", int_array(ev->stance_permille, STANCE_COUNT));
+        }
         cJSON_AddItemToArray(log, o);
     }
     char *text = cJSON_PrintUnformatted(root);
@@ -378,6 +386,7 @@ static bool load_combatant(Context *ctx, const cJSON *obj, Combatant *c)
            read_int(ctx, obj, "damage_bonus_percent", 0, 1000, &c->damage_bonus_percent) &&
            read_int(ctx, obj, "damage_bonus_ticks", 0, 1000000, &c->damage_bonus_ticks) &&
            read_int(ctx, obj, "next_decision_tick", 0, MAX_TICK, &c->next_decision_tick) &&
+           read_int(ctx, obj, "next_waiting_tick", 0, MAX_TICK, &c->next_waiting_tick) &&
            read_int(ctx, obj, "haste_percent", 0, 1000, &c->haste_percent) &&
            read_int(ctx, obj, "haste_ticks", 0, 1000000, &c->haste_ticks) &&
            read_int(ctx, obj, "vision_percent", 0, 1000, &c->vision_percent) &&
@@ -447,6 +456,25 @@ static bool load_remains(Context *ctx, const cJSON *root, Battle *battle)
     return true;
 }
 
+static bool load_provenance(Context *ctx, const cJSON *o, Event *event)
+{
+    int fallback;
+    if (event->amount <= STANCE_NONE || event->amount >= STANCE_COUNT) return fail_key(ctx, "amount", "decision Stance out of range");
+    if (event->detail < 0 || event->detail >= HURT_COUNT) return fail_key(ctx, "detail", "decision hurt level out of range");
+    const cJSON *permille = cJSON_GetObjectItemCaseSensitive(o, "stance_permille");
+    if (!read_int(ctx, o, "confidence_permille", 0, 1000, &event->confidence_permille) ||
+        !read_int(ctx, o, "answer_ms", 0, EVENT_AMOUNT_LIMIT, &event->answer_ms) ||
+        !read_id(ctx, o, "fallback", FALLBACK_IDS, FALLBACK_COUNT, &fallback))
+        return false;
+    event->fallback = (Fallback)fallback;
+    if (!cJSON_IsArray(permille) || cJSON_GetArraySize(permille) != STANCE_COUNT) return fail_key(ctx, "stance_permille", "array of 5 permille");
+    for (int s = 0; s < STANCE_COUNT; s++)
+        if (!json_to_int(cJSON_GetArrayItem(permille, s), &event->stance_permille[s]) || event->stance_permille[s] < 0 ||
+            event->stance_permille[s] > 1000)
+            return fail_key(ctx, "stance_permille", "array of 5 permille");
+    return true;
+}
+
 static bool load_event(Context *ctx, const cJSON *o, Event *event)
 {
     int kind, decider;
@@ -461,7 +489,7 @@ static bool load_event(Context *ctx, const cJSON *o, Event *event)
         return false;
     event->kind = (EventKind)kind;
     event->decider = (DeciderKind)decider;
-    return true;
+    return kind != EVENT_DECISION || load_provenance(ctx, o, event);
 }
 
 static bool load_log(Context *ctx, const cJSON *root, Battle *battle)

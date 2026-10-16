@@ -17,11 +17,13 @@ SIM_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard src/sim/*.c))
 VIEW_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard src/view/*.c))
 VIEW_PURE_OBJECTS := $(BUILD)/obj/src/view/atlas.o $(BUILD)/obj/src/view/scene.o $(BUILD)/obj/src/view/saves.o $(BUILD)/obj/src/view/sound_mix.o
 TEST_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard tests/*.c))
-GAME_OBJECTS := $(BUILD)/obj/src/main_game.o $(VIEW_OBJECTS) $(SIM_OBJECTS) $(CJSON_OBJECT)
-HEADLESS_OBJECTS := $(BUILD)/obj/src/main_headless.o $(SIM_OBJECTS) $(CJSON_OBJECT)
+LAYA_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard src/laya/*.c))
+SETUP_OBJECT := $(BUILD)/obj/src/decider_setup.o
+GAME_OBJECTS := $(BUILD)/obj/src/main_game.o $(VIEW_OBJECTS) $(SIM_OBJECTS) $(LAYA_OBJECTS) $(SETUP_OBJECT) $(CJSON_OBJECT)
+HEADLESS_OBJECTS := $(BUILD)/obj/src/main_headless.o $(SIM_OBJECTS) $(LAYA_OBJECTS) $(SETUP_OBJECT) $(CJSON_OBJECT)
 BALANCE_OBJECTS := $(BUILD)/obj/src/main_balance.o $(SIM_OBJECTS) $(CJSON_OBJECT)
 
-.PHONY: game headless test run clean asan balance screenshots
+.PHONY: game headless test run clean asan balance screenshots laya-local
 
 game: $(BUILD)/game
 headless: $(BUILD)/headless
@@ -33,10 +35,14 @@ test: $(BUILD)/tests
 	$(BUILD)/tests
 
 $(BUILD)/game: $(GAME_OBJECTS) $(RAYLIB_LIB)
-	$(CC) $^ $(FRAMEWORKS) -o $@
+	$(CC) $^ $(FRAMEWORKS) -lcurl -o $@
 
 $(BUILD)/headless: $(HEADLESS_OBJECTS)
-	$(CC) $^ $(SAN) -o $@
+	$(CC) $^ $(SAN) -lcurl -o $@
+
+laya-local:
+	LAYA_HOST=127.0.0.1 LAYA_PORT=8765 LAYA_DEVICE=cpu LAYA_THREADS=8 LAYA_MODELS=english LAYA_DEFAULT_MODEL=english \
+		uv tool run --exclude-newer 2026-10-15 --python 3.12 --from 'laya[serve]==0.4.7' laya-serve
 
 balance: $(BUILD)/balance
 	$(BUILD)/balance
@@ -44,7 +50,7 @@ balance: $(BUILD)/balance
 $(BUILD)/balance: $(BALANCE_OBJECTS)
 	$(CC) $^ $(SAN) -o $@
 
-$(BUILD)/tests: $(TEST_OBJECTS) $(SIM_OBJECTS) $(VIEW_PURE_OBJECTS) $(CJSON_OBJECT)
+$(BUILD)/tests: $(TEST_OBJECTS) $(SIM_OBJECTS) $(VIEW_PURE_OBJECTS) $(BUILD)/obj/src/laya/laya.o $(CJSON_OBJECT)
 	$(CC) $^ $(SAN) -o $@
 
 $(BUILD)/obj/%.o: %.c
@@ -76,6 +82,7 @@ asan:
 	set -e; for seed in $(ASAN_SEEDS); do \
 		build/asan/headless --seed $$seed --ticks 300 --dump build/asan/mid.json > /dev/null; \
 		build/asan/headless --load build/asan/mid.json --ticks 300 > /dev/null; \
+		build/asan/headless --replay build/asan/mid.json > /dev/null; \
 	done
 
 SHOT_SEEDS := 1 2 3

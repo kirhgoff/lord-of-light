@@ -120,7 +120,7 @@ static void test_failed_load_leaves_the_running_battle_untouched(void)
     make_dir();
     battle_setup(&battle, &data, 4);
     for (int t = 0; t < 25; t++) battle_step(&battle, &data, NULL);
-    battle_log_event(&battle, (Event){25, EVENT_HIT, 0, 0, 1, 0, ELEMENT_FIRE, 5, 0, DECIDER_NONE});
+    battle_log_event(&battle, (Event){.tick = 25, .kind = EVENT_HIT, .actor = 0, .actor_part = 0, .target = 1, .target_part = 0, .element = ELEMENT_FIRE, .amount = 5, .detail = 0, .decider = DECIDER_NONE});
     char *before = battle_save_json(&battle, &data);
     char *valid = battle_save_json(&battle, &data);
     char *last_decider = last_decider_field(valid);

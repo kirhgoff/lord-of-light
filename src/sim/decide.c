@@ -31,7 +31,7 @@ static const Ability *find_working_ability(const Combatant *c, const GameData *d
     return NULL;
 }
 
-static bool has_working_support(const Combatant *c, const GameData *data)
+bool combatant_has_working_support(const Combatant *c, const GameData *data)
 {
     return find_working_ability(c, data, ORDER_SUPPORT) != NULL;
 }
@@ -46,30 +46,39 @@ int combatant_initiative(const Combatant *c, const GameData *data)
     return total > 0 ? total : 1;
 }
 
-static HurtLevel hurt_level_of(const Combatant *c)
+Event decision_event(int combatant, Stance stance, HurtLevel hurt, int element, DeciderKind decider)
 {
-    int quarters = combatant_health_quarters(c);
+    return (Event){.tick = 0, .kind = EVENT_DECISION, .actor = combatant, .actor_part = -1, .target = -1, .target_part = -1, .element = element, .amount = stance, .detail = hurt, .decider = decider};
+}
+
+Decision event_decision(const Event *event)
+{
+    return (Decision){(Stance)event->amount, (HurtLevel)event->detail, event->element};
+}
+
+HurtLevel hurt_level_from_quarters(int quarters)
+{
     return quarters >= 4 ? HURT_UNHURT : quarters == 3 ? HURT_WOUNDED : quarters == 2 ? HURT_BADLY_WOUNDED : HURT_NEAR_DEATH;
 }
 
-static bool is_enemy_of(const Combatant *me, const Perceived *seen)
+bool perceived_is_enemy(const Combatant *me, const Perceived *seen)
 {
     return seen->kind == PERCEIVED_COMBATANT && (seen->band == BAND_FAR || seen->side != (int)me->charm_side);
 }
 
-static bool is_ally_of(const Combatant *me, const Perceived *seen)
+bool perceived_is_ally(const Combatant *me, const Perceived *seen)
 {
     return seen->kind == PERCEIVED_COMBATANT && seen->band != BAND_FAR && seen->side == (int)me->charm_side;
 }
 
-static const Perceived *nearest_enemy(const Combatant *me, const Perception *perception)
+const Perceived *perception_nearest_enemy(const Combatant *me, const Perception *perception)
 {
     const Perceived *best = NULL;
     int64_t best_distance = 0;
     for (int i = 0; i < perception->seen_count; i++) {
         const Perceived *seen = &perception->seen[i];
         int64_t distance = distance_squared(me, seen->x_millipx, seen->y_millipx);
-        if (is_enemy_of(me, seen) && (!best || distance < best_distance)) best = seen, best_distance = distance;
+        if (perceived_is_enemy(me, seen) && (!best || distance < best_distance)) best = seen, best_distance = distance;
     }
     return best;
 }
@@ -109,36 +118,75 @@ static bool some_ally(const Battle *battle, const Combatant *me, const GameData 
 {
     for (int i = 0; i < perception->seen_count; i++) {
         const Perceived *seen = &perception->seen[i];
-        if (!is_ally_of(me, seen)) continue;
-        if (needs_support && !has_working_support(&battle->combatants[seen->index], data)) continue;
+        if (!perceived_is_ally(me, seen)) continue;
+        if (needs_support && !combatant_has_working_support(&battle->combatants[seen->index], data)) continue;
         if (needs_help && seen->health_quarters != 1) continue;
         return true;
     }
     return false;
 }
 
-bool reflex_decide(Decider *self, const Battle *battle, const GameData *data, int combatant, Decision *out)
+bool reflex_decide(Decider *self, const Battle *battle, const GameData *data, int combatant, Event *out)
 {
     (void)self;
     const Combatant *me = &battle->combatants[combatant];
     Perception perception;
     perceive(battle, data, combatant, &perception);
-    const Perceived *focus = nearest_enemy(me, &perception);
+    const Perceived *focus = perception_nearest_enemy(me, &perception);
     const Perceived *healing = nearest_pickup(me, data, &perception, true);
-    HurtLevel hurt = hurt_level_of(me);
+    HurtLevel hurt = hurt_level_from_quarters(combatant_health_quarters(me));
     bool healing_is_nearer = healing && (!focus || distance_squared(me, healing->x_millipx, healing->y_millipx) <
                                                        distance_squared(me, focus->x_millipx, focus->y_millipx));
     Stance stance = STANCE_FIGHT;
     if (hurt >= HURT_WOUNDED && healing_is_nearer) stance = STANCE_COLLECT;
     else if (hurt == HURT_NEAR_DEATH && some_ally(battle, me, data, &perception, true, false)) stance = STANCE_RETREAT;
-    else if (has_working_support(me, data) && some_ally(battle, me, data, &perception, false, true)) stance = STANCE_SUPPORT;
-    *out = (Decision){stance, hurt, focus ? most_vulnerable_element(me, &battle->combatants[focus->index], data) : -1};
+    else if (combatant_has_working_support(me, data) && some_ally(battle, me, data, &perception, false, true)) stance = STANCE_SUPPORT;
+    *out = decision_event(combatant, stance, hurt, focus ? most_vulnerable_element(me, &battle->combatants[focus->index], data) : -1, DECIDER_REFLEX);
     return true;
 }
 
 Decider reflex_decider(void)
 {
-    return (Decider){reflex_decide, DECIDER_REFLEX};
+    return (Decider){reflex_decide};
+}
+
+static bool replay_decide(Decider *self, const Battle *battle, const GameData *data, int combatant, Event *out)
+{
+    (void)data;
+    ReplayDecider *replay = (ReplayDecider *)self;
+    for (int i = replay->next[combatant]; i < replay->count; i++) {
+        const Event *logged = &replay->log[i];
+        if (logged->kind != EVENT_DECISION || logged->actor != combatant) continue;
+        if (logged->tick != battle->tick) return false;
+        replay->next[combatant] = i + 1;
+        if (logged->fallback == FALLBACK_WAITING) return false;
+        *out = *logged;
+        return true;
+    }
+    return false;
+}
+
+void replay_decider_init(ReplayDecider *replay, const Event *log, int count)
+{
+    *replay = (ReplayDecider){.base = {replay_decide}, .log = log, .count = count};
+}
+
+DecisionStats battle_decision_stats(const Battle *battle)
+{
+    DecisionStats stats = {0};
+    long confidence_sum = 0, answer_sum = 0;
+    int answer_count = 0;
+    for (int e = 0; e < battle->log_count; e++) {
+        const Event *event = &battle->log[e];
+        if (event->kind != EVENT_DECISION) continue;
+        stats.fallback[event->fallback]++;
+        if (event->decider == DECIDER_LAYA) stats.laya++, confidence_sum += event->confidence_permille;
+        else stats.reflex++;
+        if (event->answer_ms > 0) answer_sum += event->answer_ms, answer_count++;
+    }
+    stats.mean_confidence_permille = stats.laya ? (int)(confidence_sum / stats.laya) : 0;
+    stats.mean_answer_ms = answer_count ? (int)(answer_sum / answer_count) : 0;
+    return stats;
 }
 
 typedef struct {
@@ -179,7 +227,7 @@ static int pick_most_hurt(const Situation *situation, int self)
     int best = self, best_quarters = combatant_health_quarters(situation->me);
     for (int i = 0; i < situation->perception.seen_count; i++) {
         const Perceived *seen = &situation->perception.seen[i];
-        if (is_ally_of(situation->me, seen) && seen->health_quarters < best_quarters) best = seen->index, best_quarters = seen->health_quarters;
+        if (perceived_is_ally(situation->me, seen) && seen->health_quarters < best_quarters) best = seen->index, best_quarters = seen->health_quarters;
     }
     return best;
 }
@@ -191,7 +239,7 @@ static const Perceived *nearest_healer(const Situation *situation)
     for (int i = 0; i < situation->perception.seen_count; i++) {
         const Perceived *seen = &situation->perception.seen[i];
         int64_t distance = distance_squared(situation->me, seen->x_millipx, seen->y_millipx);
-        if (is_ally_of(situation->me, seen) && has_working_support(&situation->battle->combatants[seen->index], situation->data) &&
+        if (perceived_is_ally(situation->me, seen) && combatant_has_working_support(&situation->battle->combatants[seen->index], situation->data) &&
             (!best || distance < best_distance))
             best = seen, best_distance = distance;
     }
@@ -203,7 +251,7 @@ static const Perceived *most_hurt_ally(const Situation *situation)
     const Perceived *best = NULL;
     for (int i = 0; i < situation->perception.seen_count; i++) {
         const Perceived *seen = &situation->perception.seen[i];
-        if (is_ally_of(situation->me, seen) && seen->health_quarters < 4 && (!best || seen->health_quarters < best->health_quarters)) best = seen;
+        if (perceived_is_ally(situation->me, seen) && seen->health_quarters < 4 && (!best || seen->health_quarters < best->health_quarters)) best = seen;
     }
     return best;
 }
@@ -361,7 +409,7 @@ void tactics_apply(Battle *battle, const GameData *data, int combatant)
     Situation situation = {.battle = battle, .data = data, .me = me};
     body_working_parts(&me->body, me->parts, situation.working);
     perceive(battle, data, combatant, &situation.perception);
-    situation.focus = nearest_enemy(me, &situation.perception);
+    situation.focus = perception_nearest_enemy(me, &situation.perception);
     situation.preferred_attack = pick_attack(&situation);
     situation.most_hurt = pick_most_hurt(&situation, combatant);
     Movement movement = stance_movement(&situation);
@@ -370,11 +418,10 @@ void tactics_apply(Battle *battle, const GameData *data, int combatant)
         if (situation.working[s]) me->parts[s].order = order_for_part(&situation, &data->parts[me->body.slots[s].part], &movement);
 }
 
-static void store_decision(Battle *battle, int combatant, Decision decision, DeciderKind kind)
+static void store_decision(Battle *battle, Event event)
 {
-    battle->combatants[combatant].decision = decision;
-    battle_log_event(battle, (Event){0, EVENT_DECISION, combatant, -1, -1, -1, decision.vulnerable_element, decision.stance,
-                                     decision.hurt_level, kind});
+    battle->combatants[event.actor].decision = event_decision(&event);
+    battle_log_event(battle, event);
 }
 
 static int collect_due(const Battle *battle, const GameData *data, int due[MAX_COMBATANTS])
@@ -393,17 +440,26 @@ static int collect_due(const Battle *battle, const GameData *data, int due[MAX_C
     return count;
 }
 
+static int decision_interval(const Combatant *who, const GameData *data)
+{
+    int interval = DECISION_INTERVAL_K / combatant_initiative(who, data);
+    return interval > 1 ? interval : 1;
+}
+
 static void ask(Battle *battle, const GameData *data, Decider *decider, int combatant)
 {
     Combatant *who = &battle->combatants[combatant];
-    Decision decision;
-    if (decider->decide(decider, battle, data, combatant, &decision)) {
-        store_decision(battle, combatant, decision, decider->kind);
-        int interval = DECISION_INTERVAL_K / combatant_initiative(who, data);
-        who->next_decision_tick = battle->tick + (interval > 1 ? interval : 1);
-    } else if (who->decision.stance == STANCE_NONE) {
-        reflex_decide(NULL, battle, data, combatant, &decision);
-        store_decision(battle, combatant, decision, DECIDER_REFLEX);
+    Event event;
+    if (decider->decide(decider, battle, data, combatant, &event)) {
+        event.actor = combatant;
+        store_decision(battle, event);
+        who->next_decision_tick = battle->tick + decision_interval(who, data);
+        who->next_waiting_tick = who->next_decision_tick;
+    } else if (battle->tick >= who->next_waiting_tick) {
+        reflex_decide(NULL, battle, data, combatant, &event);
+        event.fallback = FALLBACK_WAITING;
+        store_decision(battle, event);
+        who->next_waiting_tick = battle->tick + decision_interval(who, data);
     }
 }
 

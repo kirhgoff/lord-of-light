@@ -173,6 +173,16 @@ typedef struct {
     int spawning;
 } PowerWeights;
 
+#define LAYA_MAX_URLS 4
+#define LAYA_URL_LEN 128
+
+typedef struct {
+    char urls[LAYA_MAX_URLS][LAYA_URL_LEN];
+    int url_count;
+    int timeout_ms;
+    int min_stance_confidence_permille;
+} LayaSettings;
+
 typedef struct {
     ElementDef elements[ELEMENT_COUNT];
     SoundCues cues;
@@ -187,6 +197,7 @@ typedef struct {
     ArenaObjectDef traps[MAX_ARENA_OBJECTS];
     int trap_count;
     PowerWeights power;
+    LayaSettings laya;
 } GameData;
 
 typedef struct cJSON cJSON;
@@ -208,6 +219,7 @@ bool load_body_plans(GameData *data, const char *path, char *err, size_t err_siz
 bool load_parts(GameData *data, const char *path, char *err, size_t err_size);
 bool load_arena_objects(GameData *data, const char *path, char *err, size_t err_size);
 bool load_power(GameData *data, const char *path, char *err, size_t err_size);
+bool load_laya(GameData *data, const char *path, char *err, size_t err_size);
 bool load_pantheons(GameData *data, const char *folder, char *err, size_t err_size);
 bool load_pantheon(GameData *data, const char *path, char *err, size_t err_size);
 bool load_game_data(GameData *data, const char *dir, char *err, size_t err_size);

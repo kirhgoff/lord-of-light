@@ -1,10 +1,12 @@
 #include <errno.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
+#include "decider_setup.h"
 #include "raylib.h"
 #include "sim/battle.h"
 #include "sim/decide.h"
@@ -42,7 +44,7 @@ static bool parse_ticks(const char *text, long *ticks)
 
 static int usage(void)
 {
-    fprintf(stderr, "usage: game [--seed N] [--ticks N --screenshot out.png] [--xray]\n");
+    fprintf(stderr, "usage: game [--seed N] [--ticks N --screenshot out.png] [--xray] [--decider laya|reflex] [--replay dump.json]\n");
     return 2;
 }
 
@@ -54,7 +56,7 @@ typedef struct {
     bool xray;
 } Args;
 
-static bool parse_args(int argc, char **argv, Args *args)
+static bool parse_args(int argc, char **argv, Args *args, DeciderSetup *setup)
 {
     *args = (Args){.seed = 1};
     for (int i = 1; i < argc; i++) {
@@ -63,7 +65,7 @@ static bool parse_args(int argc, char **argv, Args *args)
         else if (has_value && strcmp(argv[i], "--seed") == 0 && parse_seed(argv[i + 1], &args->seed)) i++;
         else if (has_value && strcmp(argv[i], "--ticks") == 0 && parse_ticks(argv[i + 1], &args->ticks)) i++, args->ticks_given = true;
         else if (has_value && strcmp(argv[i], "--screenshot") == 0) args->screenshot = argv[++i];
-        else return false;
+        else if (!decider_setup_parse(setup, argc, argv, &i)) return false;
     }
     return args->screenshot || !args->ticks_given;
 }
@@ -93,15 +95,16 @@ static void handle_camera_input(Viewport *view)
     if (IsKeyPressed(KEY_EQUAL)) viewport_zoom(view, 1);
 }
 
-static void advance_ticks(Battle *battle, const GameData *data, Decider *decider, Scene *scene, float *accumulated)
+static void advance_ticks(Battle *battle, const GameData *data, Decider *decider, Scene *scene, float *accumulated, int stop_tick)
 {
     *accumulated += GetFrameTime() < MAX_FRAME_SECONDS ? GetFrameTime() : MAX_FRAME_SECONDS;
-    while (*accumulated >= TICK_SECONDS) {
+    while (*accumulated >= TICK_SECONDS && battle->tick < stop_tick) {
         scene_before_step(scene, battle);
         battle_step(battle, data, decider);
         scene_after_step(scene, battle);
         *accumulated -= TICK_SECONDS;
     }
+    if (battle->tick >= stop_tick) *accumulated = 0;
 }
 
 static void handle_save_keys(Battle *battle, const GameData *data, Scene *scene, Hud *hud)
@@ -124,7 +127,7 @@ static void handle_save_keys(Battle *battle, const GameData *data, Scene *scene,
 }
 
 static void run_window(Battle *battle, const GameData *data, Decider *decider, Scene *scene, const Atlases *atlases,
-                       const Sheets *sheets, Viewport *view, Hud *hud)
+                       const Sheets *sheets, Viewport *view, Hud *hud, int stop_tick)
 {
     float accumulated = 0;
     while (!WindowShouldClose()) {
@@ -136,7 +139,8 @@ static void run_window(Battle *battle, const GameData *data, Decider *decider, S
         if (IsKeyPressed(KEY_SPACE)) hud->paused = !hud->paused;
         if (IsKeyPressed(KEY_T)) scene->xray = !scene->xray;
         if (IsKeyPressed(KEY_M)) sound_toggle_mute();
-        if (!hud->paused && !hud->confirm_quit && battle_winner(battle) < 0) advance_ticks(battle, data, decider, scene, &accumulated);
+        if (!hud->paused && !hud->confirm_quit && battle_winner(battle) < 0) advance_ticks(battle, data, decider, scene, &accumulated, stop_tick);
+        if (battle->tick >= stop_tick) hud->paused = true;
         sound_update(battle, data, view, hud->paused || hud->confirm_quit);
         scene->alpha = accumulated / TICK_SECONDS;
         BeginDrawing();
@@ -148,7 +152,8 @@ static void run_window(Battle *battle, const GameData *data, Decider *decider, S
 int main(int argc, char **argv)
 {
     Args args;
-    if (!parse_args(argc, argv, &args)) return usage();
+    static DeciderSetup setup;
+    if (!parse_args(argc, argv, &args, &setup)) return usage();
 
     static GameData data;
     static Atlases atlases;
@@ -170,8 +175,13 @@ int main(int argc, char **argv)
         CloseWindow();
         return 1;
     }
-    battle_setup(&battle, &data, args.seed);
-    Decider reflex = reflex_decider();
+    if (!decider_setup_open(&setup, &data, &battle, err, ERR_SIZE)) {
+        fprintf(stderr, "decider: %s\n", err);
+        sheets_unload(&sheets);
+        CloseWindow();
+        return 1;
+    }
+    if (!setup.replay_path) battle_setup(&battle, &data, args.seed);
     Viewport view;
     viewport_init(&view, WINDOW_WIDTH, WINDOW_HEIGHT);
     Scene scene = {.xray = args.xray};
@@ -182,16 +192,17 @@ int main(int argc, char **argv)
     if (args.screenshot) {
         for (long t = 0; t < args.ticks && battle_winner(&battle) < 0; t++) {
             scene_before_step(&scene, &battle);
-            battle_step(&battle, &data, &reflex);
+            battle_step(&battle, &data, setup.decider);
             scene_after_step(&scene, &battle);
         }
         render_to_png(args.screenshot, &battle, &data, &scene, &atlases, &sheets, &view, &hud);
     } else if (sound_init(&data, &battle, err, ERR_SIZE)) {
-        run_window(&battle, &data, &reflex, &scene, &atlases, &sheets, &view, &hud);
+        run_window(&battle, &data, setup.decider, &scene, &atlases, &sheets, &view, &hud, setup.replay_path ? setup.source.tick : INT_MAX);
     } else {
         fprintf(stderr, "%s\n", err);
         exit_code = 1;
     }
+    decider_setup_close(&setup);
     sound_close();
     sheets_unload(&sheets);
     battle_free(&battle);

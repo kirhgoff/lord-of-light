@@ -1,0 +1,5 @@
+{
+  "urls": ["http://127.0.0.1:8765"],
+  "timeout_ms": 8000,
+  "min_stance_confidence_permille": 1001
+}

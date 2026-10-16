@@ -303,6 +303,17 @@ static bool load_file(GameData *data, const char *path, char *err, size_t err_si
     return ok;
 }
 
+static bool get_name(Context *ctx, const cJSON *obj, const char *parent, const char *key, char *out, size_t size)
+{
+    if (!get_string(ctx, obj, parent, key, out, size, true)) return false;
+    bool valid = out[0] != '\0';
+    for (const char *c = out; *c; c++)
+        if (!(isalpha((unsigned char)*c) || *c == ' ' || *c == '\'' || *c == '_')) valid = false;
+    char path[PATH_LEN];
+    join_key(path, parent, key);
+    return valid || fail(ctx, path, "invalid name \"%s\": use letters, spaces, apostrophes or underscores", out);
+}
+
 static bool get_sound(Context *ctx, const cJSON *obj, const char *parent, const char *key,
                       char *out, bool required)
 {
@@ -689,7 +700,7 @@ static bool body_plans_from_root(Context *ctx, const cJSON *root, GameData *data
         if (count == MAX_BODY_PLANS) return fail(ctx, "bodyplans", "more than %d body plans", MAX_BODY_PLANS);
         if (!cJSON_IsObject(item)) return fail(ctx, path, "expected an object");
         BodyPlan *plan = &plans[count];
-        if (!get_string(ctx, item, path, "id", plan->id, sizeof plan->id, true)) return false;
+        if (!get_name(ctx, item, path, "id", plan->id, sizeof plan->id)) return false;
         for (int i = 0; i < count; i++)
             if (strcmp(plans[i].id, plan->id) == 0) {
                 char id_path[PATH_LEN];
@@ -878,7 +889,7 @@ static bool check_arena_object_ranges(Context *ctx, const char *path, const Aren
 static bool read_arena_object(Context *ctx, const cJSON *obj, const char *path, ArenaObjectDef *def)
 {
     return get_string(ctx, obj, path, "id", def->id, sizeof def->id, true)
-        && get_string(ctx, obj, path, "name", def->name, sizeof def->name, true)
+        && get_name(ctx, obj, path, "name", def->name, sizeof def->name)
         && get_string(ctx, obj, path, "sprite", def->sprite, sizeof def->sprite, true)
         && get_sound(ctx, obj, path, "sound", def->sound, true)
         && get_element(ctx, obj, path, "element", &def->element, false)
@@ -946,13 +957,40 @@ static bool power_from_root(Context *ctx, const cJSON *root, GameData *data)
     return true;
 }
 
+static bool read_laya_urls(Context *ctx, const cJSON *root, LayaSettings *laya)
+{
+    const cJSON *list, *item;
+    if (!get_array(ctx, root, "", "urls", &list, true)) return false;
+    laya->url_count = cJSON_GetArraySize(list);
+    if (laya->url_count < 1 || laya->url_count > LAYA_MAX_URLS) return fail(ctx, "urls", "must have between 1 and %d entries", LAYA_MAX_URLS);
+    int index = 0;
+    cJSON_ArrayForEach(item, list) {
+        char path[PATH_LEN];
+        join_index(path, "urls", index);
+        if (!cJSON_IsString(item)) return fail(ctx, path, "expected a string");
+        if (item->valuestring[0] == '\0' || strlen(item->valuestring) >= LAYA_URL_LEN) return fail(ctx, path, "must be 1 to %d characters", LAYA_URL_LEN - 1);
+        strcpy(laya->urls[index++], item->valuestring);
+    }
+    return true;
+}
+
+static bool laya_from_root(Context *ctx, const cJSON *root, GameData *data)
+{
+    LayaSettings *laya = &data->laya;
+    return read_laya_urls(ctx, root, laya)
+        && get_int(ctx, root, "", "timeout_ms", &laya->timeout_ms, true)
+        && check_range(ctx, "", "timeout_ms", laya->timeout_ms, 1, 60000)
+        && get_int(ctx, root, "", "min_stance_confidence_permille", &laya->min_stance_confidence_permille, true)
+        && check_range(ctx, "", "min_stance_confidence_permille", laya->min_stance_confidence_permille, 0, 1000);
+}
+
 static bool read_deity(Context *ctx, const cJSON *obj, const char *path, const GameData *data,
                        Deity *deity)
 {
     const cJSON *body;
     char body_path[PATH_LEN];
     join_key(body_path, path, "body");
-    return get_string(ctx, obj, path, "name", deity->name, sizeof deity->name, true)
+    return get_name(ctx, obj, path, "name", deity->name, sizeof deity->name)
         && get_string(ctx, obj, path, "epithet", deity->epithet, sizeof deity->epithet, false)
         && get_object(ctx, obj, path, "body", &body, true)
         && read_body(ctx, body, body_path, "parts", data, read_deity_slot, &deity->body);
@@ -1007,6 +1045,11 @@ bool load_arena_objects(GameData *data, const char *path, char *err, size_t err_
 bool load_power(GameData *data, const char *path, char *err, size_t err_size)
 {
     return load_file(data, path, err, err_size, power_from_root);
+}
+
+bool load_laya(GameData *data, const char *path, char *err, size_t err_size)
+{
+    return load_file(data, path, err, err_size, laya_from_root);
 }
 
 bool load_pantheon(GameData *data, const char *path, char *err, size_t err_size)
@@ -1074,6 +1117,7 @@ bool load_game_data(GameData *data, const char *dir, char *err, size_t err_size)
         && LOAD(load_parts, "parts.json")
         && LOAD(load_arena_objects, "arena_objects.json")
         && LOAD(load_power, "power.json")
+        && LOAD(load_laya, "laya.json")
         && (snprintf(path, sizeof path, "%s/pantheons", dir), append_pantheons(&fresh, path, err, err_size));
 #undef LOAD
     if (ok) *data = fresh;

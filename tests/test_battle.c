@@ -106,15 +106,27 @@ static void test_step_advances_tick_and_moves_only_with_orders(void)
     CHECK(battle.combatants[0].x_millipx > x);
 }
 
+static Event decision_event_with_provenance(void)
+{
+    Event event = {.tick = 0, .kind = EVENT_DECISION, .actor = 2, .actor_part = -1, .target = -1, .target_part = -1,
+                   .element = ELEMENT_FIRE, .amount = STANCE_FIGHT, .detail = HURT_WOUNDED, .decider = DECIDER_REFLEX};
+    event.confidence_permille = 415;
+    event.answer_ms = 612;
+    event.fallback = FALLBACK_LOW_CONFIDENCE;
+    memcpy(event.stance_permille, (int[STANCE_COUNT]){0, 610, 200, 0, 190}, sizeof event.stance_permille);
+    return event;
+}
+
 static void test_round_trip_is_identical(void)
 {
     load_data();
     battle_setup(&battle, &data, 11);
     run(&battle, 30);
-    CHECK(battle_log_event(&battle, (Event){0, EVENT_HIT, 1, 2, 5, 3, ELEMENT_FIRE, 12, -4, DECIDER_NONE}));
+    CHECK(battle_log_event(&battle, (Event){.tick = 0, .kind = EVENT_HIT, .actor = 1, .actor_part = 2, .target = 5, .target_part = 3, .element = ELEMENT_FIRE, .amount = 12, .detail = -4, .decider = DECIDER_NONE}));
     battle.combatants[2].parts[1].order = (Order){ORDER_STRIKE, 5, 10000, 20000};
     battle.combatants[2].decision = (Decision){STANCE_FIGHT, HURT_WOUNDED, ELEMENT_FIRE};
     battle.combatants[3].next_decision_tick = 77;
+    battle.combatants[3].next_waiting_tick = 88;
     battle.combatants[5].charm_ticks = 9;
     battle.combatants[5].charm_side = SIDE_PANTHEON;
     battle.combatants[5].dot_damage = 2;
@@ -124,7 +136,9 @@ static void test_round_trip_is_identical(void)
     battle.combatants[5].spawner = 2;
     battle.combatants[5].damage_bonus_percent = 50;
     battle.combatants[5].damage_bonus_ticks = 7;
-    CHECK(battle_log_event(&battle, (Event){0, EVENT_DECISION, 2, -1, -1, -1, ELEMENT_FIRE, STANCE_FIGHT, HURT_WOUNDED, DECIDER_REFLEX}));
+    CHECK(battle_log_event(&battle, (Event){.tick = 0, .kind = EVENT_DECISION, .actor = 2, .actor_part = -1, .target = -1, .target_part = -1, .element = ELEMENT_FIRE, .amount = STANCE_FIGHT, .detail = HURT_WOUNDED, .decider = DECIDER_REFLEX}));
+    Event provenance = decision_event_with_provenance();
+    CHECK(battle_log_event(&battle, provenance));
     battle.remains[0] = (Remains){5000, 6000, 2, {1, 2}};
     battle.remains_count = 1;
     char *json = battle_save_json(&battle, &data);
@@ -132,8 +146,11 @@ static void test_round_trip_is_identical(void)
     char *again = battle_save_json(&loaded, &data);
     CHECK(strcmp(json, again) == 0);
     CHECK(memcmp(loaded.obstacle, battle.obstacle, sizeof battle.obstacle) == 0);
-    CHECK(loaded.combatants[3].next_decision_tick == 77 && loaded.log[1].decider == DECIDER_REFLEX);
-    CHECK(loaded.log_count == 2 && loaded.log[0].amount == 12 && loaded.log[0].detail == -4 && loaded.log[0].tick == 30 && loaded.rng == battle.rng);
+    CHECK(loaded.combatants[3].next_decision_tick == 77 && loaded.combatants[3].next_waiting_tick == 88 && loaded.log[1].decider == DECIDER_REFLEX);
+    const Event *back = &loaded.log[2];
+    CHECK(back->confidence_permille == 415 && back->answer_ms == 612 && back->fallback == FALLBACK_LOW_CONFIDENCE);
+    CHECK(back->stance_permille[STANCE_FIGHT] == 610 && back->stance_permille[STANCE_RETREAT] == 200 && back->stance_permille[STANCE_COLLECT] == 190);
+    CHECK(loaded.log_count == 3 && loaded.log[0].amount == 12 && loaded.log[0].detail == -4 && loaded.log[0].tick == 30 && loaded.rng == battle.rng);
     free(json);
     free(again);
     battle_free(&loaded);
@@ -171,7 +188,7 @@ static void test_rng_is_deterministic_and_never_zero(void)
 static char *saved_json(uint32_t seed)
 {
     battle_setup(&battle, &data, seed);
-    battle_log_event(&battle, (Event){0, EVENT_HIT, 0, 0, 1, 0, ELEMENT_FIRE, 5, 0, DECIDER_NONE});
+    battle_log_event(&battle, (Event){.tick = 0, .kind = EVENT_HIT, .actor = 0, .actor_part = 0, .target = 1, .target_part = 0, .element = ELEMENT_FIRE, .amount = 5, .detail = 0, .decider = DECIDER_NONE});
     return battle_save_json(&battle, &data);
 }
 
@@ -223,6 +240,7 @@ static void test_load_rejects_bad_input(void)
     check_rejected(json, "\"hurt_level\":0", "\"hurt_level\":4");
     check_rejected(json, "\"decider\":0", "\"decider\":3");
     check_rejected(json, "\"next_decision_tick\":0", "\"next_decision_tick\":-1");
+    check_rejected(json, "\"next_waiting_tick\":0", "\"next_waiting_tick\":-1");
     check_rejected(json, "\"decision\":{\"stance\"", "\"decisionx\":{\"stance\"");
     check_rejected(json, "\"slots\":[{", "\"slots\":[5,{");
     check_rejected(json, "\"def\":\"soma\"", "\"def\":\"no_such_pickup\"");
@@ -253,6 +271,34 @@ static void test_load_rejects_bad_input(void)
     battle_free(&loaded);
 }
 
+static void test_decision_provenance_is_validated_and_hits_stay_small(void)
+{
+    load_data();
+    battle_setup(&battle, &data, 3);
+    CHECK(battle_log_event(&battle, decision_event_with_provenance()));
+    char *json = battle_save_json(&battle, &data);
+    check_rejected(json, "\"stance_permille\":[0,610,200,0,190]", "\"stance_permille\":[1,2]");
+    check_rejected(json, "\"stance_permille\":[0,610,200,0,190]", "\"stance_permille\":[0,610,200,0,1001]");
+    check_rejected(json, "\"fallback\":\"low_confidence\"", "\"fallback\":\"sulking\"");
+    check_rejected(json, "\"amount\":1,", "\"amount\":4000,");
+    check_rejected(json, "\"amount\":1,", "\"amount\":0,");
+    check_rejected(json, "\"detail\":1,", "\"detail\":4,");
+    check_rejected(json, "\"detail\":1,", "\"detail\":-1,");
+    check_rejected(json, "\"confidence_permille\":415", "\"confidence_permille\":1001");
+    CHECK(battle_load_json(&loaded, &data, json, err, ERR_SIZE));
+    battle_free(&loaded);
+    free(json);
+    battle_free(&battle);
+    battle_setup(&battle, &data, 3);
+    CHECK(battle_log_event(&battle, (Event){.tick = 0, .kind = EVENT_HIT, .actor = 0, .actor_part = 0, .target = 1, .target_part = 0, .element = ELEMENT_FIRE, .amount = 5, .detail = 0, .decider = DECIDER_NONE}));
+    json = battle_save_json(&battle, &data);
+    CHECK(strstr(json, "confidence_permille") == NULL);
+    CHECK(battle_load_json(&loaded, &data, json, err, ERR_SIZE));
+    battle_free(&loaded);
+    free(json);
+    battle_free(&battle);
+}
+
 static void test_remains_and_floor_objects_are_saved_by_id(void)
 {
     load_data();
@@ -272,7 +318,7 @@ static void test_log_grows_without_dropping(void)
     load_data();
     reset(&battle);
     battle_setup(&battle, &data, 3);
-    for (int i = 0; i < 5000; i++) CHECK(battle_log_event(&battle, (Event){0, EVENT_HIT, 0, 0, 1, 0, -1, i, 0, DECIDER_NONE}));
+    for (int i = 0; i < 5000; i++) CHECK(battle_log_event(&battle, (Event){.tick = 0, .kind = EVENT_HIT, .actor = 0, .actor_part = 0, .target = 1, .target_part = 0, .element = -1, .amount = i, .detail = 0, .decider = DECIDER_NONE}));
     CHECK(battle.log_count == 5000 && battle.log[4999].amount == 4999);
     char *json = battle_save_json(&battle, &data);
     CHECK(battle_load_json(&loaded, &data, json, err, ERR_SIZE));
@@ -333,6 +379,7 @@ void run_battle_tests(void)
     test_resume_matches_uninterrupted_run();
     test_rng_is_deterministic_and_never_zero();
     test_load_rejects_bad_input();
+    test_decision_provenance_is_validated_and_hits_stay_small();
     test_remains_and_floor_objects_are_saved_by_id();
     test_log_grows_without_dropping();
     test_seed_zero_differs_from_one();
