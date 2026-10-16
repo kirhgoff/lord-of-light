@@ -52,6 +52,15 @@ typedef struct {
     int buff_strip_count;
 } ElementDef;
 
+typedef enum {
+    SLOT_ROLE_ANY,
+    SLOT_ROLE_HEART,
+    SLOT_ROLE_MOVER,
+    SLOT_ROLE_ATTACK,
+    SLOT_ROLE_SENSE,
+    SLOT_ROLE_COUNT
+} SlotRole;
+
 typedef struct {
     OrderKind order;
     Element element;
@@ -67,6 +76,7 @@ typedef struct {
     char name[NAME_LEN];
     bool internal;
     bool deity_only;
+    bool minion_only;
     int integrity;
     Ability abilities[MAX_ABILITIES];
     int ability_count;
@@ -85,6 +95,8 @@ typedef struct {
 typedef struct {
     char id[ID_LEN];
     bool internal;
+    SlotRole role;
+    char fixed_part_id[ID_LEN];
     int anchor_x;
     int anchor_y;
     int part;
@@ -168,6 +180,7 @@ const char *order_kind_id(OrderKind kind);
 int find_part(const GameData *data, const char *id);
 int find_body_plan(const GameData *data, const char *id);
 int find_body_slot(const Body *body, const char *id);
+bool part_fits_role(const Part *part, SlotRole role);
 
 bool load_elements(GameData *data, const char *path, char *err, size_t err_size);
 bool load_body_plans(GameData *data, const char *path, char *err, size_t err_size);

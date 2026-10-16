@@ -110,8 +110,14 @@ static void test_body_plans_resolved(void)
     const BodyPlan *biped = &data.body_plans[find_body_plan(&data, "biped")];
     CHECK(biped->body.slot_count == 7 && biped->body.edge_count == 6);
     CHECK(biped->body.slots[find_body_slot(&biped->body, "heart")].internal);
-    CHECK(biped->body.slots[find_body_slot(&biped->body, "head")].anchor_y == -14);
+    CHECK(biped->body.slots[find_body_slot(&biped->body, "head")].anchor_y == -10);
 }
+
+typedef struct {
+    bool (*loader)(GameData *, const char *, char *, size_t);
+    const char *fixture;
+    const char *expected;
+} ErrorCase;
 
 static void test_pantheon_errors(void)
 {
@@ -137,6 +143,35 @@ static void test_body_plan_errors(void)
                 "bodyplans[0].core: missing core");
     check_error(load_body_plans(&data, FIXTURE("bodyplans_duplicate_slot.json"), err, ERR_SIZE),
                 "bodyplans[0].slots[7].id: duplicate slot \"head\"");
+}
+
+static void test_slot_role_errors(void)
+{
+    static const ErrorCase cases[] = {
+        { load_body_plans, FIXTURE("bodyplans_unknown_role.json"), "bodyplans[0].slots[0].role: unknown role \"flyer\"" },
+        { load_body_plans, FIXTURE("bodyplans_heart_role_external.json"), "bodyplans[0].slots[0].role: role \"heart\" needs an internal slot" },
+        { load_body_plans, FIXTURE("bodyplans_mover_role_internal.json"), "bodyplans[0].slots[6].role: role \"mover\" needs an external slot" },
+        { load_body_plans, FIXTURE("bodyplans_unknown_fixed_part.json"), "bodyplans[0].slots[2].part: unknown part \"torzo\"" },
+        { load_body_plans, FIXTURE("bodyplans_fixed_part_wrong_kind.json"), "bodyplans[0].slots[2].part: part \"heart\" is internal" },
+        { load_body_plans, FIXTURE("bodyplans_fixed_part_misses_role.json"), "bodyplans[0].slots[3].part: part \"torso\" does not fit role \"sense\"" },
+        { load_body_plans, FIXTURE("bodyplans_no_heart_slot.json"), "bodyplans[0]: body plan \"biped\" has no heart slot" },
+        { load_body_plans, FIXTURE("bodyplans_no_mover_slot.json"), "bodyplans[0]: body plan \"biped\" has no mover slot" },
+    };
+    load_real_data();
+    for (size_t i = 0; i < sizeof cases / sizeof cases[0]; i++)
+        check_error(cases[i].loader(&data, cases[i].fixture, err, ERR_SIZE), cases[i].expected);
+}
+
+static void test_minion_plans_are_fixed(void)
+{
+    load_real_data();
+    for (int p = 0; p < data.part_count; p++) {
+        if (data.parts[p].spawn_plan < 0) continue;
+        const Body *body = &data.body_plans[data.parts[p].spawn_plan].body;
+        for (int s = 0; s < body->slot_count; s++) CHECK(body->slots[s].part >= 0);
+    }
+    CHECK(data.parts[find_part(&data, "imp_body")].minion_only);
+    CHECK(!data.parts[find_part(&data, "heart")].minion_only);
 }
 
 static void test_part_errors(void)
@@ -216,12 +251,6 @@ static void test_heal_is_separate_from_damage(void)
     CHECK(heal->order == ORDER_SUPPORT && heal->heal == 10 && heal->damage == 0);
 }
 
-typedef struct {
-    bool (*loader)(GameData *, const char *, char *, size_t);
-    const char *fixture;
-    const char *expected;
-} ErrorCase;
-
 static void test_negative_values_and_empty_parts(void)
 {
     static const ErrorCase cases[] = {
@@ -271,6 +300,8 @@ void run_data_tests(void)
     test_body_plans_resolved();
     test_pantheon_errors();
     test_body_plan_errors();
+    test_slot_role_errors();
+    test_minion_plans_are_fixed();
     test_part_errors();
     test_other_file_errors();
     test_file_errors();

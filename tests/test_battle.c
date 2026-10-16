@@ -41,6 +41,29 @@ static void test_setup_is_seeded(void)
     free(jc);
 }
 
+static void test_placeholder_horde_is_viable(void)
+{
+    load_data();
+    for (uint32_t seed = 0; seed < 200; seed++) {
+        battle_setup(&battle, &data, seed);
+        for (int c = 0; c < battle.combatant_count; c++) {
+            const Combatant *who = &battle.combatants[c];
+            if (who->side != SIDE_HORDE) continue;
+            bool working[MAX_SLOTS];
+            body_working_parts(&who->body, who->parts, working);
+            bool has_heart = false, can_move = false;
+            for (int s = 0; s < who->body.slot_count; s++) {
+                const Part *part = &data.parts[who->body.slots[s].part];
+                CHECK(!part->deity_only && !part->minion_only);
+                has_heart |= working[s] && part_fits_role(part, SLOT_ROLE_HEART);
+                can_move |= working[s] && part_fits_role(part, SLOT_ROLE_MOVER);
+            }
+            CHECK(has_heart && can_move);
+        }
+    }
+    battle_free(&battle);
+}
+
 static void test_setup_places_both_sides(void)
 {
     load_data();
@@ -184,7 +207,7 @@ static void test_load_rejects_bad_input(void)
     check_rejected(json, "\"x_millipx\":", "\"x_millipx\":1e300,\"z\":");
     check_rejected(json, "\"x_millipx\":", "\"x_millipx\":-1e999,\"z\":");
     check_rejected(json, "\"edges\":[[", "\"edges\":[{\"a\":0},[");
-    check_rejected(json, "\"edges\":[[0,1]", "\"edges\":[[0,1e300]");
+    check_rejected(json, "\"edges\":[[2,3]", "\"edges\":[[2,1e300]");
     check_rejected(json, "\"target\":-1", "\"target\":64");
     check_rejected(json, "\"actor\":0", "\"actor\":64");
     check_rejected(json, "\"actor_part\":0", "\"actor_part\":24");
@@ -272,6 +295,7 @@ static void test_winner_when_a_side_is_dead(void)
 void run_battle_tests(void)
 {
     test_setup_is_seeded();
+    test_placeholder_horde_is_viable();
     test_setup_places_both_sides();
     test_step_advances_tick_and_moves();
     test_round_trip_is_identical();

@@ -47,8 +47,9 @@ def plan_placements(plan_id, fills):
         sys.exit(f"no body plan {plan_id}")
     placements = []
     for slot in plan["slots"]:
-        if slot["id"] in fills:
-            placements.append((fills[slot["id"]], slot["x"], slot["y"]))
+        fill = fills.get(slot["id"], slot.get("part"))
+        if fill:
+            placements.append((fill, slot["x"], slot["y"]))
         else:
             print(f"slot {slot['id']} has no fill, skipped", file=sys.stderr)
     return placements

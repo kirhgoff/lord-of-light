@@ -8,6 +8,18 @@
         "core": "torso",
         "parts": [
           {
+            "id": "hand_left",
+            "part": "sun_bow",
+            "x": -1,
+            "y": -6
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 10
+          },
+          {
             "id": "torso",
             "part": "torso",
             "x": 0,
@@ -16,38 +28,26 @@
           {
             "id": "head",
             "part": "radiant_crown",
-            "x": 0,
-            "y": -14
-          },
-          {
-            "id": "hand_left",
-            "part": "sun_bow",
-            "x": -10,
-            "y": -4
+            "x": 2,
+            "y": -10
           },
           {
             "id": "hand_right",
             "part": "healing_hand",
-            "x": 10,
-            "y": -4
-          },
-          {
-            "id": "legs",
-            "part": "legs",
-            "x": 0,
-            "y": 12
+            "x": 3,
+            "y": -5
           },
           {
             "id": "heart",
             "part": "large_heart",
-            "x": 0,
-            "y": -2
+            "x": 1,
+            "y": -4
           },
           {
             "id": "gland",
             "part": "fire_gland",
-            "x": 0,
-            "y": 4
+            "x": -1,
+            "y": 2
           }
         ],
         "edges": [
@@ -85,6 +85,18 @@
         "core": "torso",
         "parts": [
           {
+            "id": "hand_left",
+            "part": "void_maw",
+            "x": -1,
+            "y": -6
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 10
+          },
+          {
             "id": "torso",
             "part": "torso",
             "x": 0,
@@ -93,38 +105,26 @@
           {
             "id": "head",
             "part": "head",
-            "x": 0,
-            "y": -14
-          },
-          {
-            "id": "hand_left",
-            "part": "void_maw",
-            "x": -10,
-            "y": -4
+            "x": 2,
+            "y": -10
           },
           {
             "id": "hand_right",
             "part": "serpent_hand",
-            "x": 10,
-            "y": -4
-          },
-          {
-            "id": "legs",
-            "part": "legs",
-            "x": 0,
-            "y": 12
+            "x": 3,
+            "y": -5
           },
           {
             "id": "heart",
             "part": "large_heart",
-            "x": 0,
-            "y": -2
+            "x": 1,
+            "y": -4
           },
           {
             "id": "gland",
             "part": "venom_gland",
-            "x": 0,
-            "y": 4
+            "x": -1,
+            "y": 2
           }
         ],
         "edges": [
@@ -162,6 +162,18 @@
         "core": "torso",
         "parts": [
           {
+            "id": "hand_left",
+            "part": "void_tendril",
+            "x": -1,
+            "y": -6
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 10
+          },
+          {
             "id": "torso",
             "part": "torso",
             "x": 0,
@@ -170,49 +182,37 @@
           {
             "id": "head",
             "part": "judging_eye",
-            "x": 0,
-            "y": -14
-          },
-          {
-            "id": "hand_left",
-            "part": "void_tendril",
-            "x": -10,
-            "y": -4
+            "x": 2,
+            "y": -10
           },
           {
             "id": "hand_right",
             "part": "bow_hand",
-            "x": 10,
-            "y": -4
-          },
-          {
-            "id": "legs",
-            "part": "legs",
-            "x": 0,
-            "y": 12
+            "x": 3,
+            "y": -5
           },
           {
             "id": "heart",
             "part": "large_heart",
-            "x": 0,
-            "y": -2
+            "x": 1,
+            "y": -4
           },
           {
             "id": "gland",
             "part": "void_gland",
-            "x": 0,
-            "y": 4
+            "x": -1,
+            "y": 2
           },
           {
             "id": "ganglion",
             "part": "ganglion",
-            "x": 0,
-            "y": 7
+            "x": 2,
+            "y": 6
           },
           {
             "id": "lobe",
             "part": "mind_lobe",
-            "x": -6,
+            "x": -2,
             "y": -8
           }
         ],
@@ -259,6 +259,18 @@
         "core": "torso",
         "parts": [
           {
+            "id": "hand_left",
+            "part": "healing_hand",
+            "x": -1,
+            "y": -6
+          },
+          {
+            "id": "legs",
+            "part": "wings_of_light",
+            "x": 0,
+            "y": 10
+          },
+          {
             "id": "torso",
             "part": "torso",
             "x": 0,
@@ -267,38 +279,26 @@
           {
             "id": "head",
             "part": "head",
-            "x": 0,
-            "y": -14
-          },
-          {
-            "id": "hand_left",
-            "part": "healing_hand",
-            "x": -10,
-            "y": -4
+            "x": 2,
+            "y": -10
           },
           {
             "id": "hand_right",
             "part": "shield_hand",
-            "x": 10,
-            "y": -4
-          },
-          {
-            "id": "legs",
-            "part": "wings_of_light",
-            "x": 0,
-            "y": 12
+            "x": 3,
+            "y": -5
           },
           {
             "id": "heart",
             "part": "large_heart",
-            "x": 0,
-            "y": -2
+            "x": 1,
+            "y": -4
           },
           {
             "id": "gland",
             "part": "radiance_gland",
-            "x": 0,
-            "y": 4
+            "x": -1,
+            "y": 2
           }
         ],
         "edges": [

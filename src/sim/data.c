@@ -20,6 +20,10 @@ static const char *const ORDER_KIND_IDS[ORDER_KIND_COUNT] = {
     "strike", "cast", "block", "move_to", "pick_up", "support", "spawn", "idle"
 };
 
+static const char *const SLOT_ROLE_IDS[SLOT_ROLE_COUNT] = {
+    "any", "heart", "mover", "attack", "sense"
+};
+
 typedef struct {
     const char *file;
     char *err;
@@ -55,6 +59,24 @@ int find_body_slot(const Body *body, const char *id)
     for (int i = 0; i < body->slot_count; i++)
         if (strcmp(body->slots[i].id, id) == 0) return i;
     return -1;
+}
+
+static bool has_strike_or_cast(const Part *part)
+{
+    for (int a = 0; a < part->ability_count; a++)
+        if (part->abilities[a].order == ORDER_STRIKE || part->abilities[a].order == ORDER_CAST) return true;
+    return false;
+}
+
+bool part_fits_role(const Part *part, SlotRole role)
+{
+    switch (role) {
+    case SLOT_ROLE_HEART: return part->internal && part->vitality > 0;
+    case SLOT_ROLE_MOVER: return part->move_speed_px_per_second > 0;
+    case SLOT_ROLE_ATTACK: return has_strike_or_cast(part);
+    case SLOT_ROLE_SENSE: return part->vision_far > 0;
+    default: return true;
+    }
 }
 
 static bool fail(Context *ctx, const char *path, const char *format, ...)
@@ -314,6 +336,23 @@ static bool read_slot_position(Context *ctx, const cJSON *obj, const char *path,
         && get_int(ctx, obj, path, "y", &slot->anchor_y, false);
 }
 
+static bool read_slot_role(Context *ctx, const cJSON *obj, const char *path, BodySlot *slot)
+{
+    char role[ID_LEN], role_path[PATH_LEN];
+    if (!get_string(ctx, obj, path, "role", role, sizeof role, false)) return false;
+    join_key(role_path, path, "role");
+    if (role[0]) {
+        slot->role = SLOT_ROLE_COUNT;
+        for (int r = 0; r < SLOT_ROLE_COUNT; r++)
+            if (strcmp(role, SLOT_ROLE_IDS[r]) == 0) slot->role = (SlotRole)r;
+        if (slot->role == SLOT_ROLE_COUNT) return fail(ctx, role_path, "unknown role \"%s\"", role);
+    }
+    if (slot->role == SLOT_ROLE_HEART && !slot->internal) return fail(ctx, role_path, "role \"heart\" needs an internal slot");
+    if (slot->role != SLOT_ROLE_ANY && slot->role != SLOT_ROLE_HEART && slot->internal)
+        return fail(ctx, role_path, "role \"%s\" needs an external slot", SLOT_ROLE_IDS[slot->role]);
+    return true;
+}
+
 static bool read_plan_slot(Context *ctx, const cJSON *obj, const char *path, const GameData *data,
                            BodySlot *slot)
 {
@@ -326,7 +365,8 @@ static bool read_plan_slot(Context *ctx, const cJSON *obj, const char *path, con
     if (strcmp(kind, "internal") == 0) slot->internal = true;
     else if (strcmp(kind, "external") != 0) return fail(ctx, kind_path, "expected \"external\" or \"internal\"");
     slot->part = -1;
-    return true;
+    return read_slot_role(ctx, obj, path, slot)
+        && get_string(ctx, obj, path, "part", slot->fixed_part_id, sizeof slot->fixed_part_id, false);
 }
 
 static bool read_deity_slot(Context *ctx, const cJSON *obj, const char *path, const GameData *data,
@@ -458,6 +498,53 @@ static bool read_body(Context *ctx, const cJSON *obj, const char *path, const ch
         && check_reachable_from_core(ctx, path, slots_key, body);
 }
 
+static bool resolve_fixed_part(Context *ctx, const GameData *data, const char *path, BodySlot *slot)
+{
+    char part_path[PATH_LEN];
+    join_key(part_path, path, "part");
+    slot->part = find_part(data, slot->fixed_part_id);
+    if (slot->part < 0) return fail(ctx, part_path, "unknown part \"%s\"", slot->fixed_part_id);
+    const Part *part = &data->parts[slot->part];
+    if (part->internal != slot->internal)
+        return fail(ctx, part_path, "part \"%s\" is %s", part->id, part->internal ? "internal" : "external");
+    if (!part_fits_role(part, slot->role))
+        return fail(ctx, part_path, "part \"%s\" does not fit role \"%s\"", part->id, SLOT_ROLE_IDS[slot->role]);
+    return true;
+}
+
+static bool slot_can_move(const GameData *data, const BodySlot *slot)
+{
+    return slot->role == SLOT_ROLE_MOVER || (slot->part >= 0 && data->parts[slot->part].move_speed_px_per_second > 0);
+}
+
+static bool resolve_body_plan(Context *ctx, GameData *data, int index)
+{
+    Body *body = &data->body_plans[index].body;
+    bool has_heart = false, can_move = false;
+    for (int s = 0; s < body->slot_count; s++) {
+        char path[PATH_LEN], list_path[PATH_LEN];
+        join_index(list_path, "bodyplans", index);
+        join_key(list_path, list_path, "slots");
+        join_index(path, list_path, s);
+        if (body->slots[s].fixed_part_id[0] && !resolve_fixed_part(ctx, data, path, &body->slots[s])) return false;
+        has_heart |= body->slots[s].role == SLOT_ROLE_HEART;
+        can_move |= slot_can_move(data, &body->slots[s]);
+    }
+    char path[PATH_LEN];
+    join_index(path, "bodyplans", index);
+    if (!has_heart) return fail(ctx, path, "body plan \"%s\" has no heart slot", data->body_plans[index].id);
+    if (!can_move) return fail(ctx, path, "body plan \"%s\" has no mover slot", data->body_plans[index].id);
+    return true;
+}
+
+static bool resolve_body_plans(Context *ctx, GameData *data)
+{
+    if (data->part_count == 0 || data->body_plan_count == 0) return true;
+    for (int p = 0; p < data->body_plan_count; p++)
+        if (!resolve_body_plan(ctx, data, p)) return false;
+    return true;
+}
+
 static bool body_plans_from_root(Context *ctx, const cJSON *root, GameData *data)
 {
     const cJSON *list;
@@ -483,7 +570,7 @@ static bool body_plans_from_root(Context *ctx, const cJSON *root, GameData *data
     }
     memcpy(data->body_plans, plans, sizeof(BodyPlan) * (size_t)count);
     data->body_plan_count = count;
-    return true;
+    return resolve_body_plans(ctx, data);
 }
 
 static bool check_non_negative(Context *ctx, const char *path, const char *key, int value)
@@ -609,6 +696,7 @@ static bool read_part(Context *ctx, const cJSON *obj, const char *path, const Ga
         && get_string(ctx, obj, path, "name", part->name, sizeof part->name, true)
         && read_part_kind(ctx, obj, path, part)
         && get_bool(ctx, obj, path, "deity_only", &part->deity_only)
+        && get_bool(ctx, obj, path, "minion_only", &part->minion_only)
         && read_part_stats(ctx, obj, path, part)
         && get_string(ctx, obj, path, "sprite", part->sprite, sizeof part->sprite, true)
         && read_abilities(ctx, obj, path, part)
@@ -643,7 +731,7 @@ static bool parts_from_root(Context *ctx, const cJSON *root, GameData *data)
     if (count == 0) return fail(ctx, "parts", "no parts");
     memcpy(data->parts, parts, sizeof(Part) * (size_t)count);
     data->part_count = count;
-    return true;
+    return resolve_body_plans(ctx, data);
 }
 
 static bool read_arena_object(Context *ctx, const cJSON *obj, const char *path, ArenaObjectDef *def)

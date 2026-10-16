@@ -51,6 +51,7 @@
       "id": "imp_body",
       "name": "Imp Body",
       "kind": "external",
+      "minion_only": true,
       "integrity": 14,
       "sprite": "imp_body",
       "vision": {
@@ -64,6 +65,7 @@
       "id": "crow_body",
       "name": "Crow Body",
       "kind": "external",
+      "minion_only": true,
       "integrity": 10,
       "sprite": "crow_body",
       "move_speed": 80
@@ -72,6 +74,7 @@
       "id": "wisp_core",
       "name": "Wisp Core",
       "kind": "external",
+      "minion_only": true,
       "integrity": 8,
       "sprite": "wisp_core",
       "move_speed": 70,
@@ -178,6 +181,7 @@
       "id": "small_heart",
       "name": "Small Heart",
       "kind": "internal",
+      "minion_only": true,
       "integrity": 10,
       "sprite": "small_heart",
       "vitality": 15
