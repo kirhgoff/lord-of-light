@@ -181,7 +181,7 @@ static int64_t distance_squared(int ax, int ay, int bx, int by)
     return squared(ax - bx) + squared(ay - by);
 }
 
-static bool hits_combatant(const Battle *battle, int self, int x_millipx, int y_millipx)
+static int blocking_combatant(const Battle *battle, int self, int x_millipx, int y_millipx)
 {
     const Combatant *me = &battle->combatants[self];
     int64_t touching = squared(2 * COMBATANT_RADIUS_MILLIPX);
@@ -190,19 +190,30 @@ static bool hits_combatant(const Battle *battle, int self, int x_millipx, int y_
         if (c == self || !other->alive) continue;
         int64_t after = distance_squared(x_millipx, y_millipx, other->x_millipx, other->y_millipx);
         int64_t before = distance_squared(me->x_millipx, me->y_millipx, other->x_millipx, other->y_millipx);
-        if (after < touching && after < before) return true;
+        if (after < touching && after < before) return c;
     }
-    return false;
+    return -1;
 }
 
 static bool try_move(Battle *battle, int self, int dx, int dy)
 {
     Combatant *me = &battle->combatants[self];
     int x = me->x_millipx + dx, y = me->y_millipx + dy;
-    if (hits_terrain(battle, x, y) || hits_combatant(battle, self, x, y)) return false;
+    if (hits_terrain(battle, x, y) || blocking_combatant(battle, self, x, y) >= 0) return false;
     me->x_millipx = x;
     me->y_millipx = y;
     return true;
+}
+
+static void slide_around(Battle *battle, int self, int blocker, int dx, int dy, int step)
+{
+    const Combatant *me = &battle->combatants[self], *other = &battle->combatants[blocker];
+    int64_t bx = other->x_millipx - me->x_millipx, by = other->y_millipx - me->y_millipx;
+    int64_t length = isqrt(squared(bx) + squared(by));
+    if (length == 0) return;
+    int tx = (int)(-by * step / length), ty = (int)(bx * step / length);
+    if ((int64_t)tx * dx + (int64_t)ty * dy < 0) tx = -tx, ty = -ty;
+    if (!try_move(battle, self, tx, ty)) try_move(battle, self, -tx, -ty);
 }
 
 static void move_towards(Battle *battle, int self, int goal_x, int goal_y, int step)
@@ -213,6 +224,11 @@ static void move_towards(Battle *battle, int self, int goal_x, int goal_y, int s
     if (distance == 0) return;
     if (distance > step) dx = (int)(dx * step / distance), dy = (int)(dy * step / distance);
     if (try_move(battle, self, dx, dy)) return;
+    int blocker = blocking_combatant(battle, self, me->x_millipx + dx, me->y_millipx + dy);
+    if (blocker >= 0) {
+        slide_around(battle, self, blocker, dx, dy, step);
+        return;
+    }
     if (!try_move(battle, self, dx, 0)) try_move(battle, self, 0, dy);
 }
 

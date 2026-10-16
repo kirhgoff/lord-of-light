@@ -238,6 +238,20 @@ static void test_two_tile_gap_is_wide_enough(void)
     CHECK(battle.combatants[0].x_millipx == 30 * TILE + TILE / 2);
 }
 
+static void test_blocked_by_ally_slides_around(void)
+{
+    open_field();
+    for (int c = 2; c < battle.combatant_count; c++) battle.combatants[c].alive = false;
+    place(0, 5, 10);
+    place(1, 8, 10);
+    set_side(0, SIDE_PANTHEON);
+    set_side(1, SIDE_PANTHEON);
+    send_to(0, 12 * TILE + TILE / 2, 10 * TILE + TILE / 2);
+    run(300);
+    CHECK(battle.combatants[0].x_millipx == 12 * TILE + TILE / 2);
+    CHECK(battle.combatants[0].y_millipx == 10 * TILE + TILE / 2);
+}
+
 static void test_combatant_beside_obstacle_corner_still_moves(void)
 {
     open_field();
@@ -535,6 +549,7 @@ void run_movement_tests(void)
     test_one_tile_gap_is_too_narrow_to_path_through();
     test_two_tile_gap_is_wide_enough();
     test_combatants_at_the_same_spot_are_pushed_apart();
+    test_blocked_by_ally_slides_around();
     test_combatant_beside_obstacle_corner_still_moves();
     test_push_apart_never_pushes_into_terrain();
     test_obstacle_blocks_line_of_sight();
