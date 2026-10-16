@@ -4,18 +4,48 @@
 
 #include "movement.h"
 
-#define LOS_SAMPLE_MILLIPX (2 * MILLIPX_PER_PX)
+#define NEVER INT64_MAX
+
+static int64_t absolute(int64_t value)
+{
+    return value < 0 ? -value : value;
+}
+
+static int64_t first_crossing(int64_t position, int tile, int direction, int64_t other_axis_span)
+{
+    if (direction == 0) return NEVER;
+    int64_t to_edge = direction > 0 ? (tile + 1) * (int64_t)TILE_MILLIPX - position : position - tile * (int64_t)TILE_MILLIPX;
+    return to_edge * other_axis_span;
+}
 
 bool line_of_sight(const Battle *battle, int from_x, int from_y, int to_x, int to_y)
 {
     int64_t dx = to_x - from_x, dy = to_y - from_y;
-    int64_t longest = (dx < 0 ? -dx : dx) > (dy < 0 ? -dy : dy) ? (dx < 0 ? -dx : dx) : (dy < 0 ? -dy : dy);
-    int64_t samples = longest / LOS_SAMPLE_MILLIPX + 1;
-    for (int64_t i = 0; i <= samples; i++) {
-        int x = (int)(from_x + dx * i / samples), y = (int)(from_y + dy * i / samples);
-        if (tile_is_solid(battle, x / TILE_MILLIPX, y / TILE_MILLIPX)) return false;
+    int column = from_x / TILE_MILLIPX, row = from_y / TILE_MILLIPX;
+    int end_column = to_x / TILE_MILLIPX, end_row = to_y / TILE_MILLIPX;
+    int step_x = (dx > 0) - (dx < 0), step_y = (dy > 0) - (dy < 0);
+    int64_t next_x = first_crossing(from_x, column, step_x, absolute(dy));
+    int64_t next_y = first_crossing(from_y, row, step_y, absolute(dx));
+    int64_t cost_x = TILE_MILLIPX * absolute(dy), cost_y = TILE_MILLIPX * absolute(dx);
+    for (;;) {
+        if (tile_is_solid(battle, column, row)) return false;
+        if (column == end_column && row == end_row) return true;
+        if (column == end_column) next_x = NEVER;
+        if (row == end_row) next_y = NEVER;
+        if (next_x < next_y) {
+            column += step_x;
+            next_x += cost_x;
+        } else if (next_y < next_x) {
+            row += step_y;
+            next_y += cost_y;
+        } else {
+            if (tile_is_solid(battle, column + step_x, row) || tile_is_solid(battle, column, row + step_y)) return false;
+            column += step_x;
+            row += step_y;
+            next_x += cost_x;
+            next_y += cost_y;
+        }
     }
-    return true;
 }
 
 void combatant_vision_ranges(const Combatant *combatant, const GameData *data, int range_millipx[3])
@@ -63,8 +93,10 @@ void perceive(const Battle *battle, const GameData *data, int self, Perception *
         bool enemy = other->side != me->charm_side;
         if (band == UNKNOWN || (band == BAND_FAR && !enemy)) continue;
         if (!line_of_sight(battle, me->x_millipx, me->y_millipx, other->x_millipx, other->y_millipx)) continue;
-        add(out, (Perceived){PERCEIVED_COMBATANT, c, (Band)band, UNKNOWN,
-                             band == BAND_FAR ? UNKNOWN : other->side, band == BAND_FAR ? UNKNOWN : health_quarters(other)});
+        bool detailed = band != BAND_FAR;
+        add(out, (Perceived){PERCEIVED_COMBATANT, c, (Band)band, UNKNOWN, detailed ? other->side : UNKNOWN,
+                             detailed ? health_quarters(other) : UNKNOWN, detailed ? other->name : NULL,
+                             other->x_millipx, other->y_millipx});
     }
 
     for (int p = 0; p < battle->pickup_count + battle->trap_count; p++) {
@@ -77,6 +109,7 @@ void perceive(const Battle *battle, const GameData *data, int self, Perception *
         if (band == UNKNOWN || (is_trap && band != BAND_CLOSE) || (band == BAND_FAR && def->heal <= 0)) continue;
         if (!line_of_sight(battle, me->x_millipx, me->y_millipx, object->x_millipx, object->y_millipx)) continue;
         add(out, (Perceived){is_trap ? PERCEIVED_TRAP : PERCEIVED_PICKUP, is_trap ? p - battle->pickup_count : p, (Band)band,
-                             band == BAND_FAR ? UNKNOWN : object->def, UNKNOWN, UNKNOWN});
+                             band == BAND_FAR ? UNKNOWN : object->def, UNKNOWN, UNKNOWN, NULL,
+                             object->x_millipx, object->y_millipx});
     }
 }

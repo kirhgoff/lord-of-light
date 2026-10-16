@@ -16,6 +16,9 @@ typedef struct {
     int def;
     int side;
     int health_quarters;
+    const char *name;
+    int x_millipx;
+    int y_millipx;
 } Perceived;
 
 typedef struct {

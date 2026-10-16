@@ -70,10 +70,36 @@ static int pop_best(int *open, int *open_count, const int *cost, const int *esti
     return node;
 }
 
+static int closest_reachable_tile(const Battle *battle, int start, int to_column, int to_row)
+{
+    int queue[TILE_COUNT], head = 0, tail = 0, best = start;
+    bool reached[TILE_COUNT] = {false};
+    int best_estimate = heuristic(start % ARENA_WIDTH_TILES, start / ARENA_WIDTH_TILES, to_column, to_row);
+    queue[tail++] = start;
+    reached[start] = true;
+    while (head < tail) {
+        int node = queue[head++];
+        int column = node % ARENA_WIDTH_TILES, row = node / ARENA_WIDTH_TILES;
+        int estimate = heuristic(column, row, to_column, to_row);
+        if (estimate < best_estimate || (estimate == best_estimate && node < best)) best = node, best_estimate = estimate;
+        for (int dir = 0; dir < NEIGHBOUR_COUNT; dir++) {
+            int next = (row + neighbour_dy[dir]) * ARENA_WIDTH_TILES + column + neighbour_dx[dir];
+            if (!step_is_open(battle, column, row, dir) || reached[next]) continue;
+            reached[next] = true;
+            queue[tail++] = next;
+        }
+    }
+    return best;
+}
+
 int find_path(const Battle *battle, int from_column, int from_row, int to_column, int to_row, int *next_column, int *next_row)
 {
-    if (tile_is_solid(battle, to_column, to_row) || tile_is_solid(battle, from_column, from_row)) return PATH_NONE;
-    int start = from_row * ARENA_WIDTH_TILES + from_column, goal = to_row * ARENA_WIDTH_TILES + to_column;
+    if (tile_is_solid(battle, from_column, from_row)) return PATH_NONE;
+    int start = from_row * ARENA_WIDTH_TILES + from_column;
+    int goal = closest_reachable_tile(battle, start, to_column, to_row);
+    if (goal == start) return PATH_NONE;
+    to_column = goal % ARENA_WIDTH_TILES;
+    to_row = goal / ARENA_WIDTH_TILES;
     int cost[TILE_COUNT], estimate[TILE_COUNT], parent[TILE_COUNT], open[TILE_COUNT], open_count = 0;
     bool closed[TILE_COUNT] = {false};
     for (int i = 0; i < TILE_COUNT; i++) cost[i] = UNREACHED, parent[i] = PATH_NONE;
@@ -97,7 +123,6 @@ int find_path(const Battle *battle, int from_column, int from_row, int to_column
             if (!queued) open[open_count++] = next;
         }
     }
-    if (cost[goal] == UNREACHED) return PATH_NONE;
     int node = goal;
     while (node != start && parent[node] != start) node = parent[node];
     *next_column = node % ARENA_WIDTH_TILES;
