@@ -3,6 +3,7 @@
 #include "cJSON.h"
 #include "check.h"
 #include "../src/sim/battle.h"
+#include "../src/sim/horde.h"
 
 #define ERR_SIZE 256
 
@@ -68,7 +69,7 @@ static void test_setup_places_both_sides(void)
 {
     load_data();
     battle_setup(&battle, &data, 3);
-    CHECK(battle.combatant_count == DEITIES_PER_PANTHEON + HORDE_SIZE);
+    CHECK(battle.combatant_count > DEITIES_PER_PANTHEON && battle.combatant_count <= DEITIES_PER_PANTHEON + HORDE_MAX_SIZE);
     int left = 0, right = 0;
     for (int c = 0; c < battle.combatant_count; c++) {
         const Combatant *who = &battle.combatants[c];
@@ -79,7 +80,7 @@ static void test_setup_places_both_sides(void)
         if (on_left) left++;
         else right++;
     }
-    CHECK(left == DEITIES_PER_PANTHEON && right == HORDE_SIZE);
+    CHECK(left == DEITIES_PER_PANTHEON && right == battle.combatant_count - DEITIES_PER_PANTHEON);
     CHECK(battle.pickup_count == data.pickup_count && battle.trap_count == data.trap_count);
     CHECK(battle_winner(&battle) == -1);
 }

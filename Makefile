@@ -19,8 +19,9 @@ TEST_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard tests/*.c))
 LAYA_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard src/laya/*.c))
 GAME_OBJECTS := $(BUILD)/obj/src/main_game.o $(VIEW_OBJECTS) $(SIM_OBJECTS) $(CJSON_OBJECT)
 HEADLESS_OBJECTS := $(BUILD)/obj/src/main_headless.o $(SIM_OBJECTS) $(LAYA_OBJECTS) $(CJSON_OBJECT)
+BALANCE_OBJECTS := $(BUILD)/obj/src/main_balance.o $(SIM_OBJECTS) $(CJSON_OBJECT)
 
-.PHONY: game headless test run clean asan
+.PHONY: game headless test run clean asan balance
 
 game: $(BUILD)/game
 headless: $(BUILD)/headless
@@ -36,6 +37,12 @@ $(BUILD)/game: $(GAME_OBJECTS) $(RAYLIB_LIB)
 
 $(BUILD)/headless: $(HEADLESS_OBJECTS)
 	$(CC) $^ $(SAN) -lcurl -o $@
+
+balance: $(BUILD)/balance
+	$(BUILD)/balance
+
+$(BUILD)/balance: $(BALANCE_OBJECTS)
+	$(CC) $^ $(SAN) -o $@
 
 $(BUILD)/tests: $(TEST_OBJECTS) $(SIM_OBJECTS) $(BUILD)/obj/src/laya/laya.o $(CJSON_OBJECT)
 	$(CC) $^ $(SAN) -o $@

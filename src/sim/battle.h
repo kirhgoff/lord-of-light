@@ -10,7 +10,6 @@
 
 #define MAX_COMBATANTS 64
 #define MAX_REMAINS MAX_COMBATANTS
-#define HORDE_SIZE 4
 #define EVENT_AMOUNT_LIMIT 1000000000
 
 typedef enum { SIDE_PANTHEON, SIDE_HORDE, SIDE_COUNT } Side;
@@ -159,6 +158,7 @@ int rng_below(uint32_t *state, int bound);
 
 /* A Battle must be zero-initialised (Battle b = {0};) before its first setup or load. */
 void battle_setup(Battle *battle, const GameData *data, uint32_t seed);
+void battle_setup_pantheon(Battle *battle, const GameData *data, uint32_t seed, int forced_pantheon);
 int battle_add_combatant(Battle *battle, const GameData *data, const char *name, Side side, const Body *body, int x_millipx, int y_millipx);
 void battle_step(Battle *battle, const GameData *data, Decider *decider);
 void battle_free(Battle *battle);
