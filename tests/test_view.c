@@ -63,11 +63,12 @@ static void test_viewport_starts_centred_and_clamped(void)
 {
     Viewport v;
     viewport_init(&v, WIDTH, HEIGHT);
+    CHECK(v.zoom == 1);
+    CHECK(v.centre_x == 384 && v.centre_y == 256);
+    viewport_zoom(&v, 1);
     CHECK(v.zoom == 2);
     CHECK(v.centre_x >= 320 && v.centre_x <= 448);
-    CHECK(v.centre_y >= 180 && v.centre_y <= 332);
-    viewport_zoom(&v, -1);
-    CHECK(v.centre_x == 384 && v.centre_y == 256);
+    CHECK(v.centre_y >= 168 && v.centre_y <= 344);
 }
 
 static void test_viewport_zoom_stays_within_limits(void)
@@ -84,19 +85,21 @@ static void test_viewport_pan_stops_at_the_arena_edge(void)
 {
     Viewport v;
     viewport_init(&v, WIDTH, HEIGHT);
+    viewport_zoom(&v, 1);
     viewport_pan(&v, 10000, 10000);
-    CHECK(v.centre_x == 448 && v.centre_y == 332);
+    CHECK(v.centre_x == 448 && v.centre_y == 344);
     viewport_pan(&v, -10000, -10000);
-    CHECK(v.centre_x == 320 && v.centre_y == 180);
+    CHECK(v.centre_x == 320 && v.centre_y == 168);
 }
 
 static void test_viewport_centre_maps_to_screen_centre(void)
 {
     Viewport v;
     viewport_init(&v, WIDTH, HEIGHT);
+    viewport_zoom(&v, 1);
     viewport_pan(&v, 40, -30);
     CHECK(viewport_screen_x(&v, v.centre_x) == WIDTH / 2);
-    CHECK(viewport_screen_y(&v, v.centre_y) == HEIGHT / 2);
+    CHECK(viewport_screen_y(&v, v.centre_y) == HUD_HEIGHT + (HEIGHT - HUD_HEIGHT) / 2);
     CHECK(viewport_screen_x(&v, v.centre_x + 10) == WIDTH / 2 + 10 * v.zoom);
 }
 

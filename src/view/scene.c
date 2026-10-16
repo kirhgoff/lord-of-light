@@ -18,7 +18,7 @@ static float clamp_axis(float centre, float screen_size, int zoom, float arena_s
 void viewport_clamp(Viewport *v)
 {
     v->centre_x = clamp_axis(v->centre_x, (float)v->width, v->zoom, ARENA_WIDTH_PX);
-    v->centre_y = clamp_axis(v->centre_y, (float)v->height, v->zoom, ARENA_HEIGHT_PX);
+    v->centre_y = clamp_axis(v->centre_y, (float)(v->height - HUD_HEIGHT), v->zoom, ARENA_HEIGHT_PX);
 }
 
 void viewport_init(Viewport *v, int width, int height)
@@ -48,7 +48,7 @@ float viewport_screen_x(const Viewport *v, float world_x)
 
 float viewport_screen_y(const Viewport *v, float world_y)
 {
-    return (float)v->height / 2 + (world_y - v->centre_y) * (float)v->zoom;
+    return (float)HUD_HEIGHT + (float)(v->height - HUD_HEIGHT) / 2 + (world_y - v->centre_y) * (float)v->zoom;
 }
 
 static void snapshot_positions(Scene *s, const Battle *b)

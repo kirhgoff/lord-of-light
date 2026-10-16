@@ -7,9 +7,10 @@
 #include "../sim/movement.h"
 #include "atlas.h"
 
+#define HUD_HEIGHT 48
 #define ZOOM_MIN 1
 #define ZOOM_MAX 4
-#define ZOOM_DEFAULT 2
+#define ZOOM_DEFAULT 1
 #define PAN_SCREEN_PX_PER_SECOND 600
 #define TICK_SECONDS (1.0f / TICKS_PER_SECOND)
 #define IDLE_FRAME_TICKS 10
@@ -22,7 +23,6 @@
 #define TRAP_ACT_TICKS 10
 #define MAX_EFFECTS 64
 #define NEVER (-1000000)
-#define HUD_HEIGHT 48
 #define REMAINS_SPREAD_PX 12
 #define EFFECT_LIFT_PX 16
 
