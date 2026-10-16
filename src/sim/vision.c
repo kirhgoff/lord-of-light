@@ -96,7 +96,7 @@ void perceive(const Battle *battle, const GameData *data, int self, Perception *
         if (band == UNKNOWN || (band == BAND_FAR && !enemy)) continue;
         if (!line_of_sight(battle, me->x_millipx, me->y_millipx, other->x_millipx, other->y_millipx)) continue;
         bool detailed = band != BAND_FAR;
-        add(out, (Perceived){PERCEIVED_COMBATANT, c, (Band)band, UNKNOWN, detailed ? other->charm_side : UNKNOWN,
+        add(out, (Perceived){PERCEIVED_COMBATANT, c, (Band)band, UNKNOWN, detailed ? (int)other->charm_side : UNKNOWN,
                              detailed ? combatant_health_quarters(other) : UNKNOWN, detailed ? other->name : NULL,
                              other->x_millipx, other->y_millipx});
     }

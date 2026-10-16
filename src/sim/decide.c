@@ -48,7 +48,7 @@ int combatant_initiative(const Combatant *c, const GameData *data)
 
 Event decision_event(int combatant, Stance stance, HurtLevel hurt, int element, DeciderKind decider)
 {
-    return (Event){.tick = 0, .kind = EVENT_DECISION, .actor = combatant, .actor_part = -1, .target = -1, .target_part = -1, .element = element, .amount = stance, .detail = hurt, .decider = decider};
+    return (Event){.tick = 0, .kind = EVENT_DECISION, .actor = combatant, .actor_part = -1, .target = -1, .target_part = -1, .element = element, .amount = (int)stance, .detail = (int)hurt, .decider = decider};
 }
 
 Decision event_decision(const Event *event)
@@ -108,7 +108,7 @@ static int most_vulnerable_element(const Combatant *me, const Combatant *focus, 
             if (!is_attack(&part->abilities[a])) continue;
             Element element = part->abilities[a].element;
             int resistance = combatant_resistance_percent(focus, data, element, element == ELEMENT_RADIANCE);
-            if (best < 0 || resistance < best_resistance) best = element, best_resistance = resistance;
+            if (best < 0 || resistance < best_resistance) best = (int)element, best_resistance = resistance;
         }
     }
     return best;

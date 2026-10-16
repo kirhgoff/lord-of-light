@@ -86,7 +86,7 @@ static void kill(Battle *battle, int target, int actor, int actor_part, Element 
         for (int s = 0; s < c->body.slot_count; s++) remains->parts[s] = c->body.slots[s].part;
         remains_index = battle->remains_count++;
     }
-    battle_log_event(battle, (Event){.tick = 0, .kind = EVENT_DEATH, .actor = actor, .actor_part = actor_part, .target = target, .target_part = -1, .element = element, .amount = 0, .detail = remains_index, .decider = DECIDER_NONE});
+    battle_log_event(battle, (Event){.tick = 0, .kind = EVENT_DEATH, .actor = actor, .actor_part = actor_part, .target = target, .target_part = -1, .element = (int)element, .amount = 0, .detail = remains_index, .decider = DECIDER_NONE});
 }
 
 static void death_check(Battle *battle, const GameData *data, int target, int actor, int actor_part, Element element)
@@ -105,11 +105,14 @@ static void hit_once(Battle *battle, const GameData *data, int actor, int actor_
     damage = percent_of(damage, 100 - resistance);
     if (is_blocking(victim, data, working)) damage = percent_of(damage, BLOCK_PERCENT);
     int part = pick_target_part(battle, data, victim, working, element);
-    if (part < 0) return death_check(battle, data, target, actor, actor_part, element);
+    if (part < 0) {
+        death_check(battle, data, target, actor, actor_part, element);
+        return;
+    }
     victim->parts[part].integrity = victim->parts[part].integrity > damage ? victim->parts[part].integrity - damage : 0;
     victim->vitality -= percent_of(damage, VITALITY_SHARE_PERCENT);
     if (victim->vitality < 0) victim->vitality = 0;
-    battle_log_event(battle, (Event){.tick = 0, .kind = EVENT_HIT, .actor = actor, .actor_part = actor_part, .target = target, .target_part = part, .element = element, .amount = damage, .detail = victim->parts[part].integrity, .decider = DECIDER_NONE});
+    battle_log_event(battle, (Event){.tick = 0, .kind = EVENT_HIT, .actor = actor, .actor_part = actor_part, .target = target, .target_part = part, .element = (int)element, .amount = damage, .detail = victim->parts[part].integrity, .decider = DECIDER_NONE});
     death_check(battle, data, target, actor, actor_part, element);
 }
 
@@ -120,7 +123,7 @@ static int scaled(int ticks, int resistance)
 
 static void log_effect(Battle *battle, int actor, int actor_part, int target, Element element, int amount, EffectKind kind)
 {
-    battle_log_event(battle, (Event){.tick = 0, .kind = EVENT_EFFECT, .actor = actor, .actor_part = actor_part, .target = target, .target_part = -1, .element = element, .amount = amount, .detail = kind, .decider = DECIDER_NONE});
+    battle_log_event(battle, (Event){.tick = 0, .kind = EVENT_EFFECT, .actor = actor, .actor_part = actor_part, .target = target, .target_part = -1, .element = (int)element, .amount = amount, .detail = (int)kind, .decider = DECIDER_NONE});
 }
 
 static void apply_burning(Combatant *victim, const ElementDef *def, int actor, Element element, int resistance)
@@ -128,7 +131,7 @@ static void apply_burning(Combatant *victim, const ElementDef *def, int actor, E
     int ticks = scaled(def->dot_ticks, resistance);
     if (def->dot_ticks == 0 || ticks == 0) return;
     victim->dot_damage = def->dot_damage;
-    victim->dot_element = element;
+    victim->dot_element = (int)element;
     victim->dot_source = actor;
     victim->dot_ticks = ticks;
 }
@@ -254,7 +257,7 @@ static bool act_support(Battle *battle, int me, int s, const Ability *ability)
     if (gain > ability->heal) gain = ability->heal;
     if (gain <= 0) return false;
     ally->vitality += gain;
-    battle_log_event(battle, (Event){.tick = 0, .kind = EVENT_EFFECT, .actor = me, .actor_part = s, .target = target, .target_part = -1, .element = ability->element, .amount = gain, .detail = EFFECT_HEAL, .decider = DECIDER_NONE});
+    battle_log_event(battle, (Event){.tick = 0, .kind = EVENT_EFFECT, .actor = me, .actor_part = s, .target = target, .target_part = -1, .element = (int)ability->element, .amount = gain, .detail = EFFECT_HEAL, .decider = DECIDER_NONE});
     return true;
 }
 

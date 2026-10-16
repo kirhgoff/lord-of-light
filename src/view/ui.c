@@ -88,7 +88,7 @@ static Clay_String frame_string(const char *format, ...)
 
 static void sized_text(Clay_String string, Clay_Color colour, int size)
 {
-    CLAY_TEXT(string, CLAY_TEXT_CONFIG({.fontId = FONT_BODY, .fontSize = size, .letterSpacing = 1, .textColor = colour}));
+    CLAY_TEXT(string, CLAY_TEXT_CONFIG({.fontId = FONT_BODY, .fontSize = (uint16_t)size, .letterSpacing = 1, .textColor = colour}));
 }
 
 static void text(Clay_String string, Clay_Color colour)

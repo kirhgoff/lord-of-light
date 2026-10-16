@@ -137,7 +137,7 @@ static void test_viewport_centre_maps_to_screen_centre(void)
     viewport_pan(&v, 40, -30);
     CHECK(viewport_screen_x(&v, v.centre_x) == WIDTH / 2);
     CHECK(viewport_screen_y(&v, v.centre_y) == HUD_HEIGHT + (HEIGHT - HUD_HEIGHT) / 2);
-    CHECK(viewport_screen_x(&v, v.centre_x + 10) == WIDTH / 2 + 10 * v.zoom);
+    CHECK(viewport_screen_x(&v, v.centre_x + 10) == (float)(WIDTH / 2 + 10 * v.zoom));
 }
 
 static void test_position_interpolates_between_ticks(void)

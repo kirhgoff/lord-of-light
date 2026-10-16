@@ -293,9 +293,9 @@ static void plan_questions(const GameData *data, const Combatant *me, const Perc
     *asked = (LayaQuestions){.fixed_element = -1};
     if (focus && distinct >= 2) {
         asked->element_count = distinct;
-        for (int e = 0; e < distinct; e++) asked->elements[e] = elements[e];
+        for (int e = 0; e < distinct; e++) asked->elements[e] = (int)elements[e];
     } else if (focus && distinct == 1) {
-        asked->fixed_element = elements[0];
+        asked->fixed_element = (int)elements[0];
     }
     asked->stance_offered[STANCE_FIGHT] = asked->stance_offered[STANCE_RETREAT] = true;
     asked->stance_offered[STANCE_SUPPORT] = combatant_has_working_support(me, data) && some_ally_is_hurt(me, perception);
