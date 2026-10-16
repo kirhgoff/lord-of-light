@@ -15,8 +15,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 05 Combat | `05-combat-elements` / `~/Projects/lord-of-light-05-combat-elements` | sonnet executor running |
-| 18 Sprite proportions | `18-sprite-proportions` / `~/Projects/lord-of-light-18-sprite-proportions` | sonnet executor running |
+| 05 Combat | `05-combat-elements` / `~/Projects/lord-of-light-05-combat-elements` | fable plan written (scratchpad `plan-05-combat.md`, volatile); waiting on user decisions, then sonnet executor |
 
 ## Done
 
@@ -28,6 +27,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 - 09 Placeholder sprites — merged after design re-review.
 - 14 Clay+raylib research — merged (`docs/research/clay-raylib.md`).
 - 17 Slot roles — merged after 2 code + 2 design review rounds.
+- 18 Sprite proportions — merged after a design review.
 - 04 Movement + vision — merged after 3 review rounds (incl. user decisions on footprint and charm).
 
 ## Next up (once unblocked)
