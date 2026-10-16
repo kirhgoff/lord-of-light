@@ -90,11 +90,11 @@ void perceive(const Battle *battle, const GameData *data, int self, Perception *
         if (c == self || !other->alive) continue;
         int64_t dx = other->x_millipx - me->x_millipx, dy = other->y_millipx - me->y_millipx;
         int band = band_at(out->range_millipx, dx * dx + dy * dy);
-        bool enemy = other->side != me->charm_side;
+        bool enemy = other->charm_side != me->charm_side;
         if (band == UNKNOWN || (band == BAND_FAR && !enemy)) continue;
         if (!line_of_sight(battle, me->x_millipx, me->y_millipx, other->x_millipx, other->y_millipx)) continue;
         bool detailed = band != BAND_FAR;
-        add(out, (Perceived){PERCEIVED_COMBATANT, c, (Band)band, UNKNOWN, detailed ? other->side : UNKNOWN,
+        add(out, (Perceived){PERCEIVED_COMBATANT, c, (Band)band, UNKNOWN, detailed ? other->charm_side : UNKNOWN,
                              detailed ? health_quarters(other) : UNKNOWN, detailed ? other->name : NULL,
                              other->x_millipx, other->y_millipx});
     }

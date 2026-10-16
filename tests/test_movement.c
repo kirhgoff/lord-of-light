@@ -29,6 +29,11 @@ static void place(int c, int x_tile, int y_tile)
     battle.combatants[c].y_millipx = y_tile * TILE + TILE / 2;
 }
 
+static void set_side(int c, Side side)
+{
+    battle.combatants[c].side = battle.combatants[c].charm_side = side;
+}
+
 static void send_to(int c, int x_millipx, int y_millipx)
 {
     Combatant *who = &battle.combatants[c];
@@ -268,8 +273,9 @@ static void test_combatant_bands(void)
     battle.combatants[6].alive = false;
     battle.combatants[7].alive = false;
     for (int c = 1; c < 6; c++) battle.combatants[c].y_millipx = battle.combatants[0].y_millipx;
-    battle.combatants[1].side = battle.combatants[2].side = SIDE_PANTHEON;
-    battle.combatants[3].side = battle.combatants[4].side = battle.combatants[5].side = SIDE_HORDE;
+    set_side(1, SIDE_PANTHEON);
+    set_side(2, SIDE_PANTHEON);
+    for (int c = 3; c < 6; c++) set_side(c, SIDE_HORDE);
     battle.combatants[2].vitality = battle.combatants[2].vitality_max / 2;
 
     static Perception seen;
@@ -309,16 +315,16 @@ static void test_charmed_viewer_sees_far_enemies_by_charm_side(void)
     give_vision(0, 48, 96, 160);
     place(0, 5, 5);
     for (int c = 1; c < battle.combatant_count; c++) battle.combatants[c].alive = false;
-    battle.combatants[0].side = SIDE_PANTHEON;
+    set_side(0, SIDE_PANTHEON);
     battle.combatants[0].charm_side = SIDE_HORDE;
     battle.combatants[1].alive = true;
     battle.combatants[1].x_millipx = battle.combatants[0].x_millipx + 150 * PX;
     battle.combatants[1].y_millipx = battle.combatants[0].y_millipx;
     static Perception seen;
-    battle.combatants[1].side = SIDE_HORDE;
+    set_side(1, SIDE_HORDE);
     perceive(&battle, &data, 0, &seen);
     CHECK(seen.seen_count == 0);
-    battle.combatants[1].side = SIDE_PANTHEON;
+    set_side(1, SIDE_PANTHEON);
     perceive(&battle, &data, 0, &seen);
     CHECK(seen.seen_count == 1);
 }
@@ -341,6 +347,28 @@ static void test_respawning_floor_objects_are_hidden(void)
     battle.traps[0].respawn_in = 5;
     perceive(&battle, &data, 0, &seen);
     CHECK(seen.seen_count == 0);
+}
+
+static void test_charmed_monster_is_an_ally_to_the_pantheon(void)
+{
+    open_field();
+    give_vision(0, 48, 96, 160);
+    place(0, 5, 5);
+    for (int c = 1; c < battle.combatant_count; c++) battle.combatants[c].alive = false;
+    set_side(0, SIDE_PANTHEON);
+    battle.combatants[1].alive = true;
+    set_side(1, SIDE_HORDE);
+    battle.combatants[1].x_millipx = battle.combatants[0].x_millipx + 150 * PX;
+    battle.combatants[1].y_millipx = battle.combatants[0].y_millipx;
+    static Perception seen;
+    perceive(&battle, &data, 0, &seen);
+    CHECK(seen.seen_count == 1);
+    battle.combatants[1].charm_side = SIDE_PANTHEON;
+    perceive(&battle, &data, 0, &seen);
+    CHECK(seen.seen_count == 0);
+    battle.combatants[1].x_millipx = battle.combatants[0].x_millipx + 40 * PX;
+    perceive(&battle, &data, 0, &seen);
+    CHECK(seen.seen_count == 1 && seen.seen[0].side == SIDE_PANTHEON);
 }
 
 static void test_obstacle_hides_combatant(void)
@@ -438,6 +466,7 @@ void run_movement_tests(void)
     test_far_ally_is_not_perceived();
     test_charmed_viewer_sees_far_enemies_by_charm_side();
     test_respawning_floor_objects_are_hidden();
+    test_charmed_monster_is_an_ally_to_the_pantheon();
     test_obstacle_hides_combatant();
     test_pickups_and_traps_by_band();
     test_vision_ranges_take_max_of_working_parts();
