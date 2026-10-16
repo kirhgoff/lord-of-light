@@ -117,9 +117,8 @@ static void push_effect(Scene *s, float x, float y, int element, int tick)
 static void push_effect_at_combatant(Scene *s, const Battle *b, int c, int element, int tick)
 {
     if (c < 0 || c >= b->combatant_count) return;
-    float x, y;
-    scene_position(s, b, c, &x, &y);
-    push_effect(s, x, y - EFFECT_LIFT_PX, element, tick);
+    const Combatant *who = &b->combatants[c];
+    push_effect(s, (float)who->x_millipx / MILLIPX_PER_PX, (float)who->y_millipx / MILLIPX_PER_PX - EFFECT_LIFT_PX, element, tick);
 }
 
 static void mark_act(Scene *s, const Battle *b, int actor, int part, int tick)

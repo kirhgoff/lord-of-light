@@ -1,5 +1,6 @@
 #include <string.h>
 #include "check.h"
+#include "../src/sim/decide.h"
 #include "../src/view/scene.h"
 
 #define WIDTH 1280
@@ -158,10 +159,15 @@ static void test_hit_event_marks_actor_target_and_effect(void)
     Scene scene = {0};
     scene_reset(&scene, &battle);
     Event hit = hit_event(7, 0, 1, TARGET, 2);
+    scene.alpha = 0.5f;
+    scene.prev_x[TARGET] = 0;
+    scene.prev_y[TARGET] = 0;
     scene_apply_event(&scene, &battle, &hit);
     CHECK(scene.act_since[0][1] == 7);
     CHECK(scene.hit_since[TARGET][2] == 7 && scene.hit_element[TARGET][2] == ELEMENT_FIRE);
     CHECK(live_effects(&scene) == 1 && scene.effects[0].element == ELEMENT_FIRE);
+    CHECK(scene.effects[0].x == (float)battle.combatants[TARGET].x_millipx / MILLIPX_PER_PX);
+    CHECK(scene.effects[0].y == (float)battle.combatants[TARGET].y_millipx / MILLIPX_PER_PX - EFFECT_LIFT_PX);
 }
 
 static void test_trap_hit_without_actor_marks_only_the_target(void)
@@ -363,8 +369,43 @@ static void test_remains_offset_is_bounded_and_deterministic(void)
     CHECK(distinct > 30);
 }
 
+static void test_reset_after_stepping_clears_effects_and_syncs_events(void)
+{
+    setup_battle();
+    Decider reflex = reflex_decider();
+    Scene scene = {0};
+    scene_reset(&scene, &battle);
+    for (int t = 0; t < 120; t++) {
+        scene_before_step(&scene, &battle);
+        battle_step(&battle, &data, &reflex);
+        scene_after_step(&scene, &battle);
+    }
+    CHECK(live_effects(&scene) > 0);
+    scene_reset(&scene, &battle);
+    CHECK(live_effects(&scene) == 0);
+    CHECK(scene.seen_events == battle.log_count);
+    CHECK(scene.effect_next == 0);
+}
+
+static void test_combatant_added_mid_battle_faces_its_side(void)
+{
+    setup_battle();
+    Scene scene = {0};
+    scene_reset(&scene, &battle);
+    scene_before_step(&scene, &battle);
+    Body body = battle.combatants[0].body;
+    int horde = battle_add_combatant(&battle, &data, "minion", SIDE_HORDE, &body, 1000, 1000);
+    int pantheon = battle_add_combatant(&battle, &data, "ally", SIDE_PANTHEON, &body, 1000, 1000);
+    scene.facing_left[pantheon] = true;
+    scene_after_step(&scene, &battle);
+    CHECK(scene.facing_left[horde]);
+    CHECK(!scene.facing_left[pantheon]);
+}
+
 void run_view_tests(void)
 {
+    test_reset_after_stepping_clears_effects_and_syncs_events();
+    test_combatant_added_mid_battle_faces_its_side();
     test_collect_sorts_by_y_and_skips_dead_and_respawning();
     test_agni_feet_sit_33_px_below_the_origin();
     test_tile_hash_covers_every_variant();
