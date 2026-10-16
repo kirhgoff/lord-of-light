@@ -18,3 +18,5 @@ Blocked by: 05
 ## Comments
 
 **Plan (fable): `docs/plan/plan-06-tactics.md`.** User accepted all its defaults 2026-10-16, plus walk-over Pickups for both 06 and 08 (`ORDER_PICK_UP` removed by 08).
+
+**Review 1 (opus): CHANGES.** Deviations accepted (DECIDER_NONE in initialisers, COLLECT always move_to, trap test bound); sweep 0..199 no stalls, save/resume identical, charm targeting and the Decider interface held. To fix: merge main (08) and repair floor.c initialisers / removed trap and pickup ids in tests; allies oscillating head-on at a 2-tile gap (higher index steps back); trap test bound from the radius; SUPPORT-legs-to-enemy mutation survives; cap Part initiative at 100.
