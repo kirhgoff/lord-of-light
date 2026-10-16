@@ -41,8 +41,7 @@ static char *reply_choosing_first_options(const char *body, double stance_confid
     cJSON *reply = cJSON_CreateObject();
     cJSON *answers = cJSON_AddObjectToObject(reply, "answers");
     const cJSON *question;
-    cJSON_ArrayForEach(question, cJSON_GetObjectItemCaseSensitive(request, "questions"))
-    {
+    cJSON_ArrayForEach(question, cJSON_GetObjectItemCaseSensitive(request, "questions")) {
         const char *first = cJSON_GetObjectItemCaseSensitive(question, "criteria")->child->string;
         cJSON *answer = cJSON_AddObjectToObject(answers, question->string);
         cJSON_AddStringToObject(answer, "choice", first);

@@ -363,8 +363,7 @@ static bool elements_from_root(Context *ctx, const cJSON *root, GameData *data)
     bool seen[ELEMENT_COUNT] = {false};
     int index = 0;
     const cJSON *item;
-    cJSON_ArrayForEach(item, list)
-    {
+    cJSON_ArrayForEach(item, list) {
         char path[PATH_LEN], id[ID_LEN];
         join_index(path, "elements", index++);
         Element element;
@@ -446,8 +445,7 @@ static bool read_slots(Context *ctx, const cJSON *obj, const char *path, const c
     join_key(list_path, path, key);
     if (!get_array(ctx, obj, path, key, &list, true)) return false;
     const cJSON *item;
-    cJSON_ArrayForEach(item, list)
-    {
+    cJSON_ArrayForEach(item, list) {
         char slot_path[PATH_LEN];
         join_index(slot_path, list_path, body->slot_count);
         if (body->slot_count == MAX_SLOTS) return fail(ctx, list_path, "more than %d slots", MAX_SLOTS);
@@ -489,8 +487,7 @@ static bool read_edges(Context *ctx, const cJSON *obj, const char *path, Body *b
     if (!get_array(ctx, obj, path, "edges", &list, false)) return false;
     if (!list) return true;
     const cJSON *pair;
-    cJSON_ArrayForEach(pair, list)
-    {
+    cJSON_ArrayForEach(pair, list) {
         char edge_path[PATH_LEN], end_path[PATH_LEN];
         join_index(edge_path, list_path, body->edge_count);
         if (body->edge_count == MAX_EDGES) return fail(ctx, list_path, "more than %d edges", MAX_EDGES);
@@ -667,8 +664,7 @@ static bool body_plans_from_root(Context *ctx, const cJSON *root, GameData *data
     int count = 0;
     BodyPlan plans[MAX_BODY_PLANS] = {0};
     const cJSON *item;
-    cJSON_ArrayForEach(item, list)
-    {
+    cJSON_ArrayForEach(item, list) {
         char path[PATH_LEN];
         join_index(path, "bodyplans", count);
         if (count == MAX_BODY_PLANS) return fail(ctx, "bodyplans", "more than %d body plans", MAX_BODY_PLANS);
@@ -705,8 +701,7 @@ static bool read_abilities(Context *ctx, const cJSON *obj, const char *path, Par
     join_key(list_path, path, "abilities");
     if (!get_array(ctx, obj, path, "abilities", &list, false)) return false;
     const cJSON *item;
-    cJSON_ArrayForEach(item, list)
-    {
+    cJSON_ArrayForEach(item, list) {
         char ability_path[PATH_LEN];
         join_index(ability_path, list_path, part->ability_count);
         if (part->ability_count == MAX_ABILITIES)
@@ -723,8 +718,7 @@ static bool read_resistances(Context *ctx, const cJSON *obj, const char *path, P
     const cJSON *map;
     if (!get_object(ctx, obj, path, "resistances", &map, false)) return false;
     const cJSON *item;
-    cJSON_ArrayForEach(item, map)
-    {
+    cJSON_ArrayForEach(item, map) {
         char item_path[PATH_LEN];
         Element element;
         join_key(item_path, path, "resistances");
@@ -801,8 +795,7 @@ static bool parts_from_root(Context *ctx, const cJSON *root, GameData *data)
     static Part parts[MAX_PARTS];
     int count = 0;
     const cJSON *item;
-    cJSON_ArrayForEach(item, list)
-    {
+    cJSON_ArrayForEach(item, list) {
         char path[PATH_LEN];
         join_index(path, "parts", count);
         if (count == MAX_PARTS) return fail(ctx, "parts", "more than %d parts", MAX_PARTS);
@@ -841,8 +834,7 @@ static bool read_arena_object_list(Context *ctx, const cJSON *root, const char *
     if (!get_array(ctx, root, "", key, &list, true)) return false;
     int count = 0;
     const cJSON *item;
-    cJSON_ArrayForEach(item, list)
-    {
+    cJSON_ArrayForEach(item, list) {
         char path[PATH_LEN];
         join_index(path, key, count);
         if (count == MAX_ARENA_OBJECTS) return fail(ctx, key, "more than %d objects", MAX_ARENA_OBJECTS);
@@ -884,8 +876,7 @@ static bool read_laya_urls(Context *ctx, const cJSON *root, LayaSettings *laya)
     laya->url_count = cJSON_GetArraySize(list);
     if (laya->url_count < 1 || laya->url_count > LAYA_MAX_URLS) return fail(ctx, "urls", "must have between 1 and %d entries", LAYA_MAX_URLS);
     int index = 0;
-    cJSON_ArrayForEach(item, list)
-    {
+    cJSON_ArrayForEach(item, list) {
         char path[PATH_LEN];
         join_index(path, "urls", index);
         if (!cJSON_IsString(item)) return fail(ctx, path, "expected a string");
@@ -922,8 +913,7 @@ static bool pantheon_from_root(Context *ctx, const cJSON *root, GameData *data)
         return fail(ctx, "deities", "expected %d deities, found %d", DEITIES_PER_PANTHEON, cJSON_GetArraySize(list));
     int index = 0;
     const cJSON *item;
-    cJSON_ArrayForEach(item, list)
-    {
+    cJSON_ArrayForEach(item, list) {
         char path[PATH_LEN];
         join_index(path, "deities", index);
         if (!cJSON_IsObject(item)) return fail(ctx, path, "expected an object");
