@@ -15,6 +15,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
+| 21 Parallel Laya requests | `21-laya-parallel` / `~/Projects/lord-of-light-21-laya-parallel` | sonnet executor running |
 
 ## Done
 
@@ -41,7 +42,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 ## Next up (once unblocked)
 
-- Frontier: 21 Parallel Laya requests (user-requested follow-up).
+- Nothing else open on the map.
 - 20 Sound playback after 05, 10.
 - Later: 16 Save/load keys (after 10).
 

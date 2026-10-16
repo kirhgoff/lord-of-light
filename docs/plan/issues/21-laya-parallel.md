@@ -1,7 +1,7 @@
 # Parallel Laya requests
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 12
 
 ## Question
