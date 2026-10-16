@@ -14,3 +14,5 @@ Using Clay with the raylib renderer (see ticket 14):
 ## Comments
 
 **Plan (fable): `docs/plan/plan-12-clay-ui.md`.** User accepted all 11 defaults 2026-10-16.
+
+**Review 1 (fable design + opus code): CHANGES.** Held: font legibility, labels, log colours/wrap/tail, detail section, end-screen stats, Clay limits at 64 Combatants, hostile Event indices under asan, picking at every zoom, per-glyph letterSpacing (verified against raylib and clay.h). To fix: screenshots exported translucent alpha (misleading colours), overlays over the panel, panel hiding the Arena's right edge (camera inset in T view), fixed-height death log, frame scratch overflow reads out of bounds, Laya offline/briefing state survives R and F9, per-frame label waste, F9 keeps the old selection. **User decision 2026-10-17:** compact overlays (label, Vitality, Stance) for everyone; Parts only for the hovered/selected Combatant — replaces plan decision 8.
