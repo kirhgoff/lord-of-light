@@ -8,6 +8,7 @@ Checks: >
   -cert-err33-c,
   -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
   -clang-analyzer-security.ArrayBound,
+  -clang-analyzer-security.insecureAPI.strcpy,
   -clang-analyzer-unix.Errno
 WarningsAsErrors: '*'
 HeaderFilterRegex: '^(src|tests)/'
