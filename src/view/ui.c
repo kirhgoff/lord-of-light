@@ -24,8 +24,13 @@
 #define DETAIL_PADDING 6
 #define STATUS_TEXT_SIZE 96
 
+#define FONT_BIG 20
+#define END_SCREEN_WIDTH 640
+#define DEATH_LOG_HEIGHT 260
+
 enum { FONT_BODY, FONT_COUNT };
 
+static const Clay_Color END_BACKGROUND = {0, 0, 0, 190};
 static const Clay_Color PANEL_BACKGROUND = {16, 14, 12, 220};
 static const Clay_Color OVERLAY_BACKGROUND = {0, 0, 0, 170};
 static const Clay_Color OVERLAY_FOCUS_BACKGROUND = {70, 60, 10, 200};
@@ -81,9 +86,14 @@ static Clay_String frame_string(const char *format, ...)
     return (Clay_String){.isStaticallyAllocated = false, .length = length, .chars = out};
 }
 
+static void sized_text(Clay_String string, Clay_Color colour, int size)
+{
+    CLAY_TEXT(string, CLAY_TEXT_CONFIG({.fontId = FONT_BODY, .fontSize = size, .letterSpacing = 1, .textColor = colour}));
+}
+
 static void text(Clay_String string, Clay_Color colour)
 {
-    CLAY_TEXT(string, CLAY_TEXT_CONFIG({.fontId = FONT_BODY, .fontSize = FONT_SMALL, .letterSpacing = 1, .textColor = colour}));
+    sized_text(string, colour, FONT_SMALL);
 }
 
 bool ui_init(int width, int height)
@@ -292,11 +302,76 @@ static void overlay(const Battle *b, const GameData *data, const Scene *scene, c
     }
 }
 
+static void report_lines(const Battle *b, const GameData *data, const BattleReport *r)
+{
+    char who[LABEL_SIZE];
+    if (r->top_dealer >= 0) combatant_label(b, r->top_dealer, who, sizeof who);
+    text(r->top_dealer >= 0 ? frame_string("Top damage dealer: %s (%d damage)", who, r->top_dealer_damage)
+                            : CLAY_STRING("Top damage dealer: nobody"),
+         TEXT_COLOUR);
+    text(r->destroyed_part >= 0 ? frame_string("Most destroyed Part: %s (%d times)", data->parts[r->destroyed_part].name, r->destroyed_count)
+                                : CLAY_STRING("Most destroyed Part: none"),
+         TEXT_COLOUR);
+    if (r->last_to_fall >= 0) combatant_label(b, r->last_to_fall, who, sizeof who);
+    text(r->last_to_fall >= 0 ? frame_string("Longest survivor to fall: %s at %d.%ds", who, r->last_fall_tick / TICKS_PER_SECOND,
+                                             r->last_fall_tick % TICKS_PER_SECOND / 2)
+                              : CLAY_STRING("Longest survivor to fall: nobody fell"),
+         TEXT_COLOUR);
+    text(frame_string("Pickups taken: %d", r->pickups), TEXT_COLOUR);
+    text(r->top_element >= 0 ? frame_string("Top Element by damage: %s (%d)", element_name(r->top_element), r->top_element_damage)
+                             : CLAY_STRING("Top Element by damage: none"),
+         TEXT_COLOUR);
+    const DecisionStats *d = &r->decisions;
+    int total = d->laya + d->reflex;
+    text(frame_string("Decisions: Laya %d (%d%%), Reflex %d (%d%%)", d->laya, total ? d->laya * 100 / total : 0, d->reflex,
+                      total ? d->reflex * 100 / total : 0),
+         TEXT_COLOUR);
+    text(frame_string("Laya mean confidence %d.%03d, mean answer %d ms", d->mean_confidence_permille / 1000,
+                      d->mean_confidence_permille % 1000, d->mean_answer_ms),
+         TEXT_COLOUR);
+}
+
+static void death_log(const Battle *b, const GameData *data)
+{
+    CLAY({.id = CLAY_ID("DeathLog"),
+          .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(DEATH_LOG_HEIGHT)}, .childGap = 2,
+                     .layoutDirection = CLAY_TOP_TO_BOTTOM},
+          .clip = {.vertical = true, .childOffset = Clay_GetScrollOffset()}}) {
+        char line[EVENT_LINE_SIZE];
+        for (int e = 0; e < b->log_count; e++)
+            if (b->log[e].kind == EVENT_DEATH && event_line(b, data, &b->log[e], line, sizeof line) > 0)
+                text(frame_string("%s", line), RED_COLOUR);
+    }
+}
+
+static void end_screen(const Ui *ui, const Battle *b, const GameData *data)
+{
+    BattleReport report = report_build(b);
+    CLAY({.id = CLAY_ID("EndScreen"),
+          .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
+                     .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER}},
+          .backgroundColor = END_BACKGROUND}) {
+        CLAY({.layout = {.sizing = {CLAY_SIZING_FIXED(END_SCREEN_WIDTH), CLAY_SIZING_FIT(0)}, .padding = CLAY_PADDING_ALL(16),
+                         .childGap = 6, .layoutDirection = CLAY_TOP_TO_BOTTOM},
+              .backgroundColor = DETAIL_BACKGROUND}) {
+            sized_text(report.winner == SIDE_PANTHEON ? CLAY_STRING("Pantheon wins") : CLAY_STRING("Horde wins"), YELLOW_COLOUR,
+                       FONT_BIG);
+            report_lines(b, data, &report);
+            text(CLAY_STRING("Deaths"), DIM_COLOUR);
+            death_log(b, data);
+            if (ui->restart_allowed) text(frame_string("R: new Battle (seed %u)   Esc: quit", b->seed + 1), DIM_COLOUR);
+            else text(CLAY_STRING("Esc: quit"), DIM_COLOUR);
+        }
+    }
+}
+
 void ui_draw(const Ui *ui, const Battle *b, const GameData *data, const Scene *scene, const Viewport *view,
              const char (*laya_briefings)[BRIEFING_MAX + 1])
 {
     Clay_BeginLayout();
-    if (scene->xray) {
+    if (battle_winner(b) >= 0) {
+        end_screen(ui, b, data);
+    } else if (scene->xray) {
         CLAY({.id = CLAY_ID("Root"),
               .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .childAlignment = {.x = CLAY_ALIGN_X_RIGHT}}}) {
             panel(ui, b, data, laya_briefings);

@@ -247,11 +247,9 @@ static void draw_centred_text(const char *text, int y, int size, Color colour, i
     DrawText(text, (screen_width - MeasureText(text, size)) / 2, y, size, colour);
 }
 
-static void draw_status_label(const Battle *b, const Hud *hud, int screen_width)
+static void draw_status_label(const Hud *hud, int screen_width)
 {
-    int winner = battle_winner(b);
-    const char *text = winner == SIDE_PANTHEON ? "Pantheon wins" : winner == SIDE_HORDE ? "Horde wins" : hud->paused ? "PAUSED" : NULL;
-    if (text) draw_centred_text(text, HUD_HEIGHT + 8, 20, RAYWHITE, screen_width);
+    if (hud->paused) draw_centred_text("PAUSED", HUD_HEIGHT + 8, 20, RAYWHITE, screen_width);
 }
 
 static void draw_confirm_dialog(int screen_width, int screen_height)
@@ -280,7 +278,7 @@ static void draw_hud(const Battle *b, const Hud *hud, const Viewport *view)
     DrawRectangle(0, 0, view->width, HUD_HEIGHT, Fade(BLACK, 0.6f));
     draw_team_bar(b, SIDE_PANTHEON, 0, view->width / 2);
     draw_team_bar(b, SIDE_HORDE, view->width / 2, view->width);
-    draw_status_label(b, hud, view->width);
+    draw_status_label(hud, view->width);
     DrawText("Space pause  Arrows pan  -/= zoom  T tech view  F5 save  F9 load  Esc quit", 8, view->height - 18, 12, LIGHTGRAY);
 }
 

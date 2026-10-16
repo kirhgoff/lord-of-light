@@ -81,8 +81,10 @@ static bool death_text(const Battle *b, const GameData *data, const Event *e, ch
     char actor[LABEL_SIZE], target[LABEL_SIZE];
     combatant_label(b, e->actor, actor, sizeof actor);
     combatant_label(b, e->target, target, sizeof target);
-    if (e->actor >= 0)
+    if (e->actor >= 0 && e->actor_part >= 0)
         snprintf(out, size, "%s dies to %s's %s (%s)", target, actor, part_name(b, data, e->actor, e->actor_part), element_name(e->element));
+    else if (e->actor >= 0)
+        snprintf(out, size, "%s dies to %s (%s)", target, actor, element_name(e->element));
     else
         snprintf(out, size, "%s dies (%s)", target, element_name(e->element));
     return true;
@@ -133,4 +135,53 @@ int battle_last_decision(const Battle *b, int c)
     for (int e = b->log_count - 1; e >= 0; e--)
         if (b->log[e].kind == EVENT_DECISION && b->log[e].actor == c) return e;
     return -1;
+}
+
+static int argmax_first(const int *values, int count)
+{
+    int best = -1;
+    for (int i = 0; i < count; i++)
+        if (values[i] > 0 && (best < 0 || values[i] > values[best])) best = i;
+    return best;
+}
+
+typedef struct {
+    int damage_by[MAX_COMBATANTS];
+    int destroyed_by[MAX_PARTS];
+    int damage_by_element[ELEMENT_COUNT];
+} Tallies;
+
+static void tally_hit(const Battle *b, const Event *e, Tallies *t)
+{
+    if (e->actor >= 0 && e->actor < b->combatant_count) t->damage_by[e->actor] += e->amount;
+    if (e->element >= 0 && e->element < ELEMENT_COUNT) t->damage_by_element[e->element] += e->amount;
+    bool part_known = e->target >= 0 && e->target < b->combatant_count && e->target_part >= 0 &&
+                      e->target_part < b->combatants[e->target].body.slot_count;
+    if (e->detail == 0 && part_known) t->destroyed_by[b->combatants[e->target].body.slots[e->target_part].part]++;
+}
+
+static void note_fall(BattleReport *r, const Event *e)
+{
+    bool later = e->tick > r->last_fall_tick || (e->tick == r->last_fall_tick && e->target < r->last_to_fall);
+    if (later) r->last_to_fall = e->target, r->last_fall_tick = e->tick;
+}
+
+BattleReport report_build(const Battle *b)
+{
+    BattleReport r = {.winner = battle_winner(b), .last_to_fall = -1, .last_fall_tick = -1};
+    Tallies t = {{0}, {0}, {0}};
+    for (int i = 0; i < b->log_count; i++) {
+        const Event *e = &b->log[i];
+        if (e->kind == EVENT_HIT) tally_hit(b, e, &t);
+        else if (e->kind == EVENT_PICKUP) r.pickups++;
+        else if (e->kind == EVENT_DEATH && e->target >= 0 && e->target < b->combatant_count) note_fall(&r, e);
+    }
+    r.top_dealer = argmax_first(t.damage_by, b->combatant_count);
+    r.top_dealer_damage = r.top_dealer >= 0 ? t.damage_by[r.top_dealer] : 0;
+    r.destroyed_part = argmax_first(t.destroyed_by, MAX_PARTS);
+    r.destroyed_count = r.destroyed_part >= 0 ? t.destroyed_by[r.destroyed_part] : 0;
+    r.top_element = argmax_first(t.damage_by_element, ELEMENT_COUNT);
+    r.top_element_damage = r.top_element >= 0 ? t.damage_by_element[r.top_element] : 0;
+    r.decisions = battle_decision_stats(b);
+    return r;
 }

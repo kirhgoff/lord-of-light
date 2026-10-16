@@ -111,8 +111,12 @@ static void test_event_lines_per_kind(void)
     event_line(&battle, &data, &battle.log[11], line, sizeof line);
     CHECK(has(line, "imp dies (void)"));
 
-    log_at(0, (Event){.kind = EVENT_SPAWN, .actor = agni, .target = imp});
+    log_at(0, (Event){.kind = EVENT_DEATH, .actor = agni, .actor_part = -1, .target = imp, .element = ELEMENT_VENOM});
     event_line(&battle, &data, &battle.log[12], line, sizeof line);
+    CHECK(has(line, "imp dies to Agni (venom)"));
+
+    log_at(0, (Event){.kind = EVENT_SPAWN, .actor = agni, .target = imp});
+    event_line(&battle, &data, &battle.log[13], line, sizeof line);
     CHECK(has(line, "Agni spawns imp"));
 }
 
@@ -148,8 +152,48 @@ static void test_last_decision_finds_newest(void)
     CHECK(battle_last_decision(&battle, b) == 1);
 }
 
+static void test_report_build(void)
+{
+    fresh();
+    for (int c = 0; c < 7; c++) add("x", c < 4 ? SIDE_PANTHEON : SIDE_HORDE);
+    int part = battle.combatants[0].body.slots[0].part;
+    log_at(10, (Event){.kind = EVENT_HIT, .actor = 1, .target = 0, .target_part = 1, .element = ELEMENT_FIRE, .amount = 4, .detail = 5});
+    log_at(11, (Event){.kind = EVENT_HIT, .actor = 1, .target = 0, .target_part = 0, .element = ELEMENT_FROST, .amount = 6, .detail = 0});
+    log_at(12, (Event){.kind = EVENT_HIT, .actor = 2, .target = 0, .target_part = 1, .element = ELEMENT_FIRE, .amount = 3, .detail = 2});
+    log_at(13, (Event){.kind = EVENT_HIT, .actor = -1, .target = 0, .target_part = 1, .element = ELEMENT_FROST, .amount = 2, .detail = 1});
+    log_at(20, (Event){.kind = EVENT_PICKUP, .actor = 1});
+    log_at(21, (Event){.kind = EVENT_PICKUP, .actor = 2});
+    log_at(30, (Event){.kind = EVENT_DECISION, .actor = 1, .decider = DECIDER_LAYA, .confidence_permille = 500});
+    log_at(31, (Event){.kind = EVENT_DECISION, .actor = 2, .decider = DECIDER_REFLEX});
+    log_at(60, (Event){.kind = EVENT_DEATH, .actor = 1, .target = 5});
+    log_at(80, (Event){.kind = EVENT_DEATH, .actor = 1, .target = 4});
+    log_at(80, (Event){.kind = EVENT_DEATH, .actor = 2, .target = 3});
+    BattleReport r = report_build(&battle);
+    CHECK(r.top_dealer == 1 && r.top_dealer_damage == 10);
+    CHECK(r.top_element == ELEMENT_FROST && r.top_element_damage == 8);
+    CHECK(r.destroyed_part == part && r.destroyed_count == 1);
+    CHECK(r.last_to_fall == 3 && r.last_fall_tick == 80);
+    CHECK(r.pickups == 2);
+    CHECK(r.decisions.laya == 1 && r.decisions.reflex == 1 && r.decisions.mean_confidence_permille == 500);
+
+    fresh();
+    for (int c = 0; c < 3; c++) add("x", SIDE_PANTHEON);
+    log_at(1, (Event){.kind = EVENT_HIT, .actor = 2, .target = 0, .target_part = 1, .element = ELEMENT_FIRE, .amount = 5, .detail = 3});
+    log_at(2, (Event){.kind = EVENT_HIT, .actor = 1, .target = 0, .target_part = 1, .element = ELEMENT_FROST, .amount = 5, .detail = 3});
+    BattleReport tied = report_build(&battle);
+    CHECK(tied.top_dealer == 1 && tied.top_element == ELEMENT_FIRE);
+
+    fresh();
+    add("x", SIDE_PANTHEON);
+    BattleReport empty = report_build(&battle);
+    CHECK(empty.top_dealer == -1 && empty.top_dealer_damage == 0);
+    CHECK(empty.destroyed_part == -1 && empty.destroyed_count == 0);
+    CHECK(empty.last_to_fall == -1 && empty.pickups == 0 && empty.top_element == -1);
+}
+
 void run_report_tests(void)
 {
+    test_report_build();
     test_labels_number_shared_names();
     test_event_lines_per_kind();
     test_decision_lines_show_laya_and_fallbacks_only();

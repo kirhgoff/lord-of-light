@@ -10,6 +10,7 @@ typedef struct {
     int selected;
     int hovered;
     bool follow_log;
+    bool restart_allowed;
 } Ui;
 
 bool ui_init(int width, int height);

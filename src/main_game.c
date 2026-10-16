@@ -135,6 +135,19 @@ static void handle_save_keys(Battle *battle, const GameData *data, Scene *scene,
     }
 }
 
+static void restart_battle(Battle *battle, const GameData *data, Scene *scene, Ui *ui, Hud *hud, float *accumulated)
+{
+    char message[TOAST_SIZE];
+    battle_setup(battle, data, battle->seed + 1);
+    scene_reset(scene, battle);
+    sound_reset(battle);
+    ui->selected = ui->hovered = -1;
+    ui->follow_log = true;
+    *accumulated = 0;
+    snprintf(message, sizeof message, "New Battle, seed %u", battle->seed);
+    hud_show_toast(hud, message);
+}
+
 static void run_window(Battle *battle, const GameData *data, Decider *decider, Scene *scene, const Atlases *atlases,
                        const Sheets *sheets, Viewport *view, Hud *hud, Ui *ui,
                        const char (*laya_briefings)[BRIEFING_MAX + 1], int stop_tick)
@@ -146,6 +159,8 @@ static void run_window(Battle *battle, const GameData *data, Decider *decider, S
         if (hud->confirm_quit && IsKeyPressed(KEY_N)) hud->confirm_quit = false;
         handle_camera_input(view);
         if (!hud->confirm_quit) handle_save_keys(battle, data, scene, hud);
+        if (ui->restart_allowed && !hud->confirm_quit && battle_winner(battle) >= 0 && IsKeyPressed(KEY_R))
+            restart_battle(battle, data, scene, ui, hud, &accumulated);
         if (IsKeyPressed(KEY_SPACE)) hud->paused = !hud->paused;
         if (IsKeyPressed(KEY_T)) scene->xray = !scene->xray;
         if (IsKeyPressed(KEY_M)) sound_toggle_mute();
@@ -203,7 +218,7 @@ int main(int argc, char **argv)
     Scene scene = {.xray = args.xray};
     scene_reset(&scene, &battle);
     Hud hud = {0};
-    Ui ui = {args.select, -1, true};
+    Ui ui = {args.select, -1, true, !setup.replay_path};
     const char (*laya_briefings)[BRIEFING_MAX + 1] = setup.decider == &setup.laya_decider.base ? setup.laya_decider.briefing : NULL;
     int exit_code = 0;
 
