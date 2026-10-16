@@ -10,7 +10,18 @@ RAYLIB_SOURCES := rcore rshapes rtextures rtext rmodels raudio utils
 RAYLIB_DEFINES := -DPLATFORM_DESKTOP -DGRAPHICS_API_OPENGL_33
 RAYLIB_OBJECTS := $(RAYLIB_SOURCES:%=$(BUILD)/raylib/%.o) $(BUILD)/raylib/rglfw.o
 RAYLIB_LIB := $(BUILD)/libraylib.a
-FRAMEWORKS := -framework Cocoa -framework IOKit -framework CoreVideo -framework OpenGL
+
+ifeq ($(shell uname -s),Darwin)
+PLATFORM_LIBS := -framework Cocoa -framework IOKit -framework CoreVideo -framework OpenGL
+RGLFW_LANGUAGE := objective-c
+RGLFW_DEFINES :=
+else
+PLATFORM_LIBS := -lGL -lm -lpthread -ldl -lrt -lX11
+RGLFW_LANGUAGE := c
+RGLFW_DEFINES := -D_GLFW_X11
+STRICT += -D_POSIX_C_SOURCE=200809L
+VENDOR_FLAGS += -D_GNU_SOURCE
+endif
 
 CJSON_OBJECT := $(BUILD)/vendor/cjson.o
 SIM_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard src/sim/*.c))
@@ -35,7 +46,7 @@ test: $(BUILD)/tests
 	$(BUILD)/tests
 
 $(BUILD)/game: $(GAME_OBJECTS) $(RAYLIB_LIB)
-	$(CC) $^ $(FRAMEWORKS) -lcurl -o $@
+	$(CC) $^ $(PLATFORM_LIBS) -lcurl -o $@
 
 $(BUILD)/headless: $(HEADLESS_OBJECTS)
 	$(CC) $^ $(SAN) -lcurl -o $@
@@ -70,7 +81,7 @@ $(RAYLIB_LIB): $(RAYLIB_OBJECTS)
 
 $(BUILD)/raylib/rglfw.o: $(RAYLIB_DIR)/rglfw.c
 	@mkdir -p $(@D)
-	$(CC) $(VENDOR_FLAGS) $(RAYLIB_DEFINES) -x objective-c -I$(RAYLIB_DIR)/external/glfw/include -c $< -o $@
+	$(CC) $(VENDOR_FLAGS) $(RAYLIB_DEFINES) -x $(RGLFW_LANGUAGE) $(RGLFW_DEFINES) -I$(RAYLIB_DIR)/external/glfw/include -c $< -o $@
 
 $(BUILD)/raylib/%.o: $(RAYLIB_DIR)/%.c
 	@mkdir -p $(@D)
