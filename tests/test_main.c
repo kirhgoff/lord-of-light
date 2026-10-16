@@ -15,6 +15,7 @@ void run_briefing_tests(void);
 void run_briefing_request_tests(void);
 void run_laya_tests(void);
 void run_view_tests(void);
+void run_report_tests(void);
 void run_power_tests(void);
 void run_sound_tests(void);
 void run_saves_tests(void);
@@ -38,6 +39,7 @@ int main(void)
     run_briefing_request_tests();
     run_laya_tests();
     run_view_tests();
+    run_report_tests();
     run_power_tests();
     run_sound_tests();
     run_saves_tests();

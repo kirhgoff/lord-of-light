@@ -3,6 +3,8 @@
 #include <math.h>
 #include <stdio.h>
 
+#include "report.h"
+
 #define PATH_SIZE 256
 #define HUD_SEGMENT_MAX_WIDTH 120
 #define HUD_SEGMENT_GAP 4
@@ -211,9 +213,12 @@ static Color vitality_colour(const Combatant *who)
     return percent > 50 ? GREEN : percent > 25 ? YELLOW : RED;
 }
 
-static void draw_segment(const Combatant *who, int x, int y, int width)
+static void draw_segment(const Battle *b, int c, int x, int y, int width)
 {
-    DrawText(who->name, x, y, HUD_TEXT_SIZE, who->alive ? RAYWHITE : GRAY);
+    const Combatant *who = &b->combatants[c];
+    char label[LABEL_SIZE];
+    combatant_label(b, c, label, sizeof label);
+    DrawText(label, x, y, HUD_TEXT_SIZE, who->alive ? RAYWHITE : GRAY);
     int bar_y = y + HUD_TEXT_SIZE + 2;
     DrawRectangleLines(x, bar_y, width, HUD_BAR_HEIGHT, who->alive ? RAYWHITE : GRAY);
     if (!who->alive || who->vitality_max <= 0) return;
@@ -232,7 +237,7 @@ static void draw_team_bar(const Battle *b, Side side, int left, int right)
     for (int c = 0; c < b->combatant_count; c++) {
         const Combatant *who = &b->combatants[c];
         if (who->side != side || who->spawner >= 0) continue;
-        draw_segment(who, x, 6, width);
+        draw_segment(b, c, x, 6, width);
         x += width + HUD_SEGMENT_GAP;
     }
 }
@@ -276,7 +281,7 @@ static void draw_hud(const Battle *b, const Hud *hud, const Viewport *view)
     draw_team_bar(b, SIDE_PANTHEON, 0, view->width / 2);
     draw_team_bar(b, SIDE_HORDE, view->width / 2, view->width);
     draw_status_label(b, hud, view->width);
-    DrawText("Space pause  Arrows pan  -/= zoom  T x-ray  F5 save  F9 load  Esc quit", 8, view->height - 18, 12, LIGHTGRAY);
+    DrawText("Space pause  Arrows pan  -/= zoom  T tech view  F5 save  F9 load  Esc quit", 8, view->height - 18, 12, LIGHTGRAY);
 }
 
 void draw_frame_contents(const Battle *b, const GameData *data, const Scene *scene, const Atlases *atlases,
