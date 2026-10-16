@@ -240,6 +240,7 @@ static void test_load_rejects_bad_input(void)
     check_rejected(json, "\"amount\":5", "\"amount\":2000000000");
     check_rejected(json, "\"kind\":\"hit\"", "\"kind\":7");
     check_rejected(json, "\"dot_element\":-1", "\"dot_element\":8");
+    check_rejected(json, "\"dot_ticks\":0", "\"dot_ticks\":5");
     check_rejected(json, "\"spawner\":-1", "\"spawner\":99");
     check_rejected(json, "\"slow_percent\":0", "\"slow_percent\":101");
     check_rejected(json, "\"haste_percent\":0", "\"haste_percent\":1001");

@@ -11,6 +11,7 @@ void run_movement_tests(void);
 void run_combat_tests(void);
 void run_decide_tests(void);
 void run_floor_tests(void);
+void run_view_tests(void);
 void run_power_tests(void);
 
 static void test_arena_is_48_by_32(void)
@@ -28,6 +29,7 @@ int main(void)
     run_combat_tests();
     run_decide_tests();
     run_floor_tests();
+    run_view_tests();
     run_power_tests();
     if (test_failures) return 1;
     printf("all tests passed\n");
