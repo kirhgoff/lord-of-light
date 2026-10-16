@@ -62,11 +62,11 @@ typedef struct {
     int height;
 } Args;
 
-static bool parse_dimension(const char *text, char **end, int *value)
+static bool parse_dimension(const char *text, char **end, int minimum, int *value)
 {
     errno = 0;
     long parsed = strtol(text, end, 10);
-    if (errno || *end == text || parsed > MAX_WINDOW_SIDE) return false;
+    if (errno || *end == text || parsed < minimum || parsed > MAX_WINDOW_SIDE) return false;
     *value = (int)parsed;
     return true;
 }
@@ -74,8 +74,8 @@ static bool parse_dimension(const char *text, char **end, int *value)
 static bool parse_size(const char *text, int *width, int *height)
 {
     char *end;
-    if (!parse_dimension(text, &end, width) || *end != 'x' || !parse_dimension(end + 1, &end, height) || *end) return false;
-    return *width >= WINDOW_MIN_WIDTH && *height >= WINDOW_MIN_HEIGHT;
+    return parse_dimension(text, &end, WINDOW_MIN_WIDTH, width) && *end == 'x' &&
+           parse_dimension(end + 1, &end, WINDOW_MIN_HEIGHT, height) && !*end;
 }
 
 static bool parse_args(int argc, char **argv, Args *args, DeciderSetup *setup)
