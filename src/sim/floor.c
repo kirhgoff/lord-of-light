@@ -115,7 +115,7 @@ static void take_pickups(Battle *battle, const GameData *data)
             if (!who->alive || !touching(who, object, def->radius)) continue;
             int amount = apply_pickup(who, data, def);
             if (amount == 0) continue;
-            battle_log_event(battle, (Event){0, EVENT_PICKUP, c, -1, -1, -1, -1, amount, p});
+            battle_log_event(battle, (Event){0, EVENT_PICKUP, c, -1, -1, -1, -1, amount, p, DECIDER_NONE});
             object->respawn_in = def->respawn_ticks;
             break;
         }
@@ -130,7 +130,7 @@ static void spring_traps(Battle *battle, const GameData *data)
         if (object->respawn_in > 0) continue;
         for (int c = 0; c < battle->combatant_count; c++) {
             if (!battle->combatants[c].alive || !touching(&battle->combatants[c], object, def->radius)) continue;
-            battle_log_event(battle, (Event){0, EVENT_TRAP, -1, -1, c, -1, def->element, def->damage, t});
+            battle_log_event(battle, (Event){0, EVENT_TRAP, -1, -1, c, -1, def->element, def->damage, t, DECIDER_NONE});
             object->respawn_in = def->respawn_ticks;
             combatant_hit(battle, data, -1, -1, c, def->element, def->damage);
             break;

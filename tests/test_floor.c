@@ -44,7 +44,7 @@ static void load_fixture(void)
 
 static void run(int ticks)
 {
-    for (int t = 0; t < ticks; t++) battle_step(&battle, &data);
+    for (int t = 0; t < ticks; t++) battle_step(&battle, &data, NULL);
 }
 
 static int count_events(EventKind kind)
@@ -347,7 +347,7 @@ static void test_buffs_and_trap_events_survive_save_and_load(void)
     dummy->haste_percent = 50, dummy->haste_ticks = 7;
     dummy->vision_percent = 60, dummy->vision_ticks = 8;
     dummy->ward_percent = 40, dummy->ward_ticks = 9;
-    battle_log_event(&battle, (Event){0, EVENT_TRAP, -1, -1, DUMMY, -1, ELEMENT_FROST, 8, 1});
+    battle_log_event(&battle, (Event){0, EVENT_TRAP, -1, -1, DUMMY, -1, ELEMENT_FROST, 8, 1, DECIDER_NONE});
     char *json = battle_save_json(&battle, &data);
     static Battle loaded;
     CHECK(battle_load_json(&loaded, &data, json, err, ERR_SIZE));

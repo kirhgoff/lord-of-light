@@ -23,7 +23,7 @@ static void load_data(void)
 
 static void run(Battle *b, int ticks)
 {
-    for (int t = 0; t < ticks; t++) battle_step(b, &data);
+    for (int t = 0; t < ticks; t++) battle_step(b, &data, NULL);
 }
 
 static void test_setup_is_seeded(void)
@@ -110,9 +110,10 @@ static void test_round_trip_is_identical(void)
     load_data();
     battle_setup(&battle, &data, 11);
     run(&battle, 30);
-    CHECK(battle_log_event(&battle, (Event){0, EVENT_HIT, 1, 2, 5, 3, ELEMENT_FIRE, 12, -4}));
+    CHECK(battle_log_event(&battle, (Event){0, EVENT_HIT, 1, 2, 5, 3, ELEMENT_FIRE, 12, -4, DECIDER_NONE}));
     battle.combatants[2].parts[1].order = (Order){ORDER_STRIKE, 5, 10000, 20000};
-    battle.combatants[2].decision = (Decision){STANCE_FIGHT, 40, ELEMENT_FIRE};
+    battle.combatants[2].decision = (Decision){STANCE_FIGHT, HURT_WOUNDED, ELEMENT_FIRE};
+    battle.combatants[3].next_decision_tick = 77;
     battle.combatants[5].charm_ticks = 9;
     battle.combatants[5].charm_side = SIDE_PANTHEON;
     battle.combatants[5].dot_damage = 2;
@@ -122,6 +123,7 @@ static void test_round_trip_is_identical(void)
     battle.combatants[5].spawner = 2;
     battle.combatants[5].damage_bonus_percent = 50;
     battle.combatants[5].damage_bonus_ticks = 7;
+    CHECK(battle_log_event(&battle, (Event){0, EVENT_DECISION, 2, -1, -1, -1, ELEMENT_FIRE, STANCE_FIGHT, HURT_WOUNDED, DECIDER_REFLEX}));
     battle.remains[0] = (Remains){5000, 6000, 2, {1, 2}};
     battle.remains_count = 1;
     char *json = battle_save_json(&battle, &data);
@@ -129,7 +131,8 @@ static void test_round_trip_is_identical(void)
     char *again = battle_save_json(&loaded, &data);
     CHECK(strcmp(json, again) == 0);
     CHECK(memcmp(loaded.obstacle, battle.obstacle, sizeof battle.obstacle) == 0);
-    CHECK(loaded.log_count == 1 && loaded.log[0].amount == 12 && loaded.log[0].detail == -4 && loaded.log[0].tick == 30 && loaded.rng == battle.rng);
+    CHECK(loaded.combatants[3].next_decision_tick == 77 && loaded.log[1].decider == DECIDER_REFLEX);
+    CHECK(loaded.log_count == 2 && loaded.log[0].amount == 12 && loaded.log[0].detail == -4 && loaded.log[0].tick == 30 && loaded.rng == battle.rng);
     free(json);
     free(again);
     battle_free(&loaded);
@@ -167,7 +170,7 @@ static void test_rng_is_deterministic_and_never_zero(void)
 static char *saved_json(uint32_t seed)
 {
     battle_setup(&battle, &data, seed);
-    battle_log_event(&battle, (Event){0, EVENT_HIT, 0, 0, 1, 0, ELEMENT_FIRE, 5, 0});
+    battle_log_event(&battle, (Event){0, EVENT_HIT, 0, 0, 1, 0, ELEMENT_FIRE, 5, 0, DECIDER_NONE});
     return battle_save_json(&battle, &data);
 }
 
@@ -216,6 +219,9 @@ static void test_load_rejects_bad_input(void)
     check_rejected(json, "\"combatants\":[{", "\"combatants\":[5,{");
     check_rejected(json, "\"pickups\":[{", "\"pickups\":[5,{");
     check_rejected(json, "\"log\":[{", "\"log\":[5,{");
+    check_rejected(json, "\"hurt_level\":0", "\"hurt_level\":4");
+    check_rejected(json, "\"decider\":0", "\"decider\":3");
+    check_rejected(json, "\"next_decision_tick\":0", "\"next_decision_tick\":-1");
     check_rejected(json, "\"decision\":{\"stance\"", "\"decisionx\":{\"stance\"");
     check_rejected(json, "\"slots\":[{", "\"slots\":[5,{");
     check_rejected(json, "\"def\":\"soma\"", "\"def\":\"no_such_pickup\"");
@@ -264,7 +270,7 @@ static void test_log_grows_without_dropping(void)
     load_data();
     reset(&battle);
     battle_setup(&battle, &data, 3);
-    for (int i = 0; i < 5000; i++) CHECK(battle_log_event(&battle, (Event){0, EVENT_HIT, 0, 0, 1, 0, -1, i, 0}));
+    for (int i = 0; i < 5000; i++) CHECK(battle_log_event(&battle, (Event){0, EVENT_HIT, 0, 0, 1, 0, -1, i, 0, DECIDER_NONE}));
     CHECK(battle.log_count == 5000 && battle.log[4999].amount == 4999);
     char *json = battle_save_json(&battle, &data);
     CHECK(battle_load_json(&loaded, &data, json, err, ERR_SIZE));

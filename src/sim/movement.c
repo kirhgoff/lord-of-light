@@ -141,7 +141,7 @@ static int64_t squared(int64_t value)
     return value * value;
 }
 
-static int64_t isqrt(int64_t value)
+int64_t isqrt(int64_t value)
 {
     int64_t root = 0, bit = (int64_t)1 << 62;
     while (bit > value) bit >>= 2;
@@ -181,7 +181,7 @@ static int64_t distance_squared(int ax, int ay, int bx, int by)
     return squared(ax - bx) + squared(ay - by);
 }
 
-static bool hits_combatant(const Battle *battle, int self, int x_millipx, int y_millipx)
+static int blocking_combatant(const Battle *battle, int self, int x_millipx, int y_millipx)
 {
     const Combatant *me = &battle->combatants[self];
     int64_t touching = squared(2 * COMBATANT_RADIUS_MILLIPX);
@@ -190,19 +190,40 @@ static bool hits_combatant(const Battle *battle, int self, int x_millipx, int y_
         if (c == self || !other->alive) continue;
         int64_t after = distance_squared(x_millipx, y_millipx, other->x_millipx, other->y_millipx);
         int64_t before = distance_squared(me->x_millipx, me->y_millipx, other->x_millipx, other->y_millipx);
-        if (after < touching && after < before) return true;
+        if (after < touching && after < before) return c;
     }
-    return false;
+    return -1;
 }
 
 static bool try_move(Battle *battle, int self, int dx, int dy)
 {
     Combatant *me = &battle->combatants[self];
     int x = me->x_millipx + dx, y = me->y_millipx + dy;
-    if (hits_terrain(battle, x, y) || hits_combatant(battle, self, x, y)) return false;
+    if (hits_terrain(battle, x, y) || blocking_combatant(battle, self, x, y) >= 0) return false;
     me->x_millipx = x;
     me->y_millipx = y;
     return true;
+}
+
+static bool is_cramped(const Battle *battle, const Combatant *who, int tx, int ty, int step)
+{
+    int sideways_x = (int)((int64_t)tx * COMBATANT_RADIUS_MILLIPX / step), sideways_y = (int)((int64_t)ty * COMBATANT_RADIUS_MILLIPX / step);
+    return hits_terrain(battle, who->x_millipx + sideways_x, who->y_millipx + sideways_y) ||
+           hits_terrain(battle, who->x_millipx - sideways_x, who->y_millipx - sideways_y);
+}
+
+static void slide_around(Battle *battle, int self, int blocker, int dx, int dy, int step)
+{
+    const Combatant *me = &battle->combatants[self], *other = &battle->combatants[blocker];
+    int64_t bx = other->x_millipx - me->x_millipx, by = other->y_millipx - me->y_millipx;
+    int64_t length = isqrt(squared(bx) + squared(by));
+    if (length == 0) return;
+    int tx = (int)(-by * step / length), ty = (int)(bx * step / length);
+    if ((int64_t)tx * dx + (int64_t)ty * dy < 0) tx = -tx, ty = -ty;
+    bool head_on = ((int64_t)tx * dx + (int64_t)ty * dy) * 4 < squared(step);
+    bool cramped = is_cramped(battle, me, tx, ty, step) || is_cramped(battle, other, tx, ty, step);
+    if (head_on && cramped && self > blocker && try_move(battle, self, -dx, -dy)) return;
+    if (!try_move(battle, self, tx, ty)) try_move(battle, self, -tx, -ty);
 }
 
 static void move_towards(Battle *battle, int self, int goal_x, int goal_y, int step)
@@ -213,6 +234,11 @@ static void move_towards(Battle *battle, int self, int goal_x, int goal_y, int s
     if (distance == 0) return;
     if (distance > step) dx = (int)(dx * step / distance), dy = (int)(dy * step / distance);
     if (try_move(battle, self, dx, dy)) return;
+    int blocker = blocking_combatant(battle, self, me->x_millipx + dx, me->y_millipx + dy);
+    if (blocker >= 0) {
+        slide_around(battle, self, blocker, dx, dy, step);
+        return;
+    }
     if (!try_move(battle, self, dx, 0)) try_move(battle, self, 0, dy);
 }
 

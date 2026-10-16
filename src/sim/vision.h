@@ -29,6 +29,7 @@ typedef struct {
 
 bool line_of_sight(const Battle *battle, int from_x_millipx, int from_y_millipx, int to_x_millipx, int to_y_millipx);
 void combatant_vision_ranges(const Combatant *combatant, const GameData *data, int range_millipx[3]);
+int combatant_health_quarters(const Combatant *combatant);
 void perceive(const Battle *battle, const GameData *data, int combatant, Perception *out);
 
 #endif

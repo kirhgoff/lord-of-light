@@ -92,6 +92,7 @@ static cJSON *save_combatant(const Combatant *c, const GameData *data)
     cJSON_AddNumberToObject(o, "spawner", c->spawner);
     cJSON_AddNumberToObject(o, "damage_bonus_percent", c->damage_bonus_percent);
     cJSON_AddNumberToObject(o, "damage_bonus_ticks", c->damage_bonus_ticks);
+    cJSON_AddNumberToObject(o, "next_decision_tick", c->next_decision_tick);
     cJSON_AddNumberToObject(o, "haste_percent", c->haste_percent);
     cJSON_AddNumberToObject(o, "haste_ticks", c->haste_ticks);
     cJSON_AddNumberToObject(o, "vision_percent", c->vision_percent);
@@ -168,6 +169,7 @@ char *battle_save_json(const Battle *battle, const GameData *data)
         cJSON_AddNumberToObject(o, "element", ev->element);
         cJSON_AddNumberToObject(o, "amount", ev->amount);
         cJSON_AddNumberToObject(o, "detail", ev->detail);
+        cJSON_AddNumberToObject(o, "decider", ev->decider);
         cJSON_AddItemToArray(log, o);
     }
     char *text = cJSON_PrintUnformatted(root);
@@ -335,12 +337,13 @@ static bool load_part_state(Context *ctx, const cJSON *part, PartState *state)
 static bool load_decision(Context *ctx, const cJSON *obj, Decision *decision)
 {
     const cJSON *source;
-    int stance;
+    int stance, hurt_level;
     if (!read_object(ctx, obj, "decision", &source) || !read_id(ctx, source, "stance", STANCE_IDS, STANCE_COUNT, &stance) ||
-        !read_int(ctx, source, "hurt_level", 0, 100, &decision->hurt_level) ||
+        !read_int(ctx, source, "hurt_level", 0, HURT_COUNT - 1, &hurt_level) ||
         !read_int(ctx, source, "vulnerable_element", -1, ELEMENT_COUNT - 1, &decision->vulnerable_element))
         return false;
     decision->stance = (Stance)stance;
+    decision->hurt_level = (HurtLevel)hurt_level;
     return true;
 }
 
@@ -374,6 +377,7 @@ static bool load_combatant(Context *ctx, const cJSON *obj, Combatant *c)
            read_combatant_ref(ctx, obj, "spawner", &c->spawner) &&
            read_int(ctx, obj, "damage_bonus_percent", 0, 1000, &c->damage_bonus_percent) &&
            read_int(ctx, obj, "damage_bonus_ticks", 0, 1000000, &c->damage_bonus_ticks) &&
+           read_int(ctx, obj, "next_decision_tick", 0, MAX_TICK, &c->next_decision_tick) &&
            read_int(ctx, obj, "haste_percent", 0, 1000, &c->haste_percent) &&
            read_int(ctx, obj, "haste_ticks", 0, 1000000, &c->haste_ticks) &&
            read_int(ctx, obj, "vision_percent", 0, 1000, &c->vision_percent) &&
@@ -443,16 +447,18 @@ static bool load_remains(Context *ctx, const cJSON *root, Battle *battle)
 
 static bool load_event(Context *ctx, const cJSON *o, Event *event)
 {
-    int kind;
+    int kind, decider;
     if (!cJSON_IsObject(o)) return fail(ctx, "log entry is not an object");
     if (!read_int(ctx, o, "tick", 0, MAX_TICK, &event->tick) || !read_id(ctx, o, "kind", EVENT_IDS, EVENT_KIND_COUNT, &kind) ||
         !read_combatant_ref(ctx, o, "actor", &event->actor) || !read_slot_ref(ctx, o, "actor_part", &event->actor_part) ||
         !read_combatant_ref(ctx, o, "target", &event->target) || !read_slot_ref(ctx, o, "target_part", &event->target_part) ||
         !read_int(ctx, o, "element", -1, ELEMENT_COUNT - 1, &event->element) ||
         !read_int(ctx, o, "amount", -EVENT_AMOUNT_LIMIT, EVENT_AMOUNT_LIMIT, &event->amount) ||
-        !read_int(ctx, o, "detail", -EVENT_AMOUNT_LIMIT, EVENT_AMOUNT_LIMIT, &event->detail))
+        !read_int(ctx, o, "detail", -EVENT_AMOUNT_LIMIT, EVENT_AMOUNT_LIMIT, &event->detail) ||
+        !read_int(ctx, o, "decider", 0, DECIDER_COUNT - 1, &decider))
         return false;
     event->kind = (EventKind)kind;
+    event->decider = (DeciderKind)decider;
     return true;
 }
 

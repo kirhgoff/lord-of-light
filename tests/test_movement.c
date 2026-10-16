@@ -42,7 +42,7 @@ static void send_to(int c, int x_millipx, int y_millipx)
 
 static void run(int ticks)
 {
-    for (int t = 0; t < ticks; t++) battle_step(&battle, &data);
+    for (int t = 0; t < ticks; t++) battle_step(&battle, &data, NULL);
 }
 
 static void give_vision(int c, int close, int medium, int far)
@@ -236,6 +236,38 @@ static void test_two_tile_gap_is_wide_enough(void)
     send_to(0, 30 * TILE + TILE / 2, 11 * TILE);
     run(1200);
     CHECK(battle.combatants[0].x_millipx == 30 * TILE + TILE / 2);
+}
+
+static void test_blocked_by_ally_slides_around(void)
+{
+    open_field();
+    for (int c = 2; c < battle.combatant_count; c++) battle.combatants[c].alive = false;
+    place(0, 5, 10);
+    place(1, 8, 10);
+    set_side(0, SIDE_PANTHEON);
+    set_side(1, SIDE_PANTHEON);
+    send_to(0, 12 * TILE + TILE / 2, 10 * TILE + TILE / 2);
+    run(300);
+    CHECK(battle.combatants[0].x_millipx == 12 * TILE + TILE / 2);
+    CHECK(battle.combatants[0].y_millipx == 10 * TILE + TILE / 2);
+}
+
+static void test_allies_swap_sides_through_a_two_tile_gap(void)
+{
+    open_field();
+    for (int c = 2; c < battle.combatant_count; c++) battle.combatants[c].alive = false;
+    for (int row = 0; row < ARENA_HEIGHT_TILES; row++) battle.obstacle[row][15] = row == 10 || row == 11 ? 0 : 1;
+    set_side(0, SIDE_PANTHEON);
+    set_side(1, SIDE_PANTHEON);
+    battle.combatants[0].x_millipx = 168 * PX;
+    battle.combatants[0].y_millipx = 176 * PX;
+    battle.combatants[1].x_millipx = 320 * PX;
+    battle.combatants[1].y_millipx = 176 * PX;
+    send_to(0, 400 * PX, 176 * PX);
+    send_to(1, 80 * PX, 176 * PX);
+    run(600);
+    CHECK(battle.combatants[0].x_millipx > 16 * TILE);
+    CHECK(battle.combatants[1].x_millipx < 15 * TILE);
 }
 
 static void test_combatant_beside_obstacle_corner_still_moves(void)
@@ -535,6 +567,8 @@ void run_movement_tests(void)
     test_one_tile_gap_is_too_narrow_to_path_through();
     test_two_tile_gap_is_wide_enough();
     test_combatants_at_the_same_spot_are_pushed_apart();
+    test_blocked_by_ally_slides_around();
+    test_allies_swap_sides_through_a_two_tile_gap();
     test_combatant_beside_obstacle_corner_still_moves();
     test_push_apart_never_pushes_into_terrain();
     test_obstacle_blocks_line_of_sight();

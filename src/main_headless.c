@@ -5,10 +5,11 @@
 #include <string.h>
 
 #include "sim/battle.h"
+#include "sim/decide.h"
 #include "version.h"
 
 #define ERR_SIZE 256
-#define DEFAULT_TICKS 2000
+#define DEFAULT_TICKS 4000
 
 static char *read_text_file(const char *path)
 {
@@ -87,7 +88,8 @@ int main(int argc, char **argv)
         battle_setup(&battle, &data, seed);
     }
 
-    for (long t = 0; t < ticks && battle_winner(&battle) < 0; t++) battle_step(&battle, &data);
+    Decider reflex = reflex_decider();
+    for (long t = 0; t < ticks && battle_winner(&battle) < 0; t++) battle_step(&battle, &data, &reflex);
 
     if (dump_path) {
         char *json = battle_save_json(&battle, &data);
