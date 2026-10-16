@@ -14,3 +14,7 @@ Execute the 8 Order kinds per Part each Tick (strike, cast, block, move_to, pick
 - Death when Vitality ≤ 0 or all Hearts destroyed → Remains. Battle ends when a side has no living Combatants.
 - Every hit, effect, death and spawn appends an Event (with source Combatant, Part, Element, amount, Tick).
 - Each Element and each death rule has a test from a hand-written JSON state.
+
+## Comments
+
+**Plan (fable): `docs/plan/plan-05-combat.md`.** User accepted all defaults 2026-10-16: Radiance ignores resistance from external (armour) Parts, `pierce_targets` unused; "buff" = `damage_bonus_percent/ticks` (Void strips it, nothing grants it yet); ability `area` deferred to 06; body-wide resistance clamped ±100 scales hit damage and effect durations, Vitality share 50 %, block 50 %, DoT every 20 Ticks, lightning hop half damage within 96 px; death = Vitality ≤ 0 or no working Heart, Remains keep every Part; minions spawn at the spawner, copy its charm, one cap per Combatant; old saves stop loading.

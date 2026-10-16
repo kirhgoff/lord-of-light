@@ -15,7 +15,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 05 Combat | `05-combat-elements` / `~/Projects/lord-of-light-05-combat-elements` | fable plan written (scratchpad `plan-05-combat.md`, volatile); waiting on user decisions, then sonnet executor |
+| 05 Combat | `05-combat-elements` / `~/Projects/lord-of-light-05-combat-elements` | plan `docs/plan/plan-05-combat.md` accepted; sonnet executor running |
 
 ## Done
 
