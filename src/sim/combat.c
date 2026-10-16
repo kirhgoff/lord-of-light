@@ -1,6 +1,7 @@
 #include "combat.h"
 
 #include "movement.h"
+#include "vision.h"
 
 static int64_t squared(int64_t value)
 {
@@ -112,4 +113,100 @@ void combatant_hit(Battle *battle, const GameData *data, int actor, int actor_pa
     if (!victim->alive) return;
     int resistance = combatant_resistance_percent(victim, data, element, element == ELEMENT_RADIANCE);
     hit_once(battle, data, actor, actor_part, target, element, damage, resistance);
+}
+
+static bool is_living_target(const Battle *battle, int target)
+{
+    return target >= 0 && target < battle->combatant_count && battle->combatants[target].alive;
+}
+
+static bool act_attack(Battle *battle, const GameData *data, int me, int s, const Ability *ability)
+{
+    const Combatant *self = &battle->combatants[me];
+    int target = self->parts[s].order.target;
+    if (!is_living_target(battle, target)) return false;
+    const Combatant *victim = &battle->combatants[target];
+    if (victim->charm_side == self->charm_side || !combatant_in_reach(self, victim, ability->range)) return false;
+    if (ability->order == ORDER_CAST && !line_of_sight(battle, self->x_millipx, self->y_millipx, victim->x_millipx, victim->y_millipx))
+        return false;
+    combatant_hit(battle, data, me, s, target, ability->element, ability->damage);
+    return true;
+}
+
+static bool act_support(Battle *battle, int me, int s, const Ability *ability)
+{
+    const Combatant *self = &battle->combatants[me];
+    int target = self->parts[s].order.target;
+    if (!is_living_target(battle, target)) return false;
+    Combatant *ally = &battle->combatants[target];
+    if (ally->charm_side != self->charm_side || !combatant_in_reach(self, ally, ability->range)) return false;
+    int gain = ally->vitality_max - ally->vitality;
+    if (gain > ability->heal) gain = ability->heal;
+    if (gain <= 0) return false;
+    ally->vitality += gain;
+    battle_log_event(battle, (Event){0, EVENT_EFFECT, me, s, target, -1, ability->element, gain, EFFECT_HEAL});
+    return true;
+}
+
+static int living_minions(const Battle *battle, int spawner)
+{
+    int count = 0;
+    for (int c = 0; c < battle->combatant_count; c++) count += battle->combatants[c].alive && battle->combatants[c].spawner == spawner;
+    return count;
+}
+
+static bool act_spawn(Battle *battle, const GameData *data, int me, int s)
+{
+    const Part *sac = &data->parts[battle->combatants[me].body.slots[s].part];
+    if (sac->spawn_plan < 0 || battle->combatant_count == MAX_COMBATANTS || living_minions(battle, me) >= sac->spawn_cap) return false;
+    const BodyPlan *plan = &data->body_plans[sac->spawn_plan];
+    const Combatant *spawner = &battle->combatants[me];
+    int minion = battle_add_combatant(battle, data, plan->id, spawner->side, &plan->body, spawner->x_millipx, spawner->y_millipx);
+    battle->combatants[minion].charm_side = spawner->charm_side;
+    battle->combatants[minion].charm_ticks = spawner->charm_ticks;
+    battle->combatants[minion].spawner = me;
+    battle_log_event(battle, (Event){0, EVENT_SPAWN, me, s, minion, -1, -1, 0, 0});
+    return true;
+}
+
+static bool perform(Battle *battle, const GameData *data, int me, int s, const Ability *ability)
+{
+    switch (ability->order) {
+    case ORDER_STRIKE:
+    case ORDER_CAST: return act_attack(battle, data, me, s, ability);
+    case ORDER_SUPPORT: return act_support(battle, me, s, ability);
+    case ORDER_SPAWN: return act_spawn(battle, data, me, s);
+    default: return false;
+    }
+}
+
+static void act_combatant(Battle *battle, const GameData *data, int me)
+{
+    bool working[MAX_SLOTS];
+    body_working_parts(&battle->combatants[me].body, battle->combatants[me].parts, working);
+    for (int s = 0; s < battle->combatants[me].body.slot_count; s++) {
+        PartState *state = &battle->combatants[me].parts[s];
+        const Ability *ability = find_ability(&data->parts[battle->combatants[me].body.slots[s].part], state->order.kind);
+        if (!working[s] || state->cooldown > 0 || !ability) continue;
+        if (perform(battle, data, me, s, ability)) state->cooldown = ability->cooldown_ticks;
+    }
+}
+
+void battle_act(Battle *battle, const GameData *data)
+{
+    for (int c = 0; c < battle->combatant_count; c++)
+        for (int s = 0; s < battle->combatants[c].body.slot_count; s++)
+            if (battle->combatants[c].alive && battle->combatants[c].parts[s].cooldown > 0) battle->combatants[c].parts[s].cooldown--;
+    for (int c = 0; c < battle->combatant_count; c++)
+        if (battle->combatants[c].alive) act_combatant(battle, data, c);
+}
+
+void battle_tick_effects(Battle *battle, const GameData *data)
+{
+    (void)data;
+    for (int c = 0; c < battle->combatant_count; c++) {
+        Combatant *who = &battle->combatants[c];
+        if (!who->alive) continue;
+        if (who->damage_bonus_ticks > 0 && --who->damage_bonus_ticks == 0) who->damage_bonus_percent = 0;
+    }
 }
