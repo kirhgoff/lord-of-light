@@ -8,7 +8,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 2. Spawn one executor agent per ticket (model: sonnet) with `docs/plan/executor-brief.md` + the ticket path + branch/worktree name `NN-slug` at `~/Projects/lord-of-light-NN-slug`. Research tickets: an opus agent using the `mattpocock-skills:research` skill on branch `research/<name>`.
 3. When it hands back, spawn a separate reviewer (model: opus) with `docs/plan/reviewer-brief.md`. CHANGES → send findings back to the executor, re-review if non-trivial.
 4. Verify yourself (`make test` in the worktree, `git log --format='%h %G? %s' main..<branch>` all `G`), then on main: `git merge --no-ff <branch>` (signed, trailer), set the ticket `Status: resolved` with an `## Answer`, add a line to map.md "Decisions so far", update this file, commit.
-5. Leave merged worktrees in place (see Open questions).
+5. Remove the merged worktree: `remove-worktree --force lord-of-light-NN-slug` (user approved --force for worktrees whose branch is merged into main; it refuses otherwise because there is no remote).
 
 ## In flight
 
@@ -31,4 +31,4 @@ If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`
 
 ## Open questions for the user
 
-- May merged worktrees be removed with `remove-worktree --force`? It refuses because there is no remote. Until answered, keep them.
+- None.
