@@ -4,8 +4,17 @@
 
 #define WIDTH 1280
 #define HEIGHT 720
-
 #define ERR_SIZE 256
+
+static GameData data;
+static Battle battle;
+
+static void setup_battle(void)
+{
+    char err[ERR_SIZE];
+    LOAD_OR_EXIT(load_game_data(&data, "data", err, ERR_SIZE), err);
+    battle_setup(&battle, &data, 1);
+}
 
 static void test_atlas_reads_sidecar(void)
 {
@@ -40,7 +49,6 @@ static void test_atlas_frame_wraps_within_the_kind(void)
 
 static void test_all_atlases_load_for_the_real_data(void)
 {
-    static GameData data;
     static Atlases atlases;
     char err[ERR_SIZE];
     LOAD_OR_EXIT(load_game_data(&data, "data", err, ERR_SIZE), err);
@@ -89,8 +97,46 @@ static void test_viewport_centre_maps_to_screen_centre(void)
     CHECK(viewport_screen_x(&v, v.centre_x + 10) == WIDTH / 2 + 10 * v.zoom);
 }
 
+static void test_position_interpolates_between_ticks(void)
+{
+    setup_battle();
+    Scene scene = {0};
+    scene_reset(&scene, &battle);
+    battle.combatants[0].x_millipx = 1000;
+    battle.combatants[0].y_millipx = 4000;
+    scene_before_step(&scene, &battle);
+    battle.combatants[0].x_millipx = 3000;
+    scene.alpha = 0.5f;
+    float x, y;
+    scene_position(&scene, &battle, 0, &x, &y);
+    CHECK(x == 2.0f && y == 4.0f);
+    scene.prev_count = 0;
+    scene_position(&scene, &battle, 0, &x, &y);
+    CHECK(x == 3.0f);
+    CHECK(scene_time(&scene, &battle) == (float)battle.tick + 0.5f);
+}
+
+static void test_facing_follows_horizontal_movement(void)
+{
+    setup_battle();
+    Scene scene = {0};
+    scene_reset(&scene, &battle);
+    int pantheon = 0, horde = battle.combatant_count - 1;
+    CHECK(!scene.facing_left[pantheon] && scene.facing_left[horde]);
+    scene_before_step(&scene, &battle);
+    battle.combatants[pantheon].x_millipx -= 500;
+    battle.combatants[horde].x_millipx += 500;
+    scene_after_step(&scene, &battle);
+    CHECK(scene.facing_left[pantheon] && !scene.facing_left[horde]);
+    scene_before_step(&scene, &battle);
+    scene_after_step(&scene, &battle);
+    CHECK(scene.facing_left[pantheon] && !scene.facing_left[horde]);
+}
+
 void run_view_tests(void)
 {
+    test_position_interpolates_between_ticks();
+    test_facing_follows_horizontal_movement();
     test_viewport_starts_centred_and_clamped();
     test_viewport_zoom_stays_within_limits();
     test_viewport_pan_stops_at_the_arena_edge();

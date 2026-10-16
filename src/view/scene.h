@@ -11,6 +11,19 @@
 #define ZOOM_MAX 4
 #define ZOOM_DEFAULT 2
 #define PAN_SCREEN_PX_PER_SECOND 600
+#define TICK_SECONDS (1.0f / TICKS_PER_SECOND)
+#define IDLE_FRAME_TICKS 10
+#define WALK_FRAME_TICKS 3
+#define ACT_TICKS 6
+#define HURT_TICKS 4
+#define FLASH_TICKS 8
+#define FLASH_TICKS_RADIANCE 16
+#define EFFECT_TICKS 10
+#define TRAP_ACT_TICKS 10
+#define MAX_EFFECTS 64
+#define NEVER (-1000000)
+#define HUD_HEIGHT 48
+#define REMAINS_SPREAD_PX 12
 
 typedef struct {
     float centre_x;
@@ -26,5 +39,34 @@ void viewport_pan(Viewport *v, float dx_screen_px, float dy_screen_px);
 void viewport_zoom(Viewport *v, int step);
 float viewport_screen_x(const Viewport *v, float world_x);
 float viewport_screen_y(const Viewport *v, float world_y);
+
+typedef struct {
+    float x;
+    float y;
+    int element;
+    int since_tick;
+} Effect;
+
+typedef struct {
+    int prev_x[MAX_COMBATANTS];
+    int prev_y[MAX_COMBATANTS];
+    int prev_count;
+    float alpha;
+    bool facing_left[MAX_COMBATANTS];
+    int act_since[MAX_COMBATANTS][MAX_SLOTS];
+    int hit_since[MAX_COMBATANTS][MAX_SLOTS];
+    int hit_element[MAX_COMBATANTS][MAX_SLOTS];
+    int trap_since[MAX_ARENA_OBJECTS];
+    Effect effects[MAX_EFFECTS];
+    int effect_next;
+    int seen_events;
+    bool xray;
+} Scene;
+
+void scene_reset(Scene *s, const Battle *b);
+void scene_before_step(Scene *s, const Battle *b);
+void scene_after_step(Scene *s, const Battle *b);
+float scene_time(const Scene *s, const Battle *b);
+void scene_position(const Scene *s, const Battle *b, int c, float *x_px, float *y_px);
 
 #endif
