@@ -18,6 +18,7 @@ Decider reflex_decider(void);
 bool reflex_decide(Decider *self, const Battle *battle, const GameData *data, int combatant, Event *out);
 
 HurtLevel hurt_level_from_quarters(int quarters);
+bool combatant_has_working_support(const Combatant *c, const GameData *data);
 bool perceived_is_enemy(const Combatant *me, const Perceived *seen);
 bool perceived_is_ally(const Combatant *me, const Perceived *seen);
 const Perceived *perception_nearest_enemy(const Combatant *me, const Perception *perception);

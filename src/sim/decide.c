@@ -31,7 +31,7 @@ static const Ability *find_working_ability(const Combatant *c, const GameData *d
     return NULL;
 }
 
-static bool has_working_support(const Combatant *c, const GameData *data)
+bool combatant_has_working_support(const Combatant *c, const GameData *data)
 {
     return find_working_ability(c, data, ORDER_SUPPORT) != NULL;
 }
@@ -119,7 +119,7 @@ static bool some_ally(const Battle *battle, const Combatant *me, const GameData 
     for (int i = 0; i < perception->seen_count; i++) {
         const Perceived *seen = &perception->seen[i];
         if (!perceived_is_ally(me, seen)) continue;
-        if (needs_support && !has_working_support(&battle->combatants[seen->index], data)) continue;
+        if (needs_support && !combatant_has_working_support(&battle->combatants[seen->index], data)) continue;
         if (needs_help && seen->health_quarters != 1) continue;
         return true;
     }
@@ -140,7 +140,7 @@ bool reflex_decide(Decider *self, const Battle *battle, const GameData *data, in
     Stance stance = STANCE_FIGHT;
     if (hurt >= HURT_WOUNDED && healing_is_nearer) stance = STANCE_COLLECT;
     else if (hurt == HURT_NEAR_DEATH && some_ally(battle, me, data, &perception, true, false)) stance = STANCE_RETREAT;
-    else if (has_working_support(me, data) && some_ally(battle, me, data, &perception, false, true)) stance = STANCE_SUPPORT;
+    else if (combatant_has_working_support(me, data) && some_ally(battle, me, data, &perception, false, true)) stance = STANCE_SUPPORT;
     *out = decision_event(combatant, stance, hurt, focus ? most_vulnerable_element(me, &battle->combatants[focus->index], data) : -1, DECIDER_REFLEX);
     return true;
 }
@@ -239,7 +239,7 @@ static const Perceived *nearest_healer(const Situation *situation)
     for (int i = 0; i < situation->perception.seen_count; i++) {
         const Perceived *seen = &situation->perception.seen[i];
         int64_t distance = distance_squared(situation->me, seen->x_millipx, seen->y_millipx);
-        if (perceived_is_ally(situation->me, seen) && has_working_support(&situation->battle->combatants[seen->index], situation->data) &&
+        if (perceived_is_ally(situation->me, seen) && combatant_has_working_support(&situation->battle->combatants[seen->index], situation->data) &&
             (!best || distance < best_distance))
             best = seen, best_distance = distance;
     }
