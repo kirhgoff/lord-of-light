@@ -19,3 +19,5 @@ Blocked by: 06, 09
 ## Comments
 
 **Plan (fable): `docs/plan/plan-10-view.md`.** User accepted all defaults 2026-10-16: integer zoom 1–4 (default 2), Esc dialog in plain raylib now, team bars without spawned minions, animation clock on sim Ticks, grey tint for cut-off Parts, `--xray` with `--screenshot`.
+
+**Review 1 (opus code + fable design): CHANGES.** Held: ADR 0002, Event cursor across realloc, deterministic screenshots, accumulator cap, clamp at every zoom, x-ray flash, Esc dialog, y-sort in melee piles (pile accepted for placeholder art). To fix: start zoom (**user decision 2026-10-16: start at 1×**, integer 1–4 kept), HUD-aware camera, effects at body height, OOB effect element from a loaded save (+ sim loader validation), missing PNG fails silently, lax sidecar validation, two untested contracts, effect position from stale alpha, seam comment, strict `--ticks`. Ticket 12 note: Horde bar labels repeat plan ids ("floater floater"), indistinguishable.
