@@ -36,7 +36,7 @@ Rules: `src/sim/` never includes raylib (ADR 0002); no comments; GLOSSARY names;
 5. **Battle Log:** one line per Event; DECISION lines only for Laya answers and real fallbacks (`decider == DECIDER_LAYA`, or `fallback` ∉ {NONE, WAITING}). Formatted every frame from the tail of `b->log` (newest 200 displayable Events) into frame scratch — stateless, nothing to reset. Colour by kind.
 6. **Autoscroll:** the research's `StickLogToBottom`.
 7. **Hover/select:** hover = Combatant under the mouse; left click (not over the panel) selects; click on empty floor clears. Detail shows hovered else selected. Briefing: `laya_decider.briefing[c]` when running Laya and non-empty, else a live `briefing_write`.
-8. **Overlay:** label + Vitality; one line per Part (`name cur/max`, destroyed red, cut-off grey); Stance + active statuses. Overlap in melee piles accepted.
+8. **Overlay (replaced by the user 2026-10-17: compact — label, Vitality, Stance for all; Parts only for the hovered/selected Combatant):** originally label + Vitality; one line per Part (`name cur/max`, destroyed red, cut-off grey); Stance + active statuses. Overlap in melee piles accepted.
 9. **End screen stats (pure, from `b->log` + state):**
    - winner: `battle_winner`.
    - death log: every EVENT_DEATH via `event_line`.

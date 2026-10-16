@@ -16,6 +16,7 @@ A playable raylib arena: a random Pantheon (from JSON) fights a Power-matched Ho
 
 ## Decisions so far
 
+- [Clay UI](issues/12-clay-ui.md): T tech view with compact overlays and a stateless Battle Log panel; end-screen report; R for seed + 1.
 - [Laya Decider](issues/11-laya-decider.md): Laya picks Stance + Appraisals per Combatant over a worker thread; the Reflex covers waits, low confidence and outages; replay from the log.
 - [Sound playback](issues/20-sound-playback.md): pure placement/mapping module + thin raylib player; per-category gains; silent without an audio device.
 - [Save/load keys](issues/16-save-load-keys.md): F5/F9 to `saves/` by timestamp name; loads are atomic.

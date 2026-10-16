@@ -15,7 +15,6 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 12 Clay UI | `12-clay-ui` / `~/Projects/lord-of-light-12-clay-ui` | plan accepted; sonnet executor running |
 
 ## Done
 
@@ -27,6 +26,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 - 09 Placeholder sprites — merged after design re-review.
 - 14 Clay+raylib research — merged (`docs/research/clay-raylib.md`).
 - 17 Slot roles — merged after 2 code + 2 design review rounds.
+- 12 Clay UI — merged after a code + design review and a design re-check. The map's destination is reached.
 - 11 Laya decider — merged after one review round and three user decisions.
 - 20 Sound playback — merged after one review round.
 - 16 Save/load keys — merged after one review round.
@@ -41,7 +41,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 ## Next up (once unblocked)
 
-- After 12: 21 Parallel Laya requests (user-requested follow-up).
+- Frontier: 21 Parallel Laya requests (user-requested follow-up).
 - 20 Sound playback after 05, 10.
 - Later: 16 Save/load keys (after 10).
 
