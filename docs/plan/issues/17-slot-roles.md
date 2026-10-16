@@ -25,3 +25,16 @@ Extend the schema (loader + validation + tests + data):
 - Role `any` still allows odd fills (e.g. `serpent_coil` in a legs slot).
 - Visual leftovers: imp/crow claws and wisp lantern oversized; `compound_eyes` head wider than a biped torso; serpent_coil sprite already has a head, so the separate head Part overlaps. Regenerate previews with `tools/compose_body.py` (a Fable reviewer should look at them).
 - Old saves with old slot ids no longer load (accepted).
+
+**Review 1 (opus code) of 363786d: CHANGES.** Role filter verified (200-seed test goes red with it reverted); `make test`/`make asan` green.
+1. Empty eligible pool: `random_part` (`battle.c:103-109`) calls `rng_below(…, 0)` — e.g. Horde Hearts all `deity_only` leaves heart slots empty; loads fine, then UB (div by zero under asan, garbage index otherwise). Fix: move `fills_horde_slot` into data.c and fail in `resolve_body_plan` for any non-fixed slot of a non-spawn plan no Part fills; error fixture.
+2. Core Parts with move_speed (`serpent_coil`, `gas_bladder`) fill mover slots (seed 1 floater levitator = serpent_coil; seed 3 serpent tail = serpent_coil); quadruped `tail` is `mover` so legs/wings land at the rear; attack pool admits `fanged_head`. Fix: exclude Parts used as fixed Cores from Horde filling; quadruped tail → `attack`.
+3. `resolve_fixed_part` ignores flags: reject `minion_only` fixed Parts in non-spawn plans and `deity_only` fixed Parts in all Body Plans.
+4. Info: old saves still load (Bodies are embedded whole) — better than the hand-back said.
+5. GLOSSARY "Body Plan" still says all slots are filled randomly; mention fixed Parts.
+
+**Review 1 (fable design): CHANGES.** Facing and rear Parts fine; far Parts are buried (12 of 20 Deity far-hand weapons ≤10 % visible). Data-only fixes:
+6. Biped and all 20 Deities: `arm_far` → (6, 4); signature weapon moves to the near slot (3, −5), support item to far: Dagda war_club/healing_hand; Lugh lugh_spear/shield_hand; Ra, Apollo sun_bow/healing_hand; Set, Hades, Kali void_maw/(serpent_hand, void_tendril, venom_stinger); Zeus thunderbolt_hand/sword_hand; Indra thunderbolt_hand/shield_hand; Poseidon frost_trident/frost_fang; Thor lightning_hammer/shield_hand; Brigid, Loki hearth_hand/(healing_hand, serpent_hand); Isis healing_hand/shield_hand. Freya, Odin, Morrigan, Agni, Anubis keep their near Part.
+7. Anubis `mind_lobe`: list first, (−6, −14). Shiva: `mind_lobe` to far (−6, −14) listed first, healing_hand near (3, −5).
+8. Blob `lash_far` → (−2, −6), `lash_near` → (4, 4). Floater `tentacle_far` → (−3, 2), `tentacle_near` → (3, 13). Spider `mandible_far` → (10, −4), `mandible_near` → (11, 3). minion_crow `wing` → (−6, −14).
+Sprite redraws split to ticket 18. Previews: scratchpad `bodies/` (volatile).

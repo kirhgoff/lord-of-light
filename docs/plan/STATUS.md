@@ -17,8 +17,8 @@ Handover 2026-10-16: the user asked to stop starting new tasks. The agents below
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 04 Movement + vision | `04-movement-vision` / `~/Projects/lord-of-light-04-movement-vision` | sonnet executor fixing review findings 1–7 (2026-10-16); next: re-review |
-| 17 Slot roles | `17-slot-roles` / `~/Projects/lord-of-light-17-slot-roles` | opus code review + fable body-sprite review running (2026-10-16) |
+| 04 Movement + vision | `04-movement-vision` / `~/Projects/lord-of-light-04-movement-vision` | executor fixed findings 1–7 (9e909ea, 75b5a8c, 47704a3); opus re-review running |
+| 17 Slot roles | `17-slot-roles` / `~/Projects/lord-of-light-17-slot-roles` | both reviews CHANGES (findings 1–8 in the ticket); sonnet executor fixing |
 
 If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`, `git status`), then either spawn a new executor to finish from there or review what exists.
 
@@ -34,7 +34,7 @@ If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`
 
 ## Next up (once unblocked)
 
-- After 04 + 17: 05 Combat.
+- After 04 + 17: 05 Combat, 18 Sprite proportions.
 - Later: 16 Save/load keys (after 10).
 
 ## Open questions for the user
