@@ -1,7 +1,7 @@
 # Slot roles and fixed minion bodies
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 15, 03, 09
 
 ## Question
