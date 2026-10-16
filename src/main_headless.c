@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "sim/arena.h"
+#include "version.h"
 
 int main(void)
 {

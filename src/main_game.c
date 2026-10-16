@@ -1,5 +1,5 @@
 #include "raylib.h"
-#include "sim/arena.h"
+#include "version.h"
 #include "view/arena_view.h"
 
 #define WINDOW_WIDTH 1280
