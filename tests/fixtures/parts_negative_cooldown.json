@@ -1,0 +1,318 @@
+{
+  "parts": [
+    {
+      "id": "torso",
+      "name": "Torso",
+      "kind": "external",
+      "integrity": 60,
+      "sprite": "torso"
+    },
+    {
+      "id": "head",
+      "name": "Head",
+      "kind": "external",
+      "integrity": 30,
+      "sprite": "head",
+      "initiative": 1,
+      "vision": {
+        "close": 96,
+        "medium": 192,
+        "far": 320
+      }
+    },
+    {
+      "id": "keen_head",
+      "name": "Keen Head",
+      "kind": "external",
+      "integrity": 30,
+      "sprite": "keen_head",
+      "initiative": 2,
+      "vision": {
+        "close": 128,
+        "medium": 256,
+        "far": 448
+      }
+    },
+    {
+      "id": "heart",
+      "name": "Heart",
+      "kind": "internal",
+      "integrity": 20,
+      "sprite": "heart",
+      "vitality": 40
+    },
+    {
+      "id": "great_heart",
+      "name": "Great Heart",
+      "kind": "internal",
+      "integrity": 30,
+      "sprite": "great_heart",
+      "vitality": 80
+    },
+    {
+      "id": "legs",
+      "name": "Legs",
+      "kind": "external",
+      "integrity": 40,
+      "sprite": "legs",
+      "move_speed": 60
+    },
+    {
+      "id": "sword_hand",
+      "name": "Sword Hand",
+      "kind": "external",
+      "integrity": 25,
+      "sprite": "sword_hand",
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "kinetic",
+          "damage": 12,
+          "range": 24,
+          "cooldown": -1,
+          "area": 0
+        }
+      ]
+    },
+    {
+      "id": "shield_hand",
+      "name": "Shield Hand",
+      "kind": "external",
+      "integrity": 35,
+      "sprite": "shield_hand",
+      "abilities": [
+        {
+          "order": "block",
+          "element": "kinetic",
+          "damage": 0,
+          "range": 0,
+          "cooldown": 0,
+          "area": 0
+        }
+      ]
+    },
+    {
+      "id": "claw",
+      "name": "Claw",
+      "kind": "external",
+      "integrity": 20,
+      "sprite": "claw",
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "kinetic",
+          "damage": 8,
+          "range": 20,
+          "cooldown": 10,
+          "area": 0
+        }
+      ]
+    },
+    {
+      "id": "fire_hand",
+      "name": "Fire Hand",
+      "kind": "external",
+      "integrity": 25,
+      "sprite": "fire_hand",
+      "deity_only": true,
+      "abilities": [
+        {
+          "order": "cast",
+          "element": "fire",
+          "damage": 8,
+          "range": 160,
+          "cooldown": 20,
+          "area": 24
+        }
+      ]
+    },
+    {
+      "id": "lightning_hammer",
+      "name": "Lightning Hammer",
+      "kind": "external",
+      "integrity": 35,
+      "sprite": "lightning_hammer",
+      "deity_only": true,
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "lightning",
+          "damage": 14,
+          "range": 28,
+          "cooldown": 16,
+          "area": 0
+        },
+        {
+          "order": "cast",
+          "element": "lightning",
+          "damage": 10,
+          "range": 140,
+          "cooldown": 30,
+          "area": 0
+        }
+      ]
+    },
+    {
+      "id": "healing_hand",
+      "name": "Healing Hand",
+      "kind": "external",
+      "integrity": 25,
+      "sprite": "healing_hand",
+      "deity_only": true,
+      "abilities": [
+        {
+          "order": "support",
+          "element": "radiance",
+          "range": 96,
+          "cooldown": 40,
+          "area": 0,
+          "heal": 10,
+          "damage": 0
+        }
+      ]
+    },
+    {
+      "id": "third_eye",
+      "name": "Third Eye",
+      "kind": "external",
+      "integrity": 15,
+      "sprite": "third_eye",
+      "deity_only": true,
+      "initiative": 2,
+      "vision": {
+        "close": 128,
+        "medium": 256,
+        "far": 512
+      },
+      "abilities": [
+        {
+          "order": "cast",
+          "element": "radiance",
+          "damage": 12,
+          "range": 200,
+          "cooldown": 30,
+          "area": 0
+        }
+      ]
+    },
+    {
+      "id": "venom_stinger",
+      "name": "Venom Stinger",
+      "kind": "external",
+      "integrity": 15,
+      "sprite": "venom_stinger",
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "venom",
+          "damage": 5,
+          "range": 24,
+          "cooldown": 14,
+          "area": 0
+        }
+      ]
+    },
+    {
+      "id": "mind_lobe",
+      "name": "Mind Lobe",
+      "kind": "external",
+      "integrity": 15,
+      "sprite": "mind_lobe",
+      "abilities": [
+        {
+          "order": "cast",
+          "element": "mind",
+          "damage": 0,
+          "range": 128,
+          "cooldown": 80,
+          "area": 0
+        }
+      ]
+    },
+    {
+      "id": "void_maw",
+      "name": "Void Maw",
+      "kind": "external",
+      "integrity": 25,
+      "sprite": "void_maw",
+      "deity_only": true,
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "void",
+          "damage": 10,
+          "range": 24,
+          "cooldown": 20,
+          "area": 0
+        }
+      ]
+    },
+    {
+      "id": "spawning_sac",
+      "name": "Spawning Sac",
+      "kind": "internal",
+      "integrity": 20,
+      "sprite": "spawning_sac",
+      "spawning": {
+        "plan": "minion_imp",
+        "cap": 3
+      },
+      "abilities": [
+        {
+          "order": "spawn",
+          "element": "kinetic",
+          "damage": 0,
+          "range": 0,
+          "cooldown": 120,
+          "area": 0
+        }
+      ]
+    },
+    {
+      "id": "fire_gland",
+      "name": "Fire-proof Gland",
+      "kind": "internal",
+      "integrity": 15,
+      "sprite": "fire_gland",
+      "resistances": {
+        "fire": 75
+      }
+    },
+    {
+      "id": "frost_gland",
+      "name": "Frost-proof Gland",
+      "kind": "internal",
+      "integrity": 15,
+      "sprite": "frost_gland",
+      "resistances": {
+        "frost": 75
+      }
+    },
+    {
+      "id": "armour_plate",
+      "name": "Armour Plate",
+      "kind": "external",
+      "integrity": 50,
+      "sprite": "armour_plate",
+      "resistances": {
+        "kinetic": 40
+      }
+    },
+    {
+      "id": "ganglion",
+      "name": "Initiative Ganglion",
+      "kind": "internal",
+      "integrity": 10,
+      "sprite": "ganglion",
+      "initiative": 3
+    },
+    {
+      "id": "serpent_tail",
+      "name": "Serpent Tail",
+      "kind": "external",
+      "integrity": 35,
+      "sprite": "serpent_tail",
+      "move_speed": 45
+    }
+  ]
+}

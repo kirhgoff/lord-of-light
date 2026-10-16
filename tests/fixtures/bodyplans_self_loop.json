@@ -1,0 +1,160 @@
+{
+  "bodyplans": [
+    {
+      "id": "biped",
+      "core": "torso",
+      "slots": [
+        {
+          "id": "torso",
+          "kind": "external",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "head",
+          "kind": "external",
+          "x": 0,
+          "y": -14
+        },
+        {
+          "id": "arm_left",
+          "kind": "external",
+          "x": -10,
+          "y": -4
+        },
+        {
+          "id": "arm_right",
+          "kind": "external",
+          "x": 10,
+          "y": -4
+        },
+        {
+          "id": "legs",
+          "kind": "external",
+          "x": 0,
+          "y": 12
+        },
+        {
+          "id": "heart",
+          "kind": "internal",
+          "x": 0,
+          "y": -2
+        },
+        {
+          "id": "gland",
+          "kind": "internal",
+          "x": 0,
+          "y": 4
+        }
+      ],
+      "edges": [
+        [
+          "torso",
+          "head"
+        ],
+        [
+          "torso",
+          "arm_left"
+        ],
+        [
+          "torso",
+          "arm_right"
+        ],
+        [
+          "torso",
+          "legs"
+        ],
+        [
+          "torso",
+          "heart"
+        ],
+        [
+          "torso",
+          "gland"
+        ],
+        [
+          "head",
+          "head"
+        ]
+      ]
+    },
+    {
+      "id": "serpent",
+      "core": "coil",
+      "slots": [
+        {
+          "id": "coil",
+          "kind": "external",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "head",
+          "kind": "external",
+          "x": 14,
+          "y": -4
+        },
+        {
+          "id": "tail",
+          "kind": "external",
+          "x": -14,
+          "y": 2
+        },
+        {
+          "id": "heart",
+          "kind": "internal",
+          "x": 2,
+          "y": 0
+        }
+      ],
+      "edges": [
+        [
+          "coil",
+          "head"
+        ],
+        [
+          "coil",
+          "tail"
+        ],
+        [
+          "coil",
+          "heart"
+        ]
+      ]
+    },
+    {
+      "id": "minion_imp",
+      "core": "body",
+      "slots": [
+        {
+          "id": "body",
+          "kind": "external",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "claw",
+          "kind": "external",
+          "x": 6,
+          "y": 0
+        },
+        {
+          "id": "heart",
+          "kind": "internal",
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "edges": [
+        [
+          "body",
+          "claw"
+        ],
+        [
+          "body",
+          "heart"
+        ]
+      ]
+    }
+  ]
+}

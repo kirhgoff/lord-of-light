@@ -1,7 +1,7 @@
 CC := clang
 BUILD := build
 STD := -std=c11
-STRICT := $(STD) -Wall -Wextra -Werror
+STRICT := $(STD) -Wall -Wextra -Werror -Ivendor/cjson
 VENDOR_FLAGS := $(STD) -w -O2
 
 RAYLIB_DIR := vendor/raylib/src
@@ -11,11 +11,12 @@ RAYLIB_OBJECTS := $(RAYLIB_SOURCES:%=$(BUILD)/raylib/%.o) $(BUILD)/raylib/rglfw.
 RAYLIB_LIB := $(BUILD)/libraylib.a
 FRAMEWORKS := -framework Cocoa -framework IOKit -framework CoreVideo -framework OpenGL
 
+CJSON_OBJECT := $(BUILD)/vendor/cjson.o
 SIM_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard src/sim/*.c))
 VIEW_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard src/view/*.c))
 TEST_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard tests/*.c))
-GAME_OBJECTS := $(BUILD)/obj/src/main_game.o $(VIEW_OBJECTS) $(SIM_OBJECTS)
-HEADLESS_OBJECTS := $(BUILD)/obj/src/main_headless.o $(SIM_OBJECTS)
+GAME_OBJECTS := $(BUILD)/obj/src/main_game.o $(VIEW_OBJECTS) $(SIM_OBJECTS) $(CJSON_OBJECT)
+HEADLESS_OBJECTS := $(BUILD)/obj/src/main_headless.o $(SIM_OBJECTS) $(CJSON_OBJECT)
 
 .PHONY: game headless test run clean
 
@@ -34,7 +35,7 @@ $(BUILD)/game: $(GAME_OBJECTS) $(RAYLIB_LIB)
 $(BUILD)/headless: $(HEADLESS_OBJECTS)
 	$(CC) $^ -o $@
 
-$(BUILD)/tests: $(TEST_OBJECTS) $(SIM_OBJECTS)
+$(BUILD)/tests: $(TEST_OBJECTS) $(SIM_OBJECTS) $(CJSON_OBJECT)
 	$(CC) $^ -o $@
 
 $(BUILD)/obj/%.o: %.c
@@ -42,6 +43,10 @@ $(BUILD)/obj/%.o: %.c
 	$(CC) $(STRICT) -MMD -MP -c $< -o $@
 
 $(BUILD)/obj/src/main_game.o $(VIEW_OBJECTS): STRICT += -I$(RAYLIB_DIR)
+
+$(CJSON_OBJECT): vendor/cjson/cJSON.c
+	@mkdir -p $(@D)
+	$(CC) $(VENDOR_FLAGS) -c $< -o $@
 
 $(RAYLIB_LIB): $(RAYLIB_OBJECTS)
 	ar rcs $@ $^
