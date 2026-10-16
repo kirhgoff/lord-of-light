@@ -1,10 +1,10 @@
 #include <stdio.h>
+#include "check.h"
 #include "../src/sim/arena.h"
 
-static int failures;
+int test_failures;
 
-#define CHECK(cond) \
-    do { if (!(cond)) { printf("FAIL %s:%d %s\n", __FILE__, __LINE__, #cond); failures++; } } while (0)
+void run_data_tests(void);
 
 static void test_arena_is_48_by_32(void)
 {
@@ -14,7 +14,8 @@ static void test_arena_is_48_by_32(void)
 int main(void)
 {
     test_arena_is_48_by_32();
-    if (failures) return 1;
+    run_data_tests();
+    if (test_failures) return 1;
     printf("all tests passed\n");
     return 0;
 }

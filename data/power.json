@@ -1,0 +1,11 @@
+{
+  "integrity": 1,
+  "vitality": 2,
+  "damage": 5,
+  "range": 1,
+  "resistance": 1,
+  "initiative": 3,
+  "vision": 1,
+  "move_speed": 1,
+  "spawning": 10
+}

@@ -1,0 +1,323 @@
+{
+  "name": "Hindu",
+  "deities": [
+    {
+      "name": "Agni",
+      "epithet": "Mouth of the gods, who eats the offering.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "head",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "fire_hnad",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "fire_hand",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "fire_gland",
+            "x": 0,
+            "y": 4
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Indra",
+      "epithet": "King of the gods, hurler of the thunderbolt.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "keen_head",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "lightning_hammer",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "shield_hand",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "ganglion",
+            "x": 0,
+            "y": 4
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Kali",
+      "epithet": "Black one, devourer of time.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "head",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "void_maw",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "venom_stinger",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "frost_gland",
+            "x": 0,
+            "y": 4
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Shiva",
+      "epithet": "Destroyer, whose third eye opens on the end of worlds.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "head",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "healing_hand",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "mind_lobe",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "ganglion",
+            "x": 0,
+            "y": 4
+          },
+          {
+            "id": "extra",
+            "part": "third_eye",
+            "x": 0,
+            "y": -22
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ],
+          [
+            "torso",
+            "extra"
+          ]
+        ]
+      }
+    }
+  ]
+}

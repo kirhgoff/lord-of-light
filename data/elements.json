@@ -1,0 +1,40 @@
+{
+  "elements": [
+    {
+      "id": "kinetic"
+    },
+    {
+      "id": "fire",
+      "dot_damage": 2,
+      "dot_ticks": 60
+    },
+    {
+      "id": "frost",
+      "slow_percent": 40,
+      "slow_ticks": 60
+    },
+    {
+      "id": "lightning",
+      "chain_targets": 2,
+      "chain_range": 96
+    },
+    {
+      "id": "radiance",
+      "pierce_targets": 3
+    },
+    {
+      "id": "venom",
+      "dot_damage": 1,
+      "dot_ticks": 200,
+      "internal_first": true
+    },
+    {
+      "id": "mind",
+      "charm_ticks": 100
+    },
+    {
+      "id": "void",
+      "buff_strip_count": 2
+    }
+  ]
+}
