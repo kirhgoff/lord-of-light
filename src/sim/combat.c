@@ -107,12 +107,102 @@ static void hit_once(Battle *battle, const GameData *data, int actor, int actor_
     death_check(battle, data, target, actor, actor_part, element);
 }
 
+static int scaled(int ticks, int resistance)
+{
+    return ticks * (100 - resistance) / 100;
+}
+
+static void log_effect(Battle *battle, int actor, int target, Element element, int amount, EffectKind kind)
+{
+    battle_log_event(battle, (Event){0, EVENT_EFFECT, actor, -1, target, -1, element, amount, kind});
+}
+
+static void apply_burning(Combatant *victim, const ElementDef *def, int actor, Element element, int resistance)
+{
+    int ticks = scaled(def->dot_ticks, resistance);
+    if (def->dot_ticks == 0 || ticks == 0) return;
+    victim->dot_damage = def->dot_damage;
+    victim->dot_element = element;
+    victim->dot_source = actor;
+    victim->dot_ticks = ticks;
+}
+
+static void apply_slow(Battle *battle, Combatant *victim, const ElementDef *def, int actor, int target, Element element, int resistance)
+{
+    int ticks = scaled(def->slow_ticks, resistance);
+    if (def->slow_ticks == 0 || ticks == 0) return;
+    if (def->slow_percent > victim->slow_percent) victim->slow_percent = def->slow_percent;
+    if (ticks > victim->slow_ticks) victim->slow_ticks = ticks;
+    log_effect(battle, actor, target, element, ticks, EFFECT_SLOW);
+}
+
+static void apply_charm(Battle *battle, Combatant *victim, const ElementDef *def, int actor, int target, Element element, int resistance)
+{
+    int ticks = scaled(def->charm_ticks, resistance);
+    if (def->charm_ticks == 0 || ticks == 0 || actor < 0) return;
+    victim->charm_side = battle->combatants[actor].charm_side;
+    victim->charm_ticks = ticks;
+    log_effect(battle, actor, target, element, ticks, EFFECT_CHARM);
+}
+
+static void apply_strip(Battle *battle, Combatant *victim, const ElementDef *def, int actor, int target, Element element)
+{
+    if (def->buff_strip_count == 0 || victim->damage_bonus_ticks == 0) return;
+    victim->damage_bonus_ticks = 0;
+    victim->damage_bonus_percent = 0;
+    log_effect(battle, actor, target, element, 1, EFFECT_STRIP);
+}
+
+static int nearest_chain_target(const Battle *battle, int from, Side side, const bool struck[MAX_COMBATANTS], int range_px)
+{
+    int best = -1;
+    int64_t best_distance = 0;
+    const Combatant *origin = &battle->combatants[from];
+    for (int c = 0; c < battle->combatant_count; c++) {
+        const Combatant *candidate = &battle->combatants[c];
+        if (struck[c] || !candidate->alive || candidate->charm_side == side || !combatant_in_reach(origin, candidate, range_px)) continue;
+        int64_t distance = squared(origin->x_millipx - candidate->x_millipx) + squared(origin->y_millipx - candidate->y_millipx);
+        if (best < 0 || distance < best_distance) best = c, best_distance = distance;
+    }
+    return best;
+}
+
+static void chain_lightning(Battle *battle, const GameData *data, int actor, int actor_part, int first, int damage)
+{
+    bool struck[MAX_COMBATANTS] = {false};
+    const ElementDef *def = &data->elements[ELEMENT_LIGHTNING];
+    int previous = first;
+    struck[first] = true;
+    for (int hop = 0; hop < def->chain_targets && damage / 2 > 0; hop++) {
+        damage /= 2;
+        int next = nearest_chain_target(battle, previous, battle->combatants[actor].charm_side, struck, def->chain_range);
+        if (next < 0) return;
+        struck[next] = true;
+        int resistance = combatant_resistance_percent(&battle->combatants[next], data, ELEMENT_LIGHTNING, false);
+        hit_once(battle, data, actor, actor_part, next, ELEMENT_LIGHTNING, damage, resistance);
+        previous = next;
+    }
+}
+
+static void apply_element(Battle *battle, const GameData *data, int actor, int actor_part, int target, Element element, int damage, int resistance)
+{
+    const ElementDef *def = &data->elements[element];
+    Combatant *victim = &battle->combatants[target];
+    if (def->chain_targets > 0 && actor >= 0) chain_lightning(battle, data, actor, actor_part, target, damage);
+    if (!victim->alive) return;
+    apply_burning(victim, def, actor, element, resistance);
+    apply_slow(battle, victim, def, actor, target, element, resistance);
+    apply_charm(battle, victim, def, actor, target, element, resistance);
+    apply_strip(battle, victim, def, actor, target, element);
+}
+
 void combatant_hit(Battle *battle, const GameData *data, int actor, int actor_part, int target, Element element, int damage)
 {
     const Combatant *victim = &battle->combatants[target];
     if (!victim->alive) return;
     int resistance = combatant_resistance_percent(victim, data, element, element == ELEMENT_RADIANCE);
     hit_once(battle, data, actor, actor_part, target, element, damage, resistance);
+    apply_element(battle, data, actor, actor_part, target, element, damage, resistance);
 }
 
 static bool is_living_target(const Battle *battle, int target)
@@ -201,12 +291,24 @@ void battle_act(Battle *battle, const GameData *data)
         if (battle->combatants[c].alive) act_combatant(battle, data, c);
 }
 
+static void pulse_dot(Battle *battle, const GameData *data, int target)
+{
+    Combatant *who = &battle->combatants[target];
+    who->vitality = who->vitality > who->dot_damage ? who->vitality - who->dot_damage : 0;
+    log_effect(battle, who->dot_source, target, (Element)who->dot_element, who->dot_damage, EFFECT_DOT);
+    death_check(battle, data, target, who->dot_source, -1, (Element)who->dot_element);
+}
+
 void battle_tick_effects(Battle *battle, const GameData *data)
 {
-    (void)data;
     for (int c = 0; c < battle->combatant_count; c++) {
         Combatant *who = &battle->combatants[c];
         if (!who->alive) continue;
         if (who->damage_bonus_ticks > 0 && --who->damage_bonus_ticks == 0) who->damage_bonus_percent = 0;
+        if (who->slow_ticks > 0 && --who->slow_ticks == 0) who->slow_percent = 0;
+        if (who->charm_ticks > 0 && --who->charm_ticks == 0) who->charm_side = who->side;
+        if (who->dot_ticks == 0) continue;
+        if (who->dot_ticks % DOT_INTERVAL_TICKS == 0) pulse_dot(battle, data, c);
+        who->dot_ticks--;
     }
 }

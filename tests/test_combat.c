@@ -334,6 +334,229 @@ static void test_dead_combatants_do_nothing(void)
     CHECK(battle.log_count == 0);
 }
 
+static int count_effects(EffectKind kind)
+{
+    int count = 0;
+    for (int e = 0; e < battle.log_count; e++) count += battle.log[e].kind == EVENT_EFFECT && battle.log[e].detail == (int)kind;
+    return count;
+}
+
+static void clear_order(int c, const char *slot_id)
+{
+    order(c, slot_id, ORDER_IDLE, -1);
+}
+
+static void test_fire_burns_over_time(void)
+{
+    load_fixture();
+    order(STRIKER, "maw", ORDER_CAST, DUMMY);
+    run(1);
+    clear_order(STRIKER, "maw");
+    CHECK(battle.combatants[DUMMY].vitality == 35 && battle.combatants[DUMMY].dot_ticks == 59);
+    run(20);
+    CHECK(battle.combatants[DUMMY].vitality == 33);
+    run(40);
+    CHECK(battle.combatants[DUMMY].vitality == 31 && battle.combatants[DUMMY].dot_ticks == 0);
+    CHECK(count_effects(EFFECT_DOT) == 3);
+    const Event *pulse = last_event(EVENT_EFFECT);
+    CHECK(pulse && pulse->actor == STRIKER && pulse->actor_part == -1 && pulse->element == ELEMENT_FIRE && pulse->amount == 2);
+}
+
+static void test_fire_gland_shortens_the_burn(void)
+{
+    load_fixture();
+    battle.combatants[DUMMY].body.slots[slot(DUMMY, "gland")].part = find_part(&data, "fire_gland");
+    order(STRIKER, "maw", ORDER_CAST, DUMMY);
+    run(1);
+    CHECK(battle.combatants[DUMMY].dot_ticks == 14);
+    CHECK(count_effects(EFFECT_DOT) == 0);
+}
+
+static void test_frost_slows_then_roots(void)
+{
+    load_fixture();
+    Combatant *dummy = &battle.combatants[DUMMY];
+    order(STRIKER, "fang", ORDER_STRIKE, DUMMY);
+    dummy->parts[slot(DUMMY, "legs")].order = (Order){ORDER_MOVE_TO, -1, 600000, 176000};
+    int start = dummy->x_millipx;
+    run(20);
+    CHECK(dummy->x_millipx - start == 20 * 1800);
+    CHECK(dummy->slow_percent == 40);
+    const Event *slow = last_event(EVENT_EFFECT);
+    CHECK(slow && slow->detail == EFFECT_SLOW && slow->amount == 60);
+    clear_order(STRIKER, "fang");
+    dummy->slow_percent = 100;
+    dummy->slow_ticks = 20;
+    start = dummy->x_millipx;
+    run(10);
+    CHECK(dummy->x_millipx == start);
+    run(10);
+    CHECK(dummy->slow_ticks == 0 && dummy->slow_percent == 0);
+}
+
+static void test_lightning_chains_within_range(void)
+{
+    load_fixture();
+    battle.combatants[FAR].x_millipx = 400000;
+    order(STRIKER, "tentacle", ORDER_STRIKE, DUMMY);
+    int second_before = sum_integrity(SECOND, false), far_before = sum_integrity(FAR, false);
+    run(1);
+    CHECK(battle.combatants[DUMMY].vitality == 37);
+    CHECK(battle.combatants[SECOND].vitality == 39 && second_before - sum_integrity(SECOND, false) == 3);
+    CHECK(battle.combatants[FAR].vitality == 40 && far_before == sum_integrity(FAR, false));
+    CHECK(count_events(EVENT_HIT) == 2);
+}
+
+static void test_lightning_hops_from_the_previous_target_and_stops_at_the_cap(void)
+{
+    load_fixture();
+    battle.combatants[HURT].side = battle.combatants[HURT].charm_side = SIDE_HORDE;
+    battle.combatants[HURT].x_millipx = 392000;
+    combatant_hit(&battle, &data, STRIKER, slot(STRIKER, "tentacle"), DUMMY, ELEMENT_LIGHTNING, 40);
+    CHECK(count_events(EVENT_HIT) == 3);
+    CHECK(battle.log[2].target == FAR && battle.log[2].amount == 10);
+    CHECK(sum_integrity(HURT, false) == data.parts[find_part(&data, "torso")].integrity);
+}
+
+static void test_lightning_stops_when_the_hop_does_no_damage(void)
+{
+    load_fixture();
+    combatant_hit(&battle, &data, STRIKER, slot(STRIKER, "tentacle"), DUMMY, ELEMENT_LIGHTNING, 1);
+    CHECK(count_events(EVENT_HIT) == 1);
+}
+
+static void test_radiance_ignores_armour_but_not_glands(void)
+{
+    load_fixture();
+    data.parts[find_part(&data, "armour_plate")].resistance_percent[ELEMENT_RADIANCE] = 50;
+    order(STRIKER, "lantern", ORDER_CAST, DUMMY);
+    int before = sum_integrity(DUMMY, false);
+    run(1);
+    CHECK(before - sum_integrity(DUMMY, false) == 6);
+    battle.combatants[DUMMY].body.slots[slot(DUMMY, "gland")].part = find_part(&data, "radiance_gland");
+    battle.combatants[STRIKER].parts[slot(STRIKER, "lantern")].cooldown = 0;
+    before = sum_integrity(DUMMY, false);
+    run(1);
+    CHECK(before - sum_integrity(DUMMY, false) == 1);
+}
+
+static void test_venom_hits_internal_first(void)
+{
+    load_fixture();
+    order(STRIKER, "stinger", ORDER_STRIKE, DUMMY);
+    int external = sum_integrity(DUMMY, false), internal = sum_integrity(DUMMY, true);
+    run(1);
+    clear_order(STRIKER, "stinger");
+    CHECK(internal - sum_integrity(DUMMY, true) == 5 && external == sum_integrity(DUMMY, false));
+    CHECK(battle.combatants[DUMMY].vitality == 37 && battle.combatants[DUMMY].dot_ticks == 199);
+    run(200);
+    CHECK(battle.combatants[DUMMY].vitality == 28);
+    CHECK(count_effects(EFFECT_DOT) == 10);
+}
+
+static void test_mind_charms_for_a_while(void)
+{
+    load_fixture();
+    order(STRIKER, "lobe", ORDER_CAST, DUMMY);
+    run(1);
+    clear_order(STRIKER, "lobe");
+    const Combatant *dummy = &battle.combatants[DUMMY];
+    CHECK(last_event(EVENT_HIT)->amount == 0);
+    CHECK(dummy->charm_side == SIDE_PANTHEON && dummy->charm_ticks == 99);
+    const Event *charm = last_event(EVENT_EFFECT);
+    CHECK(charm && charm->detail == EFFECT_CHARM && charm->amount == 100);
+    order(STRIKER, "sword", ORDER_STRIKE, DUMMY);
+    run(98);
+    CHECK(count_events(EVENT_HIT) == 1 && dummy->charm_side == SIDE_PANTHEON);
+    run(1);
+    CHECK(dummy->charm_side == SIDE_HORDE && dummy->charm_ticks == 0);
+}
+
+static void test_mind_resisted_by_gland(void)
+{
+    load_fixture();
+    battle.combatants[DUMMY].body.slots[slot(DUMMY, "gland")].part = find_part(&data, "mind_gland");
+    order(STRIKER, "lobe", ORDER_CAST, DUMMY);
+    run(1);
+    CHECK(battle.combatants[DUMMY].charm_ticks == 24);
+}
+
+static void test_void_strips_buffs(void)
+{
+    load_fixture();
+    battle.combatants[DUMMY].damage_bonus_percent = 50;
+    battle.combatants[DUMMY].damage_bonus_ticks = 50;
+    order(STRIKER, "tendril", ORDER_STRIKE, DUMMY);
+    run(1);
+    CHECK(battle.combatants[DUMMY].damage_bonus_ticks == 0 && battle.combatants[DUMMY].damage_bonus_percent == 0);
+    const Event *strip = last_event(EVENT_EFFECT);
+    CHECK(strip && strip->detail == EFFECT_STRIP && strip->amount == 1);
+}
+
+static void test_void_is_plain_without_buffs(void)
+{
+    load_fixture();
+    order(STRIKER, "tendril", ORDER_STRIKE, DUMMY);
+    int before = sum_integrity(DUMMY, false);
+    run(1);
+    CHECK(before - sum_integrity(DUMMY, false) == 6);
+    CHECK(count_events(EVENT_EFFECT) == 0);
+}
+
+static void test_death_by_dot_names_the_source(void)
+{
+    load_fixture();
+    battle.combatants[DUMMY].vitality = 4;
+    order(STRIKER, "maw", ORDER_CAST, DUMMY);
+    run(1);
+    const Event *death = last_event(EVENT_DEATH);
+    CHECK(!battle.combatants[DUMMY].alive && death);
+    CHECK(death && death->actor == STRIKER && death->actor_part == -1 && death->element == ELEMENT_FIRE);
+}
+
+static void test_a_killing_hit_applies_no_effect(void)
+{
+    load_fixture();
+    battle.combatants[DUMMY].vitality = 1;
+    order(STRIKER, "fang", ORDER_STRIKE, DUMMY);
+    run(1);
+    CHECK(!battle.combatants[DUMMY].alive && count_events(EVENT_EFFECT) == 0 && battle.combatants[DUMMY].slow_ticks == 0);
+}
+
+static void test_death_by_lightning_chain_hop(void)
+{
+    load_fixture();
+    battle.combatants[SECOND].vitality = 1;
+    order(STRIKER, "tentacle", ORDER_STRIKE, DUMMY);
+    run(1);
+    CHECK(!battle.combatants[SECOND].alive && last_event(EVENT_DEATH)->target == SECOND);
+}
+
+static void test_effects_round_trip_and_resume(void)
+{
+    load_fixture();
+    battle.combatants[DUMMY].damage_bonus_percent = 50;
+    battle.combatants[DUMMY].damage_bonus_ticks = 50;
+    const char *casters[] = {"maw", "fang", "stinger", "lobe", "tendril", "sac", "tentacle"};
+    for (int i = 0; i < 7; i++) order(STRIKER, casters[i], i == 5 ? ORDER_SPAWN : i == 0 || i == 3 ? ORDER_CAST : ORDER_STRIKE, DUMMY);
+    run(5);
+    char *midway = battle_save_json(&battle, &data);
+    CHECK(battle.combatants[DUMMY].dot_ticks > 0 && battle.combatants[DUMMY].slow_ticks > 0 && battle.combatants[DUMMY].charm_ticks > 0);
+    static Battle resumed;
+    CHECK(battle_load_json(&resumed, &data, midway, err, ERR_SIZE));
+    char *again = battle_save_json(&resumed, &data);
+    CHECK(strcmp(midway, again) == 0);
+    run(60);
+    for (int t = 0; t < 60; t++) battle_step(&resumed, &data);
+    char *expected = battle_save_json(&battle, &data), *actual = battle_save_json(&resumed, &data);
+    CHECK(strcmp(expected, actual) == 0);
+    battle_free(&resumed);
+    free(midway);
+    free(again);
+    free(expected);
+    free(actual);
+}
+
 void run_combat_tests(void)
 {
     test_kinetic_hit_splits_part_and_vitality();
@@ -356,5 +579,21 @@ void run_combat_tests(void)
     test_support_refuses_enemies();
     test_spawn_creates_minions_up_to_cap();
     test_dead_combatants_do_nothing();
+    test_fire_burns_over_time();
+    test_fire_gland_shortens_the_burn();
+    test_frost_slows_then_roots();
+    test_lightning_chains_within_range();
+    test_lightning_hops_from_the_previous_target_and_stops_at_the_cap();
+    test_lightning_stops_when_the_hop_does_no_damage();
+    test_radiance_ignores_armour_but_not_glands();
+    test_venom_hits_internal_first();
+    test_mind_charms_for_a_while();
+    test_mind_resisted_by_gland();
+    test_void_strips_buffs();
+    test_void_is_plain_without_buffs();
+    test_death_by_dot_names_the_source();
+    test_a_killing_hit_applies_no_effect();
+    test_death_by_lightning_chain_hop();
+    test_effects_round_trip_and_resume();
     battle_free(&battle);
 }
