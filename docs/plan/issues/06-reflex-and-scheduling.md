@@ -14,3 +14,7 @@ Blocked by: 05
 - Scheduling: each Combatant asks again every `k / Initiative` Ticks; due Combatants are queued by Initiative; until a Decision arrives they keep their current Orders (or the Reflex's if they have none).
 - Decisions are Events in the Battle Log (with source: reflex/laya, and probabilities if any).
 - Test: `headless --seed 1` runs a full Battle to a winner deterministically (same seed → identical Battle Log).
+
+## Comments
+
+**Plan (fable): `docs/plan/plan-06-tactics.md`.** User accepted all its defaults 2026-10-16, plus walk-over Pickups for both 06 and 08 (`ORDER_PICK_UP` removed by 08).

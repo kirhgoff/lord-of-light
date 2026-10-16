@@ -15,8 +15,8 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 06 Tactics + Reflex | `06-reflex-and-scheduling` | fable plan in progress |
-| 08 Pickups + traps | `08-pickups-traps` | fable plan in progress (data has placeholders; plan designs the 11 objects) |
+| 06 Tactics + Reflex | `06-reflex-and-scheduling` / `~/Projects/lord-of-light-06-reflex-and-scheduling` | plan accepted; sonnet executor running |
+| 08 Pickups + traps | `08-pickups-traps` / `~/Projects/lord-of-light-08-pickups-traps` | plan accepted; sonnet executor running |
 
 ## Done
 
