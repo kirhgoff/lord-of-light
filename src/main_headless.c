@@ -34,7 +34,7 @@ static bool parse_seed(const char *text, uint32_t *seed)
 
 static int usage(void)
 {
-    fprintf(stderr, "usage: headless [--seed N] [--load state.json] [--ticks T] [--dump out.json] [--decider laya|reflex] [--replay dump.json]\n");
+    fprintf(stderr, "usage: headless [--seed N] [--load state.json] [--ticks T] [--dump out.json] [--decider laya|reflex] [--replay dump.json] [--dump-requests requests.jsonl]\n");
     return 2;
 }
 
