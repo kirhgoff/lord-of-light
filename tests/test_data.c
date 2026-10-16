@@ -70,6 +70,8 @@ static void test_valid_load(void)
     CHECK(data.elements[ELEMENT_LIGHTNING].chain_targets > 0);
     CHECK(data.elements[ELEMENT_VENOM].internal_first);
     CHECK(data.power.damage > 0);
+    CHECK(data.laya.url_count == 2 && strncmp(data.laya.urls[0], "http://", 7) == 0);
+    CHECK(data.laya.timeout_ms == 8000 && data.laya.min_stance_confidence_permille == 200);
 }
 
 static void test_part_fields_resolved(void)
@@ -253,6 +255,10 @@ static void test_other_file_errors(void)
     check_error(load_power(&data, FIXTURE("power_missing_weight.json"), err, ERR_SIZE), "vision: missing");
     check_error(load_arena_objects(&data, FIXTURE("arena_objects_unknown_element.json"), err, ERR_SIZE),
                 "traps[0].element: unknown element \"steam\"");
+    check_error(load_laya(&data, FIXTURE("laya_threshold_out_of_range.json"), err, ERR_SIZE),
+                "min_stance_confidence_permille: must be between 0 and 1000");
+    check_error(load_laya(&data, FIXTURE("laya_missing_urls.json"), err, ERR_SIZE), "urls: missing");
+    check_error(load_laya(&data, FIXTURE("laya_empty_url.json"), err, ERR_SIZE), "urls[1]: must be 1 to 127 characters");
 }
 
 static void test_sound_errors(void)
@@ -364,6 +370,7 @@ static void test_failed_load_keeps_previous_data(void)
     check_unchanged(load_parts(&data, FIXTURE("parts_duplicate_id.json"), err, ERR_SIZE));
     check_unchanged(load_arena_objects(&data, FIXTURE("arena_objects_unknown_element.json"), err, ERR_SIZE));
     check_unchanged(load_power(&data, FIXTURE("power_missing_weight.json"), err, ERR_SIZE));
+    check_unchanged(load_laya(&data, FIXTURE("laya_missing_urls.json"), err, ERR_SIZE));
     check_unchanged(load_pantheon(&data, FIXTURE("pantheon_unknown_part.json"), err, ERR_SIZE));
     check_unchanged(load_pantheons(&data, FIXTURE("pantheons_second_file_bad"), err, ERR_SIZE));
     check_unchanged(load_game_data(&data, "tests/fixtures/no_such_dir", err, ERR_SIZE));

@@ -1,0 +1,4 @@
+{
+  "timeout_ms": 8000,
+  "min_stance_confidence_permille": 200
+}

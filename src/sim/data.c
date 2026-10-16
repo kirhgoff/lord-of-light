@@ -941,6 +941,33 @@ static bool power_from_root(Context *ctx, const cJSON *root, GameData *data)
         && get_int(ctx, root, "", "spawning", &w->spawning, true);
 }
 
+static bool read_laya_urls(Context *ctx, const cJSON *root, LayaSettings *laya)
+{
+    const cJSON *list, *item;
+    if (!get_array(ctx, root, "", "urls", &list, true)) return false;
+    laya->url_count = cJSON_GetArraySize(list);
+    if (laya->url_count < 1 || laya->url_count > LAYA_MAX_URLS) return fail(ctx, "urls", "must have between 1 and %d entries", LAYA_MAX_URLS);
+    int index = 0;
+    cJSON_ArrayForEach(item, list) {
+        char path[PATH_LEN];
+        join_index(path, "urls", index);
+        if (!cJSON_IsString(item)) return fail(ctx, path, "expected a string");
+        if (item->valuestring[0] == '\0' || strlen(item->valuestring) >= LAYA_URL_LEN) return fail(ctx, path, "must be 1 to %d characters", LAYA_URL_LEN - 1);
+        strcpy(laya->urls[index++], item->valuestring);
+    }
+    return true;
+}
+
+static bool laya_from_root(Context *ctx, const cJSON *root, GameData *data)
+{
+    LayaSettings *laya = &data->laya;
+    return read_laya_urls(ctx, root, laya)
+        && get_int(ctx, root, "", "timeout_ms", &laya->timeout_ms, true)
+        && check_range(ctx, "", "timeout_ms", laya->timeout_ms, 1, 60000)
+        && get_int(ctx, root, "", "min_stance_confidence_permille", &laya->min_stance_confidence_permille, true)
+        && check_range(ctx, "", "min_stance_confidence_permille", laya->min_stance_confidence_permille, 0, 1000);
+}
+
 static bool read_deity(Context *ctx, const cJSON *obj, const char *path, const GameData *data,
                        Deity *deity)
 {
@@ -1002,6 +1029,11 @@ bool load_arena_objects(GameData *data, const char *path, char *err, size_t err_
 bool load_power(GameData *data, const char *path, char *err, size_t err_size)
 {
     return load_file(data, path, err, err_size, power_from_root);
+}
+
+bool load_laya(GameData *data, const char *path, char *err, size_t err_size)
+{
+    return load_file(data, path, err, err_size, laya_from_root);
 }
 
 bool load_pantheon(GameData *data, const char *path, char *err, size_t err_size)
@@ -1069,6 +1101,7 @@ bool load_game_data(GameData *data, const char *dir, char *err, size_t err_size)
         && LOAD(load_parts, "parts.json")
         && LOAD(load_arena_objects, "arena_objects.json")
         && LOAD(load_power, "power.json")
+        && LOAD(load_laya, "laya.json")
         && (snprintf(path, sizeof path, "%s/pantheons", dir), append_pantheons(&fresh, path, err, err_size));
 #undef LOAD
     if (ok) *data = fresh;
