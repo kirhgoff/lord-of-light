@@ -9,9 +9,9 @@
         "parts": [
           {
             "id": "hand_left",
-            "part": "lightning_hammer",
-            "x": -1,
-            "y": -6
+            "part": "shield_hand",
+            "x": 6,
+            "y": 4
           },
           {
             "id": "legs",
@@ -33,7 +33,7 @@
           },
           {
             "id": "hand_right",
-            "part": "shield_hand",
+            "part": "lightning_hammer",
             "x": 3,
             "y": -5
           },
@@ -87,8 +87,8 @@
           {
             "id": "hand_left",
             "part": "bow_hand",
-            "x": -1,
-            "y": -6
+            "x": 6,
+            "y": 4
           },
           {
             "id": "legs",
@@ -174,8 +174,8 @@
           {
             "id": "hand_left",
             "part": "healing_hand",
-            "x": -1,
-            "y": -6
+            "x": 6,
+            "y": 4
           },
           {
             "id": "legs",
@@ -250,9 +250,9 @@
         "parts": [
           {
             "id": "hand_left",
-            "part": "hearth_hand",
-            "x": -1,
-            "y": -6
+            "part": "serpent_hand",
+            "x": 6,
+            "y": 4
           },
           {
             "id": "legs",
@@ -274,7 +274,7 @@
           },
           {
             "id": "hand_right",
-            "part": "serpent_hand",
+            "part": "hearth_hand",
             "x": 3,
             "y": -5
           },

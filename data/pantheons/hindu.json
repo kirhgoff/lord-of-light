@@ -10,8 +10,8 @@
           {
             "id": "hand_left",
             "part": "fire_hand",
-            "x": -1,
-            "y": -6
+            "x": 6,
+            "y": 4
           },
           {
             "id": "legs",
@@ -86,9 +86,9 @@
         "parts": [
           {
             "id": "hand_left",
-            "part": "thunderbolt_hand",
-            "x": -1,
-            "y": -6
+            "part": "shield_hand",
+            "x": 6,
+            "y": 4
           },
           {
             "id": "legs",
@@ -110,7 +110,7 @@
           },
           {
             "id": "hand_right",
-            "part": "shield_hand",
+            "part": "thunderbolt_hand",
             "x": 3,
             "y": -5
           },
@@ -163,9 +163,9 @@
         "parts": [
           {
             "id": "hand_left",
-            "part": "void_maw",
-            "x": -1,
-            "y": -6
+            "part": "venom_stinger",
+            "x": 6,
+            "y": 4
           },
           {
             "id": "legs",
@@ -187,7 +187,7 @@
           },
           {
             "id": "hand_right",
-            "part": "venom_stinger",
+            "part": "void_maw",
             "x": 3,
             "y": -5
           },
@@ -240,9 +240,9 @@
         "parts": [
           {
             "id": "hand_left",
-            "part": "healing_hand",
-            "x": -1,
-            "y": -6
+            "part": "mind_lobe",
+            "x": -6,
+            "y": -14
           },
           {
             "id": "legs",
@@ -270,7 +270,7 @@
           },
           {
             "id": "hand_right",
-            "part": "mind_lobe",
+            "part": "healing_hand",
             "x": 3,
             "y": -5
           },

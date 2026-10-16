@@ -9,9 +9,9 @@
         "parts": [
           {
             "id": "hand_left",
-            "part": "sun_bow",
-            "x": -1,
-            "y": -6
+            "part": "healing_hand",
+            "x": 6,
+            "y": 4
           },
           {
             "id": "legs",
@@ -33,7 +33,7 @@
           },
           {
             "id": "hand_right",
-            "part": "healing_hand",
+            "part": "sun_bow",
             "x": 3,
             "y": -5
           },
@@ -86,9 +86,9 @@
         "parts": [
           {
             "id": "hand_left",
-            "part": "void_maw",
-            "x": -1,
-            "y": -6
+            "part": "serpent_hand",
+            "x": 6,
+            "y": 4
           },
           {
             "id": "legs",
@@ -110,7 +110,7 @@
           },
           {
             "id": "hand_right",
-            "part": "serpent_hand",
+            "part": "void_maw",
             "x": 3,
             "y": -5
           },
@@ -162,10 +162,16 @@
         "core": "torso",
         "parts": [
           {
+            "id": "lobe",
+            "part": "mind_lobe",
+            "x": -6,
+            "y": -14
+          },
+          {
             "id": "hand_left",
             "part": "void_tendril",
-            "x": -1,
-            "y": -6
+            "x": 6,
+            "y": 4
           },
           {
             "id": "legs",
@@ -208,12 +214,6 @@
             "part": "ganglion",
             "x": 2,
             "y": 6
-          },
-          {
-            "id": "lobe",
-            "part": "mind_lobe",
-            "x": -2,
-            "y": -8
           }
         ],
         "edges": [
@@ -260,9 +260,9 @@
         "parts": [
           {
             "id": "hand_left",
-            "part": "healing_hand",
-            "x": -1,
-            "y": -6
+            "part": "shield_hand",
+            "x": 6,
+            "y": 4
           },
           {
             "id": "legs",
@@ -284,7 +284,7 @@
           },
           {
             "id": "hand_right",
-            "part": "shield_hand",
+            "part": "healing_hand",
             "x": 3,
             "y": -5
           },
