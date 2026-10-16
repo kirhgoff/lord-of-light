@@ -273,6 +273,5 @@ void draw_frame_contents(const Battle *b, const GameData *data, const Scene *sce
     draw_effects(scene, atlases, sheets, tick);
     EndMode2D();
     draw_hud(b, hud, view);
-    /* ticket 12: Clay_Raylib_Render goes here */
     if (hud->confirm_quit) draw_confirm_dialog(view->width, view->height);
 }
