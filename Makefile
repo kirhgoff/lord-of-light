@@ -36,7 +36,7 @@ $(BUILD)/game: $(GAME_OBJECTS) $(RAYLIB_LIB)
 $(BUILD)/headless: $(HEADLESS_OBJECTS)
 	$(CC) $^ $(SAN) -o $@
 
-$(BUILD)/tests: $(TEST_OBJECTS) $(SIM_OBJECTS) $(CJSON_OBJECT)
+$(BUILD)/tests: $(TEST_OBJECTS) $(SIM_OBJECTS) $(BUILD)/obj/src/laya/laya.o $(CJSON_OBJECT)
 	$(CC) $^ $(SAN) -o $@
 
 $(BUILD)/obj/%.o: %.c

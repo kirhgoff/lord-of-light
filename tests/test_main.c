@@ -13,6 +13,7 @@ void run_decide_tests(void);
 void run_floor_tests(void);
 void run_briefing_tests(void);
 void run_briefing_request_tests(void);
+void run_laya_tests(void);
 
 static void test_arena_is_48_by_32(void)
 {
@@ -31,6 +32,7 @@ int main(void)
     run_floor_tests();
     run_briefing_tests();
     run_briefing_request_tests();
+    run_laya_tests();
     if (test_failures) return 1;
     printf("all tests passed\n");
     return 0;
