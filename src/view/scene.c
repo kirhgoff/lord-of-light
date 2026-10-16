@@ -8,8 +8,6 @@
 #define ARENA_WIDTH_PX (ARENA_WIDTH_TILES * TILE_SIZE)
 #define ARENA_HEIGHT_PX (ARENA_HEIGHT_TILES * TILE_SIZE)
 
-#define ZOOM_STEP_EPSILON 0.0001f
-
 static float clamp_axis(float centre, float screen_size, float zoom, float arena_size)
 {
     float visible = screen_size / zoom;
@@ -56,7 +54,7 @@ void viewport_pan(Viewport *v, float dx_screen_px, float dy_screen_px)
 
 void viewport_zoom(Viewport *v, int step)
 {
-    v->zoom = step > 0 ? floorf(v->zoom + ZOOM_STEP_EPSILON) + 1 : ceilf(v->zoom - ZOOM_STEP_EPSILON) - 1;
+    v->zoom = step > 0 ? floorf(v->zoom) + 1 : ceilf(v->zoom) - 1;
     viewport_clamp(v);
 }
 
