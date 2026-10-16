@@ -15,6 +15,7 @@ FRAMEWORKS := -framework Cocoa -framework IOKit -framework CoreVideo -framework 
 CJSON_OBJECT := $(BUILD)/vendor/cjson.o
 SIM_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard src/sim/*.c))
 VIEW_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard src/view/*.c))
+VIEW_PURE_OBJECTS := $(BUILD)/obj/src/view/atlas.o
 TEST_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard tests/*.c))
 GAME_OBJECTS := $(BUILD)/obj/src/main_game.o $(VIEW_OBJECTS) $(SIM_OBJECTS) $(CJSON_OBJECT)
 HEADLESS_OBJECTS := $(BUILD)/obj/src/main_headless.o $(SIM_OBJECTS) $(CJSON_OBJECT)
@@ -36,14 +37,14 @@ $(BUILD)/game: $(GAME_OBJECTS) $(RAYLIB_LIB)
 $(BUILD)/headless: $(HEADLESS_OBJECTS)
 	$(CC) $^ $(SAN) -o $@
 
-$(BUILD)/tests: $(TEST_OBJECTS) $(SIM_OBJECTS) $(CJSON_OBJECT)
+$(BUILD)/tests: $(TEST_OBJECTS) $(SIM_OBJECTS) $(VIEW_PURE_OBJECTS) $(CJSON_OBJECT)
 	$(CC) $^ $(SAN) -o $@
 
 $(BUILD)/obj/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(STRICT) -MMD -MP -c $< -o $@
 
-$(BUILD)/obj/src/main_game.o $(VIEW_OBJECTS): STRICT += -I$(RAYLIB_DIR)
+$(BUILD)/obj/src/main_game.o $(filter-out $(VIEW_PURE_OBJECTS),$(VIEW_OBJECTS)): STRICT += -I$(RAYLIB_DIR)
 
 $(CJSON_OBJECT): vendor/cjson/cJSON.c
 	@mkdir -p $(@D)
