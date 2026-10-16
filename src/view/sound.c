@@ -65,6 +65,10 @@ static bool load_all(const GameData *data, char *err, size_t err_size)
 bool sound_init(const GameData *data, const Battle *b, char *err, size_t err_size)
 {
     InitAudioDevice();
+    if (!IsAudioDeviceReady()) {
+        fprintf(stderr, "warning: no audio device, running silent\n");
+        return true;
+    }
     SetMasterVolume(MASTER_VOLUME);
     device_open = true;
     sound_tracker_reset(&tracker, b);
