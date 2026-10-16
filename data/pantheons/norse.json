@@ -1,0 +1,333 @@
+{
+  "name": "Norse",
+  "deities": [
+    {
+      "name": "Thor",
+      "epithet": "Lord of Thunder, whose Aspect rings like a struck anvil.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "head",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "lightning_hammer",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "shield_hand",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "large_heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "lightning_gland",
+            "x": 0,
+            "y": 4
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Odin",
+      "epithet": "One-Eyed Wanderer, whose Aspect sees what others hide.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "judging_eye",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "gungnir",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "bow_hand",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "large_heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "mind_gland",
+            "x": 0,
+            "y": 4
+          },
+          {
+            "id": "ganglion",
+            "part": "ganglion",
+            "x": 0,
+            "y": 7
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ],
+          [
+            "torso",
+            "ganglion"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Freya",
+      "epithet": "Lady of the Slain, whose Aspect warms the dying.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "keen_head",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "healing_hand",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "sword_hand",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "wings_of_light",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "large_heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "radiance_gland",
+            "x": 0,
+            "y": 4
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Loki",
+      "epithet": "Smiling Knave, whose Aspect burns with a venomed tongue.",
+      "body": {
+        "core": "torso",
+        "parts": [
+          {
+            "id": "torso",
+            "part": "torso",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "id": "head",
+            "part": "head",
+            "x": 0,
+            "y": -14
+          },
+          {
+            "id": "hand_left",
+            "part": "hearth_hand",
+            "x": -10,
+            "y": -4
+          },
+          {
+            "id": "hand_right",
+            "part": "serpent_hand",
+            "x": 10,
+            "y": -4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 12
+          },
+          {
+            "id": "heart",
+            "part": "large_heart",
+            "x": 0,
+            "y": -2
+          },
+          {
+            "id": "gland",
+            "part": "venom_gland",
+            "x": 0,
+            "y": 4
+          },
+          {
+            "id": "ganglion",
+            "part": "ganglion",
+            "x": 0,
+            "y": 7
+          }
+        ],
+        "edges": [
+          [
+            "torso",
+            "head"
+          ],
+          [
+            "torso",
+            "hand_left"
+          ],
+          [
+            "torso",
+            "hand_right"
+          ],
+          [
+            "torso",
+            "legs"
+          ],
+          [
+            "torso",
+            "heart"
+          ],
+          [
+            "torso",
+            "gland"
+          ],
+          [
+            "torso",
+            "ganglion"
+          ]
+        ]
+      }
+    }
+  ]
+}
