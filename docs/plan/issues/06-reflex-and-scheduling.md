@@ -1,7 +1,7 @@
 # Tactics, Reflex, Decision scheduling
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 05
 
 ## Question

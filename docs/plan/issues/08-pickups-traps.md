@@ -1,7 +1,7 @@
 # Pickups and Traps
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 05
 
 ## Question

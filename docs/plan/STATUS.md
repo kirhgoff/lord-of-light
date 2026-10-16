@@ -15,6 +15,8 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
+| 06 Tactics + Reflex | `06-reflex-and-scheduling` | fable plan in progress |
+| 08 Pickups + traps | `08-pickups-traps` | fable plan in progress (data has placeholders; plan designs the 11 objects) |
 
 ## Done
 
@@ -33,7 +35,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 ## Next up (once unblocked)
 
-- Frontier: 06 Reflex + scheduling, 08 Pickups + traps.
+- After 06: 07 Power + Horde, 10 raylib view (then 11, 12, 16, 20).
 - 20 Sound playback after 05, 10.
 - Later: 16 Save/load keys (after 10).
 
