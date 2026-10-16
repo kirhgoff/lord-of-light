@@ -405,8 +405,8 @@ static void test_an_oversized_reply_is_malformed(void)
     canned_reply("fight the nearest enemy", "0.9", "false");
     size_t padding = LAYA_REPLY_MAX + 1;
     char *huge = malloc(strlen(reply) + padding + 1);
-    sprintf(huge, "%s", reply);
-    memset(huge + strlen(huge), ' ', padding);
+    memcpy(huge, reply, strlen(reply));
+    memset(huge + strlen(reply), ' ', padding);
     huge[strlen(reply) + padding] = '\0';
     bool truncated;
     CHECK(decide_reply(zeus, &asked, huge, FALLBACK_NONE, 9, &truncated).fallback == FALLBACK_MALFORMED);
