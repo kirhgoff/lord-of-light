@@ -3,3 +3,5 @@ __pycache__/
 assets/sounds_sheet.wav
 saves/
 .vscode/
+.env
+.jev_key
