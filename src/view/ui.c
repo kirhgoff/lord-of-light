@@ -20,6 +20,9 @@
 #define OVERLAY_PADDING 3
 #define OVERLAY_COMPACT_LINES 2
 #define PANEL_ZINDEX 2
+#define PANEL_TOP_MARGIN 8
+#define PANEL_BOTTOM_PADDING 24
+#define LOG_RIGHT_PADDING 12
 #define OVERLAY_ZINDEX 1
 #define LOG_FOLLOW_SCROLL 1e9f
 #define DETAIL_HEIGHT 360
@@ -189,7 +192,7 @@ static void battle_log(const Battle *b, const GameData *data)
     Clay_Color colours[LOG_LINES];
     int count = collect_log_lines(b, data, lines, colours);
     CLAY({.id = CLAY_ID("BattleLog"),
-          .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = CLAY_PADDING_ALL(6), .childGap = 2,
+          .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = {6, LOG_RIGHT_PADDING, 6, 6}, .childGap = 2,
                      .layoutDirection = CLAY_TOP_TO_BOTTOM},
           .clip = {.vertical = true, .childOffset = Clay_GetScrollOffset()}}) {
         for (int i = count - 1; i >= 0; i--) text(lines[i], colours[i]);
@@ -248,11 +251,12 @@ static void panel(const Ui *ui, const Battle *b, const GameData *data, const Vie
                   const char (*laya_briefings)[BRIEFING_MAX + 1])
 {
     CLAY({.id = CLAY_ID("Panel"),
-          .layout = {.sizing = {CLAY_SIZING_FIXED(PANEL_WIDTH), CLAY_SIZING_FIXED((float)view->height)}, .padding = {0, 0, HUD_HEIGHT, 0}},
+          .layout = {.sizing = {CLAY_SIZING_FIXED(PANEL_WIDTH), CLAY_SIZING_FIXED((float)view->height)}, .padding = {0, 0, HUD_HEIGHT + PANEL_TOP_MARGIN, 0}},
           .floating = {.attachTo = CLAY_ATTACH_TO_ROOT,
                        .attachPoints = {.element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP},
                        .zIndex = PANEL_ZINDEX}}) {
-        CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .layoutDirection = CLAY_TOP_TO_BOTTOM},
+        CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = {0, 0, 0, PANEL_BOTTOM_PADDING},
+                         .layoutDirection = CLAY_TOP_TO_BOTTOM},
               .backgroundColor = PANEL_BACKGROUND}) {
             battle_log(b, data);
             int target = detail_target(ui, b);
@@ -280,12 +284,36 @@ static Clay_String stance_and_statuses(const Combatant *who)
     return frame_string("%s", status);
 }
 
-static void overlay_part_line(const Combatant *who, const GameData *data, int slot, bool working)
+static Clay_String overlay_part_string(const Combatant *who, const GameData *data, int slot)
 {
     const Part *part = &data->parts[who->body.slots[slot].part];
     int integrity = who->parts[slot].integrity;
+    return frame_string("%s %d/%d", part->name, integrity > 0 ? integrity : 0, part->integrity);
+}
+
+static void overlay_part_line(const Combatant *who, const GameData *data, int slot, bool working)
+{
+    int integrity = who->parts[slot].integrity;
     Clay_Color colour = integrity <= 0 ? RED_COLOUR : working ? TEXT_COLOUR : DIM_COLOUR;
-    text(frame_string("%s %d/%d", part->name, integrity > 0 ? integrity : 0, part->integrity), colour);
+    text(overlay_part_string(who, data, slot), colour);
+}
+
+static float line_width(Clay_String line)
+{
+    Clay_TextElementConfig config = {.fontId = FONT_BODY, .fontSize = FONT_SMALL, .letterSpacing = 1};
+    return measure_text_utf8((Clay_StringSlice){line.length, line.chars, line.chars}, &config, fonts).width;
+}
+
+static float overlay_width(const Combatant *who, const GameData *data, const char *label, bool focused)
+{
+    float widest = line_width(frame_string("%s  %d/%d", label, who->vitality, who->vitality_max));
+    float status = line_width(stance_and_statuses(who));
+    if (status > widest) widest = status;
+    for (int s = 0; focused && s < who->body.slot_count; s++) {
+        float part = line_width(overlay_part_string(who, data, s));
+        if (part > widest) widest = part;
+    }
+    return widest + 2 * OVERLAY_PADDING;
 }
 
 static void overlay(const Battle *b, const GameData *data, const Scene *scene, const Viewport *view, int c, bool focused)
@@ -295,6 +323,8 @@ static void overlay(const Battle *b, const GameData *data, const Scene *scene, c
     scene_position(scene, b, c, &x, &y);
     char label[LABEL_SIZE];
     combatant_label(b, c, label, sizeof label);
+    float right_edge = viewport_screen_x(view, x) + overlay_width(who, data, label, focused) / 2;
+    if (right_edge > (float)(view->width - PANEL_WIDTH)) return;
     bool working[MAX_SLOTS];
     body_working_parts(&who->body, who->parts, working);
     int lines = focused ? who->body.slot_count + OVERLAY_COMPACT_LINES : OVERLAY_COMPACT_LINES;
