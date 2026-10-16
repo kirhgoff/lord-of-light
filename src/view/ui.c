@@ -8,27 +8,33 @@
 #include "raylib.h"
 #include "clay_renderer_raylib.c"
 
+#include "../sim/power.h"
 #include "frame_text.h"
 #include "report.h"
 
 #define LOG_LINES 200
-#define FONT_SMALL 10
+#define FONT_SMALL 16
+#define FONT_PATH "assets/fonts/AtkinsonHyperlegible-Regular.ttf"
+#define FONT_LOAD_SIZE 48
 #define OVERLAY_LIFT_PX 48
 #define OVERLAY_PADDING 3
 #define OVERLAY_COMPACT_LINES 2
 #define PANEL_ZINDEX 2
 #define OVERLAY_ZINDEX 1
 #define LOG_FOLLOW_SCROLL 1e9f
-#define DETAIL_HEIGHT 320
+#define DETAIL_HEIGHT 360
 #define DETAIL_PADDING 6
 #define STATUS_TEXT_SIZE 96
 
-#define FONT_BIG 20
-#define END_SCREEN_WIDTH 640
+#define FONT_BIG 32
+#define END_SCREEN_WIDTH 820
 #define DEATH_LOG_HEIGHT 260
+#define LINEUP_SPRITE_WIDTH 120
+#define PARTS_TEXT_SIZE 512
 
 enum { FONT_BODY, FONT_COUNT };
 
+static const Clay_Color LINEUP_BACKGROUND = {20, 18, 16, 255};
 static const Clay_Color END_BACKGROUND = {0, 0, 0, 190};
 static const Clay_Color PANEL_BACKGROUND = {16, 14, 12, 220};
 static const Clay_Color OVERLAY_BACKGROUND = {0, 0, 0, 170};
@@ -92,7 +98,9 @@ static void text(Clay_String string, Clay_Color colour)
 
 bool ui_init(int width, int height)
 {
-    fonts[FONT_BODY] = GetFontDefault();
+    fonts[FONT_BODY] = LoadFontEx(FONT_PATH, FONT_LOAD_SIZE, NULL, 0);
+    GenTextureMipmaps(&fonts[FONT_BODY].texture);
+    SetTextureFilter(fonts[FONT_BODY].texture, TEXTURE_FILTER_TRILINEAR);
     uint32_t bytes = Clay_MinMemorySize();
     clay_memory = malloc(bytes);
     if (!clay_memory) return false;
@@ -102,8 +110,14 @@ bool ui_init(int width, int height)
     return true;
 }
 
+Font ui_font(void)
+{
+    return fonts[FONT_BODY];
+}
+
 void ui_close(void)
 {
+    UnloadFont(fonts[FONT_BODY]);
     free(clay_memory);
     clay_memory = NULL;
 }
@@ -366,11 +380,76 @@ static void end_screen(const Ui *ui, const Battle *b, const GameData *data)
     }
 }
 
+static const char *deity_epithet(const Battle *b, const GameData *data, int c)
+{
+    const Pantheon *pantheon = &data->pantheons[b->pantheon];
+    for (int d = 0; d < DEITIES_PER_PANTHEON; d++)
+        if (strcmp(pantheon->deities[d].name, b->combatants[c].name) == 0) return pantheon->deities[d].epithet;
+    return NULL;
+}
+
+static Clay_String parts_text(const Combatant *who, const GameData *data)
+{
+    char parts[PARTS_TEXT_SIZE] = "Parts:";
+    for (int s = 0; s < who->body.slot_count; s++)
+        snprintf(parts + strlen(parts), sizeof parts - strlen(parts), "%s %s", s ? "," : "", data->parts[who->body.slots[s].part].name);
+    return frame_string("%s", parts);
+}
+
+static void lineup_entry(const Battle *b, const GameData *data, int c)
+{
+    const Combatant *who = &b->combatants[c];
+    char label[LABEL_SIZE];
+    combatant_label(b, c, label, sizeof label);
+    const char *epithet = deity_epithet(b, data, c);
+    CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .childGap = 12, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER}}}) {
+        CLAY({.id = CLAY_IDI("LineupSprite", c), .layout = {.sizing = {CLAY_SIZING_FIXED(LINEUP_SPRITE_WIDTH), CLAY_SIZING_GROW(0)}}}) {}
+        CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIT(0)}, .childGap = 2, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+            text(frame_string("%s   Vitality %d   Power %ld", label, who->vitality_max, body_power(data, &who->body)), YELLOW_COLOUR);
+            if (epithet) text(frame_string("%s", epithet), TEXT_COLOUR);
+            text(parts_text(who, data), DIM_COLOUR);
+        }
+    }
+}
+
+static void lineup_side(const Battle *b, const GameData *data, Side side, Clay_String title)
+{
+    CLAY({.layout = {.sizing = {CLAY_SIZING_PERCENT(0.5f), CLAY_SIZING_GROW(0)}, .padding = CLAY_PADDING_ALL(16), .childGap = 8,
+                     .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+        sized_text(title, YELLOW_COLOUR, FONT_BIG);
+        for (int c = 0; c < b->combatant_count; c++)
+            if (b->combatants[c].side == side && b->combatants[c].spawner < 0) lineup_entry(b, data, c);
+    }
+}
+
+static void lineup(const Battle *b, const GameData *data)
+{
+    CLAY({.id = CLAY_ID("Lineup"),
+          .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = CLAY_PADDING_ALL(8),
+                     .childAlignment = {.x = CLAY_ALIGN_X_CENTER}, .layoutDirection = CLAY_TOP_TO_BOTTOM},
+          .backgroundColor = LINEUP_BACKGROUND}) {
+        CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
+            lineup_side(b, data, SIDE_PANTHEON, frame_string("The %s Pantheon", data->pantheons[b->pantheon].name));
+            lineup_side(b, data, SIDE_HORDE, CLAY_STRING("The Horde"));
+        }
+        text(CLAY_STRING("Enter / Space: begin the Battle   Esc: quit"), DIM_COLOUR);
+    }
+}
+
+bool ui_lineup_box(int c, Rectangle *box)
+{
+    Clay_ElementData element = Clay_GetElementData(CLAY_IDI("LineupSprite", c));
+    *box = (Rectangle){element.boundingBox.x, element.boundingBox.y, element.boundingBox.width, element.boundingBox.height};
+    return element.found;
+}
+
 void ui_draw(const Ui *ui, const Battle *b, const GameData *data, const Scene *scene, const Viewport *view,
              const char (*laya_briefings)[BRIEFING_MAX + 1])
 {
     Clay_BeginLayout();
-    if (battle_winner(b) >= 0) {
+    if (ui->intro) {
+        lineup(b, data);
+    } else if (battle_winner(b) >= 0) {
         end_screen(ui, b, data);
     } else if (scene->xray) {
         panel(ui, b, data, view, laya_briefings);

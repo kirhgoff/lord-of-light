@@ -148,6 +148,7 @@ static void restart_battle(Battle *battle, const GameData *data, Scene *scene, U
     if (laya) laya_decider_reset(laya);
     ui->selected = ui->hovered = -1;
     ui->follow_log = true;
+    ui->intro = true;
     *accumulated = 0;
     snprintf(message, sizeof message, "New Battle, seed %u", battle->seed);
     hud_show_toast(hud, message);
@@ -166,15 +167,16 @@ static void run_window(Battle *battle, const GameData *data, Decider *decider, S
         if (!hud->confirm_quit) handle_save_keys(battle, data, scene, hud, ui, laya);
         if (ui->restart_allowed && !hud->confirm_quit && battle_winner(battle) >= 0 && IsKeyPressed(KEY_R))
             restart_battle(battle, data, scene, ui, hud, laya, &accumulated);
-        if (IsKeyPressed(KEY_SPACE)) hud->paused = !hud->paused;
+        if (ui->intro && !hud->confirm_quit && (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))) ui->intro = false;
+        else if (IsKeyPressed(KEY_SPACE)) hud->paused = !hud->paused;
         if (IsKeyPressed(KEY_T)) {
             scene->xray = !scene->xray;
             viewport_set_inset(view, scene->xray ? PANEL_WIDTH : 0);
         }
         if (IsKeyPressed(KEY_M)) sound_toggle_mute();
-        if (!hud->paused && !hud->confirm_quit && battle_winner(battle) < 0) advance_ticks(battle, data, decider, scene, &accumulated, stop_tick);
+        if (!ui->intro && !hud->paused && !hud->confirm_quit && battle_winner(battle) < 0) advance_ticks(battle, data, decider, scene, &accumulated, stop_tick);
         if (battle->tick >= stop_tick) hud->paused = true;
-        sound_update(battle, data, view, hud->paused || hud->confirm_quit);
+        sound_update(battle, data, view, ui->intro || hud->paused || hud->confirm_quit);
         scene->alpha = accumulated / TICK_SECONDS;
         ui_update(ui, battle, scene, atlases, view, hud->confirm_quit);
         BeginDrawing();
@@ -227,7 +229,7 @@ int main(int argc, char **argv)
     if (args.xray) viewport_set_inset(&view, PANEL_WIDTH);
     scene_reset(&scene, &battle);
     Hud hud = {0};
-    Ui ui = {args.select, -1, true, !setup.replay_path};
+    Ui ui = {args.select, -1, true, !setup.replay_path, !args.screenshot};
     LayaDecider *laya = setup.decider == &setup.laya_decider.base ? &setup.laya_decider : NULL;
     const char (*laya_briefings)[BRIEFING_MAX + 1] = laya ? laya->briefing : NULL;
     int exit_code = 0;
