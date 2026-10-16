@@ -40,7 +40,7 @@
       "slow_percent": 50,
       "effect_ticks": 80,
       "respawn_ticks": 200,
-      "sound": "no_such_sound"
+      "sound": "../sounds_sheet"
     }
   ]
 }

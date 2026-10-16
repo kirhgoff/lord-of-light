@@ -9,7 +9,7 @@
       "id": "fire",
       "dot_damage": 2,
       "dot_ticks": 60,
-      "hit_sound": "no_such_sound",
+      "hit_sound": "../sounds_sheet",
       "effect_sound": "fire_effect"
     },
     {

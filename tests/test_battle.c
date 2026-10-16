@@ -18,7 +18,7 @@ static void reset(Battle *b)
 
 static void load_data(void)
 {
-    CHECK(load_game_data(&data, "data", err, ERR_SIZE));
+    LOAD_OR_EXIT(load_game_data(&data, "data", err, ERR_SIZE), err);
 }
 
 static void run(Battle *b, int ticks)

@@ -13,7 +13,7 @@ static Battle battle;
 static void open_field(void)
 {
     char err[ERR_SIZE];
-    CHECK(load_game_data(&data, "data", err, ERR_SIZE));
+    LOAD_OR_EXIT(load_game_data(&data, "data", err, ERR_SIZE), err);
     battle_setup(&battle, &data, 3);
     memset(battle.obstacle, 0, sizeof battle.obstacle);
     battle.pickup_count = battle.trap_count = 0;

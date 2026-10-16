@@ -1,5 +1,6 @@
 #include "data.h"
 
+#include <ctype.h>
 #include <dirent.h>
 #include <limits.h>
 #include <math.h>
@@ -292,14 +293,13 @@ static bool get_sound(Context *ctx, const cJSON *obj, const char *parent, const 
                       char *out, bool required)
 {
     if (!get_string(ctx, obj, parent, key, out, ID_LEN, required)) return false;
-    if (out[0] == '\0') return true;
-    char file[PATH_LEN];
-    snprintf(file, sizeof file, "assets/sounds/%s.wav", out);
-    FILE *f = fopen(file, "rb");
-    if (f) fclose(f);
+    if (!required && out[0] == '\0') return true;
     char path[PATH_LEN];
     join_key(path, parent, key);
-    return f != NULL || fail(ctx, path, "unknown sound \"%s\"", out);
+    bool valid = out[0] != '\0';
+    for (const char *c = out; *c; c++)
+        if (!(islower((unsigned char)*c) || isdigit((unsigned char)*c) || *c == '_')) valid = false;
+    return valid || fail(ctx, path, "invalid sound id \"%s\"", out);
 }
 
 static bool read_element_def(Context *ctx, const cJSON *obj, const char *path, ElementDef *def)

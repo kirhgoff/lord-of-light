@@ -171,7 +171,7 @@
           "range": 20,
           "cooldown": 14,
           "area": 0,
-          "sound": "no_such_sound"
+          "sound": "../sounds_sheet"
         }
       ]
     },

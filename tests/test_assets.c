@@ -26,7 +26,7 @@ static void test_every_sprite_id_has_an_atlas(void)
 {
     static GameData data;
     char err[ERR_SIZE];
-    CHECK(load_game_data(&data, "data", err, ERR_SIZE));
+    LOAD_OR_EXIT(load_game_data(&data, "data", err, ERR_SIZE), err);
     for (int i = 0; i < data.part_count; i++) CHECK(atlas_exists("parts", data.parts[i].sprite));
     for (int i = 0; i < data.pickup_count; i++) CHECK(atlas_exists("pickups", data.pickups[i].sprite));
     for (int i = 0; i < data.trap_count; i++) CHECK(atlas_exists("traps", data.traps[i].sprite));
@@ -60,7 +60,13 @@ static bool sound_has_expected_format(const char *id)
         && le16(header + 20) == 1 && le16(header + 22) == 1 && le32(header + 24) == 22050
         && le16(header + 34) == 16 && memcmp(header + 36, "data", 4) == 0
         && data_bytes > 0 && data_bytes <= 22050 * 2 * 6 / 10;
-    if (!ok) printf("  bad sound: %s\n", path);
+    return ok;
+}
+
+static bool check_sound(const char *id)
+{
+    bool ok = sound_has_expected_format(id);
+    if (!ok) printf("  bad or missing sound: assets/sounds/%s.wav\n", id);
     return ok;
 }
 
@@ -68,25 +74,31 @@ static void test_every_sound_id_has_a_wav(void)
 {
     static GameData data;
     char err[ERR_SIZE];
-    CHECK(load_game_data(&data, "data", err, ERR_SIZE));
+    LOAD_OR_EXIT(load_game_data(&data, "data", err, ERR_SIZE), err);
     for (int p = 0; p < data.part_count; p++) {
         const Part *part = &data.parts[p];
-        for (int a = 0; a < part->ability_count; a++) CHECK(sound_has_expected_format(part->abilities[a].sound));
-        if (part->move_speed_px_per_second > 0) CHECK(sound_has_expected_format(part->step_sound));
+        for (int a = 0; a < part->ability_count; a++) CHECK(check_sound(part->abilities[a].sound));
+        if (part->move_speed_px_per_second > 0) CHECK(check_sound(part->step_sound));
     }
-    for (int i = 0; i < data.pickup_count; i++) CHECK(sound_has_expected_format(data.pickups[i].sound));
-    for (int i = 0; i < data.trap_count; i++) CHECK(sound_has_expected_format(data.traps[i].sound));
+    for (int i = 0; i < data.pickup_count; i++) CHECK(check_sound(data.pickups[i].sound));
+    for (int i = 0; i < data.trap_count; i++) CHECK(check_sound(data.traps[i].sound));
     for (int e = 0; e < ELEMENT_COUNT; e++) {
-        CHECK(sound_has_expected_format(data.elements[e].hit_sound));
-        CHECK(sound_has_expected_format(data.elements[e].effect_sound));
+        CHECK(check_sound(data.elements[e].hit_sound));
+        CHECK(check_sound(data.elements[e].effect_sound));
     }
-    CHECK(sound_has_expected_format(data.cues.death));
-    CHECK(sound_has_expected_format(data.cues.part_destroyed));
-    CHECK(sound_has_expected_format(data.cues.spawn_appear));
+    CHECK(check_sound(data.cues.death));
+    CHECK(check_sound(data.cues.part_destroyed));
+    CHECK(check_sound(data.cues.spawn_appear));
+}
+
+static void test_a_well_formed_id_without_a_wav_fails_the_asset_check(void)
+{
+    CHECK(!sound_has_expected_format("no_such_sound"));
 }
 
 void run_asset_tests(void)
 {
     test_every_sprite_id_has_an_atlas();
     test_every_sound_id_has_a_wav();
+    test_a_well_formed_id_without_a_wav_fails_the_asset_check();
 }
