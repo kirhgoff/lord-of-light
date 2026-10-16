@@ -27,7 +27,8 @@ void viewport_clamp(Viewport *v)
 {
     float cover = viewport_cover_zoom(v);
     float highest = cover > ZOOM_MAX ? cover : ZOOM_MAX;
-    v->zoom = v->zoom < cover ? cover : v->zoom > highest ? highest : v->zoom;
+    v->zoom = v->zoom < cover ? cover : v->zoom > highest ? highest
+                                                          : v->zoom;
     v->centre_x = clamp_axis(v->centre_x, (float)v->width, v->zoom, ARENA_WIDTH_PX);
     v->centre_y = clamp_axis(v->centre_y, (float)v->height, v->zoom, ARENA_HEIGHT_PX);
 }

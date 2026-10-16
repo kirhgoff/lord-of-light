@@ -384,25 +384,25 @@ static bool load_combatant(Context *ctx, const cJSON *obj, Combatant *c)
     c->side = (Side)side;
     c->charm_side = (Side)charm_side;
     bool read = read_int(ctx, obj, "vitality", 0, 1000000, &c->vitality) &&
-           read_int(ctx, obj, "vitality_max", 0, 1000000, &c->vitality_max) &&
-           read_int(ctx, obj, "slow_ticks", 0, 1000000, &c->slow_ticks) &&
-           read_int(ctx, obj, "dot_ticks", 0, 1000000, &c->dot_ticks) &&
-           read_int(ctx, obj, "charm_ticks", 0, 1000000, &c->charm_ticks) &&
-           read_int(ctx, obj, "dot_damage", 0, 1000000, &c->dot_damage) &&
-           read_int(ctx, obj, "dot_element", -1, ELEMENT_COUNT - 1, &c->dot_element) &&
-           read_combatant_ref(ctx, obj, "dot_source", &c->dot_source) &&
-           read_int(ctx, obj, "slow_percent", 0, 100, &c->slow_percent) &&
-           read_combatant_ref(ctx, obj, "spawner", &c->spawner) &&
-           read_int(ctx, obj, "damage_bonus_percent", 0, 1000, &c->damage_bonus_percent) &&
-           read_int(ctx, obj, "damage_bonus_ticks", 0, 1000000, &c->damage_bonus_ticks) &&
-           read_int(ctx, obj, "next_decision_tick", 0, MAX_TICK, &c->next_decision_tick) &&
-           read_int(ctx, obj, "next_waiting_tick", 0, MAX_TICK, &c->next_waiting_tick) &&
-           read_int(ctx, obj, "haste_percent", 0, 1000, &c->haste_percent) &&
-           read_int(ctx, obj, "haste_ticks", 0, 1000000, &c->haste_ticks) &&
-           read_int(ctx, obj, "vision_percent", 0, 1000, &c->vision_percent) &&
-           read_int(ctx, obj, "vision_ticks", 0, 1000000, &c->vision_ticks) &&
-           read_int(ctx, obj, "ward_percent", 0, 1000, &c->ward_percent) &&
-           read_int(ctx, obj, "ward_ticks", 0, 1000000, &c->ward_ticks);
+                read_int(ctx, obj, "vitality_max", 0, 1000000, &c->vitality_max) &&
+                read_int(ctx, obj, "slow_ticks", 0, 1000000, &c->slow_ticks) &&
+                read_int(ctx, obj, "dot_ticks", 0, 1000000, &c->dot_ticks) &&
+                read_int(ctx, obj, "charm_ticks", 0, 1000000, &c->charm_ticks) &&
+                read_int(ctx, obj, "dot_damage", 0, 1000000, &c->dot_damage) &&
+                read_int(ctx, obj, "dot_element", -1, ELEMENT_COUNT - 1, &c->dot_element) &&
+                read_combatant_ref(ctx, obj, "dot_source", &c->dot_source) &&
+                read_int(ctx, obj, "slow_percent", 0, 100, &c->slow_percent) &&
+                read_combatant_ref(ctx, obj, "spawner", &c->spawner) &&
+                read_int(ctx, obj, "damage_bonus_percent", 0, 1000, &c->damage_bonus_percent) &&
+                read_int(ctx, obj, "damage_bonus_ticks", 0, 1000000, &c->damage_bonus_ticks) &&
+                read_int(ctx, obj, "next_decision_tick", 0, MAX_TICK, &c->next_decision_tick) &&
+                read_int(ctx, obj, "next_waiting_tick", 0, MAX_TICK, &c->next_waiting_tick) &&
+                read_int(ctx, obj, "haste_percent", 0, 1000, &c->haste_percent) &&
+                read_int(ctx, obj, "haste_ticks", 0, 1000000, &c->haste_ticks) &&
+                read_int(ctx, obj, "vision_percent", 0, 1000, &c->vision_percent) &&
+                read_int(ctx, obj, "vision_ticks", 0, 1000000, &c->vision_ticks) &&
+                read_int(ctx, obj, "ward_percent", 0, 1000, &c->ward_percent) &&
+                read_int(ctx, obj, "ward_ticks", 0, 1000000, &c->ward_ticks);
     if (read && c->dot_ticks > 0 && c->dot_element < 0) return fail(ctx, "dot_ticks needs a dot_element");
     return read;
 }

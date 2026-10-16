@@ -150,18 +150,18 @@ static void test_body_plan_errors(void)
 static void test_slot_role_errors(void)
 {
     static const ErrorCase cases[] = {
-        { load_body_plans, FIXTURE("bodyplans_unknown_role.json"), "bodyplans[0].slots[0].role: unknown role \"flyer\"" },
-        { load_body_plans, FIXTURE("bodyplans_heart_role_external.json"), "bodyplans[0].slots[0].role: role \"heart\" needs an internal slot" },
-        { load_body_plans, FIXTURE("bodyplans_mover_role_internal.json"), "bodyplans[0].slots[6].role: role \"mover\" needs an external slot" },
-        { load_body_plans, FIXTURE("bodyplans_unknown_fixed_part.json"), "bodyplans[0].slots[2].part: unknown part \"torzo\"" },
-        { load_body_plans, FIXTURE("bodyplans_fixed_part_wrong_kind.json"), "bodyplans[0].slots[2].part: part \"heart\" is internal" },
-        { load_body_plans, FIXTURE("bodyplans_fixed_part_misses_role.json"), "bodyplans[0].slots[3].part: part \"torso\" does not fit role \"sense\"" },
-        { load_body_plans, FIXTURE("bodyplans_no_heart_slot.json"), "bodyplans[0]: body plan \"biped\" has no heart slot" },
-        { load_body_plans, FIXTURE("bodyplans_no_mover_slot.json"), "bodyplans[0]: body plan \"biped\" has no mover slot" },
-        { load_body_plans, FIXTURE("bodyplans_fixed_part_minion_only.json"), "bodyplans[0].slots[2].part: part \"imp_body\" is minion only" },
-        { load_body_plans, FIXTURE("bodyplans_fixed_part_deity_only.json"), "bodyplans[0].slots[2].part: part \"fire_hand\" is deity only" },
-        { load_body_plans, FIXTURE("bodyplans_spawn_slot_unfilled.json"), "bodyplans[6].slots[1]: spawn plan slot \"claw\" has no part" },
-        { load_parts, FIXTURE("parts_horde_heart_unfillable.json"), "bodyplans[0].slots[5]: no part fills slot \"heart\"" },
+        {load_body_plans, FIXTURE("bodyplans_unknown_role.json"), "bodyplans[0].slots[0].role: unknown role \"flyer\""},
+        {load_body_plans, FIXTURE("bodyplans_heart_role_external.json"), "bodyplans[0].slots[0].role: role \"heart\" needs an internal slot"},
+        {load_body_plans, FIXTURE("bodyplans_mover_role_internal.json"), "bodyplans[0].slots[6].role: role \"mover\" needs an external slot"},
+        {load_body_plans, FIXTURE("bodyplans_unknown_fixed_part.json"), "bodyplans[0].slots[2].part: unknown part \"torzo\""},
+        {load_body_plans, FIXTURE("bodyplans_fixed_part_wrong_kind.json"), "bodyplans[0].slots[2].part: part \"heart\" is internal"},
+        {load_body_plans, FIXTURE("bodyplans_fixed_part_misses_role.json"), "bodyplans[0].slots[3].part: part \"torso\" does not fit role \"sense\""},
+        {load_body_plans, FIXTURE("bodyplans_no_heart_slot.json"), "bodyplans[0]: body plan \"biped\" has no heart slot"},
+        {load_body_plans, FIXTURE("bodyplans_no_mover_slot.json"), "bodyplans[0]: body plan \"biped\" has no mover slot"},
+        {load_body_plans, FIXTURE("bodyplans_fixed_part_minion_only.json"), "bodyplans[0].slots[2].part: part \"imp_body\" is minion only"},
+        {load_body_plans, FIXTURE("bodyplans_fixed_part_deity_only.json"), "bodyplans[0].slots[2].part: part \"fire_hand\" is deity only"},
+        {load_body_plans, FIXTURE("bodyplans_spawn_slot_unfilled.json"), "bodyplans[6].slots[1]: spawn plan slot \"claw\" has no part"},
+        {load_parts, FIXTURE("parts_horde_heart_unfillable.json"), "bodyplans[0].slots[5]: no part fills slot \"heart\""},
     };
     load_real_data();
     for (size_t i = 0; i < sizeof cases / sizeof cases[0]; i++)
@@ -341,19 +341,19 @@ static void test_heal_is_separate_from_damage(void)
 static void test_negative_values_and_empty_parts(void)
 {
     static const ErrorCase cases[] = {
-        { load_parts, FIXTURE("parts_negative_range.json"), "parts[6].abilities[0].range: must not be negative" },
-        { load_parts, FIXTURE("parts_negative_cooldown.json"), "parts[6].abilities[0].cooldown: must not be negative" },
-        { load_parts, FIXTURE("parts_negative_area.json"), "parts[6].abilities[0].area: must not be negative" },
-        { load_parts, FIXTURE("parts_negative_vitality.json"), "parts[3].vitality: must not be negative" },
-        { load_parts, FIXTURE("parts_negative_initiative.json"), "parts[1].initiative: must not be negative" },
-        { load_parts, FIXTURE("parts_huge_initiative.json"), "parts[1].initiative: must be between 0 and 100" },
-        { load_parts, FIXTURE("parts_negative_move_speed.json"), "parts[5].move_speed: must not be negative" },
-        { load_parts, FIXTURE("parts_negative_vision.json"), "parts[1].vision.close: must not be negative" },
-        { load_parts, FIXTURE("parts_empty.json"), "parts: no parts" },
-        { load_arena_objects, FIXTURE("arena_objects_negative_heal.json"), "pickups[0].heal: must not be negative" },
-        { load_arena_objects, FIXTURE("arena_objects_negative_radius.json"), "traps[0].radius: must not be negative" },
-        { load_arena_objects, FIXTURE("arena_objects_negative_respawn.json"), "traps[1].respawn_ticks: must not be negative" },
-        { load_arena_objects, FIXTURE("arena_objects_huge_percent.json"), "pickups[5].ward_percent: must be between 0 and 1000" },
+        {load_parts, FIXTURE("parts_negative_range.json"), "parts[6].abilities[0].range: must not be negative"},
+        {load_parts, FIXTURE("parts_negative_cooldown.json"), "parts[6].abilities[0].cooldown: must not be negative"},
+        {load_parts, FIXTURE("parts_negative_area.json"), "parts[6].abilities[0].area: must not be negative"},
+        {load_parts, FIXTURE("parts_negative_vitality.json"), "parts[3].vitality: must not be negative"},
+        {load_parts, FIXTURE("parts_negative_initiative.json"), "parts[1].initiative: must not be negative"},
+        {load_parts, FIXTURE("parts_huge_initiative.json"), "parts[1].initiative: must be between 0 and 100"},
+        {load_parts, FIXTURE("parts_negative_move_speed.json"), "parts[5].move_speed: must not be negative"},
+        {load_parts, FIXTURE("parts_negative_vision.json"), "parts[1].vision.close: must not be negative"},
+        {load_parts, FIXTURE("parts_empty.json"), "parts: no parts"},
+        {load_arena_objects, FIXTURE("arena_objects_negative_heal.json"), "pickups[0].heal: must not be negative"},
+        {load_arena_objects, FIXTURE("arena_objects_negative_radius.json"), "traps[0].radius: must not be negative"},
+        {load_arena_objects, FIXTURE("arena_objects_negative_respawn.json"), "traps[1].respawn_ticks: must not be negative"},
+        {load_arena_objects, FIXTURE("arena_objects_huge_percent.json"), "pickups[5].ward_percent: must be between 0 and 1000"},
     };
     load_real_data();
     for (size_t i = 0; i < sizeof cases / sizeof cases[0]; i++)

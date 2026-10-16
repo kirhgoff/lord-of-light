@@ -4,7 +4,8 @@
 
 static float clampf(float value, float low, float high)
 {
-    return value < low ? low : value > high ? high : value;
+    return value < low ? low : value > high ? high
+                                            : value;
 }
 
 static float outside_distance(float offset, float half_extent)

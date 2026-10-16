@@ -13,7 +13,10 @@
 #define GAIN_ABILITY 0.7f
 #define GAIN_EFFECT 0.5f
 
-typedef enum { SOUND_STEP, SOUND_CUE, SOUND_ABILITY, SOUND_EFFECT } SoundCategory;
+typedef enum { SOUND_STEP,
+               SOUND_CUE,
+               SOUND_ABILITY,
+               SOUND_EFFECT } SoundCategory;
 
 typedef struct {
     float volume;

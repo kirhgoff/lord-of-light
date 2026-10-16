@@ -155,7 +155,8 @@ int64_t isqrt(int64_t value)
 
 static int clamp(int value, int low, int high)
 {
-    return value < low ? low : value > high ? high : value;
+    return value < low ? low : value > high ? high
+                                            : value;
 }
 
 static bool overlaps_tile(const Battle *battle, int x_millipx, int y_millipx, int column, int row)

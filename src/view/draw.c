@@ -37,9 +37,7 @@ bool sheets_load(Sheets *sheets, const GameData *data, const Atlases *atlases, c
         if (!load_sheet(&sheets->traps[i], "traps", data->traps[i].sprite, &atlases->traps[i], err, err_size)) return false;
     for (int e = 0; e < ELEMENT_COUNT; e++)
         if (!load_sheet(&sheets->effects[e], "effects", element_id((Element)e), &atlases->effects[e], err, err_size)) return false;
-    return load_sheet(&sheets->floor, "tiles", "floor", &atlases->floor, err, err_size)
-        && load_sheet(&sheets->rock, "tiles", "rock", &atlases->rock, err, err_size)
-        && load_sheet(&sheets->pillar, "tiles", "pillar", &atlases->pillar, err, err_size);
+    return load_sheet(&sheets->floor, "tiles", "floor", &atlases->floor, err, err_size) && load_sheet(&sheets->rock, "tiles", "rock", &atlases->rock, err, err_size) && load_sheet(&sheets->pillar, "tiles", "pillar", &atlases->pillar, err, err_size);
 }
 
 static void unload_all(Texture2D *textures, int count)
@@ -213,7 +211,8 @@ static Color vitality_colour(const Combatant *who)
 {
     if (who->charm_side != who->side) return PURPLE;
     int percent = who->vitality_max > 0 ? who->vitality * 100 / who->vitality_max : 0;
-    return percent > 50 ? GREEN : percent > 25 ? YELLOW : RED;
+    return percent > 50 ? GREEN : percent > 25 ? YELLOW
+                                               : RED;
 }
 
 static void draw_text(const char *text, int x, int y, int size, Color colour)
