@@ -5,7 +5,8 @@
       "name": "Health Vial",
       "sprite": "health_vial",
       "heal": 40,
-      "respawn_ticks": 600
+      "respawn_ticks": 600,
+      "sound": "pickup_health"
     },
     {
       "id": "rage_draught",
@@ -13,7 +14,8 @@
       "sprite": "rage_draught",
       "damage_bonus_percent": 50,
       "effect_ticks": 200,
-      "respawn_ticks": 900
+      "respawn_ticks": 900,
+      "sound": "pickup_rage"
     }
   ],
   "traps": [
@@ -25,7 +27,8 @@
       "damage": 10,
       "radius": 24,
       "effect_ticks": 0,
-      "respawn_ticks": 100
+      "respawn_ticks": 100,
+      "sound": "trap_fire_vent"
     },
     {
       "id": "frost_snare",
@@ -36,7 +39,8 @@
       "radius": 20,
       "slow_percent": 50,
       "effect_ticks": 80,
-      "respawn_ticks": 200
+      "respawn_ticks": 200,
+      "sound": "trap_frost_snare"
     },
     {
       "id": "fire_vent",
@@ -46,7 +50,8 @@
       "damage": 10,
       "radius": 24,
       "effect_ticks": 0,
-      "respawn_ticks": 100
+      "respawn_ticks": 100,
+      "sound": "trap_fire_vent"
     }
   ]
 }

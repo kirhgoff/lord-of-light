@@ -1,0 +1,46 @@
+{
+  "pickups": [
+    {
+      "id": "health_vial",
+      "name": "Health Vial",
+      "sprite": "health_vial",
+      "heal": 40,
+      "respawn_ticks": 600,
+      "sound": "pickup_health"
+    },
+    {
+      "id": "rage_draught",
+      "name": "Rage Draught",
+      "sprite": "rage_draught",
+      "damage_bonus_percent": 50,
+      "effect_ticks": 200,
+      "respawn_ticks": 900,
+      "sound": "pickup_rage"
+    }
+  ],
+  "traps": [
+    {
+      "id": "fire_vent",
+      "name": "Fire Vent",
+      "sprite": "fire_vent",
+      "element": "fire",
+      "damage": 10,
+      "radius": 24,
+      "effect_ticks": 0,
+      "respawn_ticks": 100,
+      "sound": "trap_fire_vent"
+    },
+    {
+      "id": "frost_snare",
+      "name": "Frost Snare",
+      "sprite": "frost_snare",
+      "element": "frost",
+      "damage": 4,
+      "radius": 20,
+      "slow_percent": 50,
+      "effect_ticks": 80,
+      "respawn_ticks": 200,
+      "sound": "no_such_sound"
+    }
+  ]
+}

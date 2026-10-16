@@ -247,6 +247,21 @@ static void test_other_file_errors(void)
                 "traps[0].element: unknown element \"steam\"");
 }
 
+static void test_sound_errors(void)
+{
+    load_real_data();
+    check_error(load_parts(&data, FIXTURE("parts_unknown_sound.json"), err, ERR_SIZE),
+                "parts[13].abilities[0].sound: unknown sound \"no_such_sound\"");
+    check_error(load_parts(&data, FIXTURE("parts_missing_step_sound.json"), err, ERR_SIZE),
+                "parts[3].step_sound: missing");
+    check_error(load_elements(&data, FIXTURE("elements_unknown_sound.json"), err, ERR_SIZE),
+                "elements[1].hit_sound: unknown sound \"no_such_sound\"");
+    check_error(load_elements(&data, FIXTURE("elements_missing_cue.json"), err, ERR_SIZE),
+                "cues.death: missing");
+    check_error(load_arena_objects(&data, FIXTURE("arena_objects_unknown_sound.json"), err, ERR_SIZE),
+                "traps[1].sound: unknown sound \"no_such_sound\"");
+}
+
 static void test_file_errors(void)
 {
     check_error(load_parts(&data, FIXTURE("invalid.json"), err, ERR_SIZE), "invalid JSON");
@@ -358,6 +373,7 @@ void run_data_tests(void)
     test_minion_attack_parts_match_the_parts_they_replace();
     test_part_errors();
     test_other_file_errors();
+    test_sound_errors();
     test_file_errors();
     test_failed_load_keeps_previous_data();
     test_body_graph_errors();
