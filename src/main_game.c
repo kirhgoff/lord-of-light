@@ -18,8 +18,8 @@
 #include "view/sound.h"
 #include "view/ui.h"
 
-#define WINDOW_WIDTH 1280
-#define WINDOW_HEIGHT 720
+#define DEFAULT_WINDOW_WIDTH 1280
+#define DEFAULT_WINDOW_HEIGHT 720
 #define ERR_SIZE 256
 #define MAX_FRAME_SECONDS 0.25f
 #define SCREENSHOT_UI_PASSES 2
@@ -46,7 +46,7 @@ static bool parse_ticks(const char *text, long *ticks)
 
 static int usage(void)
 {
-    fprintf(stderr, "usage: game [--seed N] [--ticks N --screenshot out.png] [--xray] [--select N] [--decider laya|reflex] [--replay dump.json]\n");
+    fprintf(stderr, "usage: game [--seed N] [--ticks N --screenshot out.png] [--xray] [--select N] [--size WxH] [--decider laya|reflex] [--replay dump.json]\n");
     return 2;
 }
 
@@ -57,11 +57,19 @@ typedef struct {
     bool ticks_given;
     bool xray;
     int select;
+    int width;
+    int height;
 } Args;
+
+static bool parse_size(const char *text, int *width, int *height)
+{
+    char extra;
+    return sscanf(text, "%dx%d%c", width, height, &extra) == 2 && *width >= WINDOW_MIN_WIDTH && *height >= WINDOW_MIN_HEIGHT;
+}
 
 static bool parse_args(int argc, char **argv, Args *args, DeciderSetup *setup)
 {
-    *args = (Args){.seed = 1, .select = -1};
+    *args = (Args){.seed = 1, .select = -1, .width = DEFAULT_WINDOW_WIDTH, .height = DEFAULT_WINDOW_HEIGHT};
     long selected;
     for (int i = 1; i < argc; i++) {
         bool has_value = i + 1 < argc;
@@ -69,6 +77,7 @@ static bool parse_args(int argc, char **argv, Args *args, DeciderSetup *setup)
         else if (has_value && strcmp(argv[i], "--seed") == 0 && parse_seed(argv[i + 1], &args->seed)) i++;
         else if (has_value && strcmp(argv[i], "--ticks") == 0 && parse_ticks(argv[i + 1], &args->ticks)) i++, args->ticks_given = true;
         else if (has_value && strcmp(argv[i], "--select") == 0 && parse_ticks(argv[i + 1], &selected)) i++, args->select = (int)selected;
+        else if (has_value && strcmp(argv[i], "--size") == 0 && parse_size(argv[i + 1], &args->width, &args->height)) i++;
         else if (has_value && strcmp(argv[i], "--screenshot") == 0) args->screenshot = argv[++i];
         else if (!decider_setup_parse(setup, argc, argv, &i)) return false;
     }
@@ -169,10 +178,8 @@ static void run_window(Battle *battle, const GameData *data, Decider *decider, S
             restart_battle(battle, data, scene, ui, hud, laya, &accumulated);
         if (ui->intro && !hud->confirm_quit && (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))) ui->intro = false;
         else if (IsKeyPressed(KEY_SPACE)) hud->paused = !hud->paused;
-        if (IsKeyPressed(KEY_T)) {
-            scene->xray = !scene->xray;
-            viewport_set_inset(view, scene->xray ? PANEL_WIDTH : 0);
-        }
+        if (IsKeyPressed(KEY_T)) scene->xray = !scene->xray;
+        if (IsWindowResized()) viewport_resize(view, GetScreenWidth(), GetScreenHeight());
         if (IsKeyPressed(KEY_M)) sound_toggle_mute();
         if (!ui->intro && !hud->paused && !hud->confirm_quit && battle_winner(battle) < 0) advance_ticks(battle, data, decider, scene, &accumulated, stop_tick);
         if (battle->tick >= stop_tick) hud->paused = true;
@@ -201,11 +208,12 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (args.screenshot) SetConfigFlags(FLAG_WINDOW_HIDDEN);
-    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Lord of Light " GAME_VERSION);
+    SetConfigFlags(args.screenshot ? FLAG_WINDOW_HIDDEN : FLAG_WINDOW_RESIZABLE);
+    InitWindow(args.width, args.height, "Lord of Light " GAME_VERSION);
+    SetWindowMinSize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT);
     SetExitKey(KEY_NULL);
     SetTargetFPS(60);
-    if (!ui_init(WINDOW_WIDTH, WINDOW_HEIGHT)) {
+    if (!ui_init(args.width, args.height)) {
         fprintf(stderr, "cannot initialise the UI\n");
         CloseWindow();
         return 1;
@@ -224,9 +232,8 @@ int main(int argc, char **argv)
     }
     if (!setup.replay_path) battle_setup(&battle, &data, args.seed);
     Viewport view;
-    viewport_init(&view, WINDOW_WIDTH, WINDOW_HEIGHT);
+    viewport_init(&view, args.width, args.height);
     Scene scene = {.xray = args.xray};
-    if (args.xray) viewport_set_inset(&view, PANEL_WIDTH);
     scene_reset(&scene, &battle);
     Hud hud = {0};
     Ui ui = {args.select, -1, true, !setup.replay_path, !args.screenshot};

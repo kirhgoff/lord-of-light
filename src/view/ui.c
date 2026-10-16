@@ -36,7 +36,7 @@ enum { FONT_BODY, FONT_COUNT };
 
 static const Clay_Color LINEUP_BACKGROUND = {20, 18, 16, 255};
 static const Clay_Color END_BACKGROUND = {0, 0, 0, 190};
-static const Clay_Color PANEL_BACKGROUND = {16, 14, 12, 220};
+static const Clay_Color PANEL_BACKGROUND = {16, 14, 12, 190};
 static const Clay_Color OVERLAY_BACKGROUND = {0, 0, 0, 170};
 static const Clay_Color OVERLAY_FOCUS_BACKGROUND = {70, 60, 10, 200};
 static const Clay_Color DETAIL_BACKGROUND = {30, 26, 22, 230};
@@ -299,7 +299,7 @@ static void overlay(const Battle *b, const GameData *data, const Scene *scene, c
     body_working_parts(&who->body, who->parts, working);
     int lines = focused ? who->body.slot_count + OVERLAY_COMPACT_LINES : OVERLAY_COMPACT_LINES;
     float height = (float)(lines * FONT_SMALL + 2 * OVERLAY_PADDING);
-    float bottom = viewport_screen_y(view, y) - OVERLAY_LIFT_PX * (float)view->zoom;
+    float bottom = viewport_screen_y(view, y) - OVERLAY_LIFT_PX * view->zoom;
     if (bottom < HUD_HEIGHT + height) bottom = HUD_HEIGHT + height;
     CLAY({.id = CLAY_IDI("Overlay", c),
           .layout = {.padding = CLAY_PADDING_ALL(OVERLAY_PADDING), .layoutDirection = CLAY_TOP_TO_BOTTOM},

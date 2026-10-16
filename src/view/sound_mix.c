@@ -15,8 +15,8 @@ static float outside_distance(float offset, float half_extent)
 
 Placement sound_place(float world_x, float world_y, const Viewport *view)
 {
-    float half_width = (float)view->width / (float)view->zoom / 2;
-    float half_height = (float)(view->height - HUD_HEIGHT) / (float)view->zoom / 2;
+    float half_width = (float)view->width / view->zoom / 2;
+    float half_height = (float)view->height / view->zoom / 2;
     float dx = world_x - view->centre_x;
     float away = hypotf(outside_distance(dx, half_width), outside_distance(world_y - view->centre_y, half_height));
     return (Placement){clampf(1 - away / half_width, 0, 1), clampf(dx / half_width, -1, 1)};
