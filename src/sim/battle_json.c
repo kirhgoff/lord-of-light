@@ -14,6 +14,16 @@ static const char *const STANCE_IDS[STANCE_COUNT] = {"none", "fight", "retreat",
 static const char *const FALLBACK_IDS[FALLBACK_COUNT] = {"none", "waiting", "unreachable", "timeout", "malformed", "low_confidence"};
 static const char *const EVENT_IDS[EVENT_KIND_COUNT] = {"decision", "hit", "pickup", "death", "effect", "spawn", "trap"};
 
+const char *stance_id(Stance stance)
+{
+    return STANCE_IDS[stance];
+}
+
+const char *fallback_id(Fallback fallback)
+{
+    return FALLBACK_IDS[fallback];
+}
+
 static const char *object_id(const ArenaObjectDef *defs, int index)
 {
     return defs[index].id;

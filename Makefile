@@ -15,7 +15,7 @@ FRAMEWORKS := -framework Cocoa -framework IOKit -framework CoreVideo -framework 
 CJSON_OBJECT := $(BUILD)/vendor/cjson.o
 SIM_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard src/sim/*.c))
 VIEW_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard src/view/*.c))
-VIEW_PURE_OBJECTS := $(BUILD)/obj/src/view/atlas.o $(BUILD)/obj/src/view/scene.o $(BUILD)/obj/src/view/saves.o $(BUILD)/obj/src/view/sound_mix.o
+VIEW_PURE_OBJECTS := $(BUILD)/obj/src/view/atlas.o $(BUILD)/obj/src/view/scene.o $(BUILD)/obj/src/view/saves.o $(BUILD)/obj/src/view/sound_mix.o $(BUILD)/obj/src/view/report.o $(BUILD)/obj/src/view/frame_text.o
 TEST_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard tests/*.c))
 LAYA_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard src/laya/*.c))
 SETUP_OBJECT := $(BUILD)/obj/src/decider_setup.o
@@ -59,6 +59,8 @@ $(BUILD)/obj/%.o: %.c
 
 $(BUILD)/obj/src/main_game.o $(filter-out $(VIEW_PURE_OBJECTS),$(VIEW_OBJECTS)): STRICT += -I$(RAYLIB_DIR)
 
+$(BUILD)/obj/src/view/ui.o: STRICT += -isystem vendor/clay
+
 $(CJSON_OBJECT): vendor/cjson/cJSON.c
 	@mkdir -p $(@D)
 	$(CC) $(VENDOR_FLAGS) -c $< -o $@
@@ -94,6 +96,7 @@ screenshots: game
 		$(BUILD)/game --seed $$seed --ticks $$ticks --screenshot $(BUILD)/shots/s$${seed}_t$${ticks}.png; \
 	done; done
 	$(BUILD)/game --seed 1 --ticks 60 --xray --screenshot $(BUILD)/shots/s1_t60_xray.png
+	$(BUILD)/game --seed 1 --ticks 60 --xray --select 0 --screenshot $(BUILD)/shots/s1_t60_xray_select0.png
 
 clean:
 	rm -rf $(BUILD)

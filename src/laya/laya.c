@@ -98,6 +98,13 @@ void laya_decider_init(LayaDecider *laya, LayaTransport *transport)
     laya->transport = transport;
 }
 
+void laya_decider_reset(LayaDecider *laya)
+{
+    laya->offline_until_tick = 0;
+    laya->offline_reason = FALLBACK_NONE;
+    memset(laya->briefing, 0, sizeof laya->briefing);
+}
+
 void laya_decider_close(LayaDecider *laya)
 {
     laya->transport->close(laya->transport);

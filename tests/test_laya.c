@@ -388,8 +388,24 @@ static void test_timeout_backs_off_too(void)
     finish();
 }
 
+static void test_reset_forgets_the_back_off_and_briefings(void)
+{
+    start(3, 1);
+    fake.failure = FALLBACK_UNREACHABLE;
+    run(2);
+    int sent_before = fake.sent;
+    CHECK(laya.briefing[0][0] != '\0' && laya.offline_until_tick > 0);
+    laya_decider_reset(&laya);
+    CHECK(laya.briefing[0][0] == '\0' && laya.offline_until_tick == 0);
+    battle_setup(&battle, &data, 3);
+    run(2);
+    CHECK(fake.sent > sent_before);
+    finish();
+}
+
 void run_laya_tests(void)
 {
+    test_reset_forgets_the_back_off_and_briefings();
     test_laya_asks_once_then_decides();
     test_transfer_outcomes_are_classified();
     test_timeout_backs_off_too();

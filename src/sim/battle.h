@@ -168,6 +168,9 @@ int battle_winner(const Battle *battle);
 
 void body_working_parts(const Body *body, const PartState *parts, bool working[MAX_SLOTS]);
 
+const char *stance_id(Stance stance);
+const char *fallback_id(Fallback fallback);
+
 char *battle_save_json(const Battle *battle, const GameData *data);
 bool battle_load_json(Battle *battle, const GameData *data, const char *json, char *err, size_t err_size);
 

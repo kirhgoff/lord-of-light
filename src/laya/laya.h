@@ -51,5 +51,6 @@ typedef struct {
 
 void laya_decider_init(LayaDecider *laya, LayaTransport *transport);
 void laya_decider_close(LayaDecider *laya);
+void laya_decider_reset(LayaDecider *laya);
 
 #endif

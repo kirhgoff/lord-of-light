@@ -6,6 +6,7 @@
 #include "raylib.h"
 #include "atlas.h"
 #include "scene.h"
+#include "ui.h"
 
 typedef struct {
     Texture2D parts[MAX_PARTS];
@@ -31,6 +32,7 @@ void hud_show_toast(Hud *hud, const char *text);
 bool sheets_load(Sheets *sheets, const GameData *data, const Atlases *atlases, char *err, size_t err_size);
 void sheets_unload(Sheets *sheets);
 void draw_frame_contents(const Battle *b, const GameData *data, const Scene *scene, const Atlases *atlases,
-                         const Sheets *sheets, const Viewport *view, const Hud *hud);
+                         const Sheets *sheets, const Viewport *view, const Hud *hud, const Ui *ui,
+                         const char (*laya_briefings)[BRIEFING_MAX + 1]);
 
 #endif

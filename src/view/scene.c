@@ -1,5 +1,7 @@
 #include "scene.h"
 
+#include <math.h>
+
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -17,13 +19,19 @@ static float clamp_axis(float centre, float screen_size, int zoom, float arena_s
 
 void viewport_clamp(Viewport *v)
 {
-    v->centre_x = clamp_axis(v->centre_x, (float)v->width, v->zoom, ARENA_WIDTH_PX);
+    v->centre_x = clamp_axis(v->centre_x, (float)(v->width - v->inset_right), v->zoom, ARENA_WIDTH_PX);
     v->centre_y = clamp_axis(v->centre_y, (float)(v->height - HUD_HEIGHT), v->zoom, ARENA_HEIGHT_PX);
 }
 
 void viewport_init(Viewport *v, int width, int height)
 {
-    *v = (Viewport){ARENA_WIDTH_PX / 2.0f, ARENA_HEIGHT_PX / 2.0f, ZOOM_DEFAULT, width, height};
+    *v = (Viewport){ARENA_WIDTH_PX / 2.0f, ARENA_HEIGHT_PX / 2.0f, ZOOM_DEFAULT, width, height, 0};
+    viewport_clamp(v);
+}
+
+void viewport_set_inset(Viewport *v, int inset_right)
+{
+    v->inset_right = inset_right;
     viewport_clamp(v);
 }
 
@@ -43,12 +51,22 @@ void viewport_zoom(Viewport *v, int step)
 
 float viewport_screen_x(const Viewport *v, float world_x)
 {
-    return (float)v->width / 2 + (world_x - v->centre_x) * (float)v->zoom;
+    return (float)(v->width - v->inset_right) / 2 + (world_x - v->centre_x) * (float)v->zoom;
 }
 
 float viewport_screen_y(const Viewport *v, float world_y)
 {
     return (float)HUD_HEIGHT + (float)(v->height - HUD_HEIGHT) / 2 + (world_y - v->centre_y) * (float)v->zoom;
+}
+
+float viewport_world_x(const Viewport *v, float screen_x)
+{
+    return v->centre_x + (screen_x - (float)(v->width - v->inset_right) / 2) / (float)v->zoom;
+}
+
+float viewport_world_y(const Viewport *v, float screen_y)
+{
+    return v->centre_y + (screen_y - (float)HUD_HEIGHT - (float)(v->height - HUD_HEIGHT) / 2) / (float)v->zoom;
 }
 
 static void snapshot_positions(Scene *s, const Battle *b)
@@ -235,6 +253,21 @@ int body_feet_offset(const Body *body, const Atlases *atlases)
         if (bottom > feet) feet = bottom;
     }
     return feet ? feet : 32;
+}
+
+int scene_pick(const Scene *s, const Battle *b, const Atlases *atlases, float world_x, float world_y)
+{
+    int picked = -1;
+    float picked_y = 0;
+    for (int c = 0; c < b->combatant_count; c++) {
+        if (!b->combatants[c].alive) continue;
+        float x, y;
+        scene_position(s, b, c, &x, &y);
+        float top = y - (float)body_feet_offset(&b->combatants[c].body, atlases);
+        bool inside = fabsf(world_x - x) <= PICK_HALF_WIDTH_PX && world_y >= top && world_y <= y;
+        if (inside && (picked < 0 || y > picked_y)) picked = c, picked_y = y;
+    }
+    return picked;
 }
 
 void remains_offset(int remains_index, int part_index, int *dx, int *dy)
