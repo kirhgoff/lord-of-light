@@ -37,7 +37,7 @@ static bool read_frame_list(Atlas *atlas, FramesKind kind, const cJSON *list)
     for (int i = 0; i < count; i++) {
         int frame;
         if (!json_to_int(cJSON_GetArrayItem(list, i), &frame)) return false;
-        if (i == 0 && (frame < 0 || frame + count > MAX_FRAME_INDEX)) return false;
+        if (i == 0 && (frame < 0 || frame > MAX_FRAME_INDEX - count)) return false;
         if (i == 0) atlas->first[kind] = frame;
         if (frame != atlas->first[kind] + i) return false;
     }
