@@ -150,6 +150,45 @@ Decider reflex_decider(void)
     return (Decider){reflex_decide};
 }
 
+static bool replay_decide(Decider *self, const Battle *battle, const GameData *data, int combatant, Event *out)
+{
+    (void)data;
+    ReplayDecider *replay = (ReplayDecider *)self;
+    for (int i = replay->next[combatant]; i < replay->count; i++) {
+        const Event *logged = &replay->log[i];
+        if (logged->kind != EVENT_DECISION || logged->actor != combatant) continue;
+        if (logged->tick != battle->tick) return false;
+        replay->next[combatant] = i + 1;
+        if (logged->fallback == FALLBACK_WAITING) return false;
+        *out = *logged;
+        return true;
+    }
+    return false;
+}
+
+void replay_decider_init(ReplayDecider *replay, const Event *log, int count)
+{
+    *replay = (ReplayDecider){.base = {replay_decide}, .log = log, .count = count};
+}
+
+DecisionStats battle_decision_stats(const Battle *battle)
+{
+    DecisionStats stats = {0};
+    long confidence_sum = 0, latency_sum = 0;
+    int latency_count = 0;
+    for (int e = 0; e < battle->log_count; e++) {
+        const Event *event = &battle->log[e];
+        if (event->kind != EVENT_DECISION) continue;
+        stats.fallback[event->fallback]++;
+        if (event->decider == DECIDER_LAYA) stats.laya++, confidence_sum += event->confidence_permille;
+        else stats.reflex++;
+        if (event->latency_ms > 0) latency_sum += event->latency_ms, latency_count++;
+    }
+    stats.mean_confidence_permille = stats.laya ? (int)(confidence_sum / stats.laya) : 0;
+    stats.mean_latency_ms = latency_count ? (int)(latency_sum / latency_count) : 0;
+    return stats;
+}
+
 typedef struct {
     const Battle *battle;
     const GameData *data;

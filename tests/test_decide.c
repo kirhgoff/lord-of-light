@@ -555,6 +555,80 @@ static void test_resume_mid_battle_matches_straight_run_with_reflex(void)
     battle_free(&resumed);
 }
 
+static int calls_per_combatant[MAX_COMBATANTS];
+
+static bool third_call_decide(Decider *self, const Battle *b, const GameData *d, int c, Event *out)
+{
+    (void)self, (void)b, (void)d;
+    if (++calls_per_combatant[c] <= 3) return false;
+    *out = decision_event(c, calls_per_combatant[c] % 2 ? STANCE_RETREAT : STANCE_FIGHT, HURT_UNHURT, -1, DECIDER_LAYA);
+    out->confidence_permille = 500;
+    out->latency_ms = 100;
+    return true;
+}
+
+static void check_replay_matches(uint32_t seed, int ticks)
+{
+    char *original = battle_save_json(&battle, &data);
+    static Battle again;
+    battle_free(&again);
+    memset(&again, 0, sizeof again);
+    battle_setup(&again, &data, seed);
+    ReplayDecider replay;
+    replay_decider_init(&replay, battle.log, battle.log_count);
+    for (int t = 0; t < ticks; t++) battle_step(&again, &data, &replay.base);
+    char *replayed = battle_save_json(&again, &data);
+    CHECK(strcmp(original, replayed) == 0);
+    free(original);
+    free(replayed);
+}
+
+static void test_replay_reproduces_a_reflex_battle(void)
+{
+    load_data();
+    fresh();
+    battle_setup(&battle, &data, 1);
+    run(300, &reflex);
+    check_replay_matches(1, 300);
+}
+
+static void test_replay_reproduces_a_delayed_decider(void)
+{
+    load_data();
+    fresh();
+    memset(calls_per_combatant, 0, sizeof calls_per_combatant);
+    battle_setup(&battle, &data, 2);
+    Decider delayed = {third_call_decide};
+    run(100, &delayed);
+    DecisionStats stats = battle_decision_stats(&battle);
+    CHECK(stats.laya > 0 && stats.fallback[FALLBACK_WAITING] > 0);
+    check_replay_matches(2, 100);
+}
+
+static void test_decision_stats(void)
+{
+    load_data();
+    fresh();
+    Event laya = decision_event(0, STANCE_FIGHT, HURT_UNHURT, -1, DECIDER_LAYA);
+    laya.confidence_permille = 400, laya.latency_ms = 100;
+    CHECK(battle_log_event(&battle, laya));
+    laya.confidence_permille = 600, laya.latency_ms = 300;
+    CHECK(battle_log_event(&battle, laya));
+    Event low = decision_event(0, STANCE_FIGHT, HURT_UNHURT, -1, DECIDER_REFLEX);
+    low.fallback = FALLBACK_LOW_CONFIDENCE, low.latency_ms = 200;
+    CHECK(battle_log_event(&battle, low));
+    Event waiting = decision_event(0, STANCE_FIGHT, HURT_UNHURT, -1, DECIDER_REFLEX);
+    waiting.fallback = FALLBACK_WAITING;
+    CHECK(battle_log_event(&battle, waiting));
+    DecisionStats stats = battle_decision_stats(&battle);
+    CHECK(stats.laya == 2 && stats.reflex == 2);
+    CHECK(stats.fallback[FALLBACK_LOW_CONFIDENCE] == 1 && stats.fallback[FALLBACK_WAITING] == 1 && stats.fallback[FALLBACK_NONE] == 2);
+    CHECK(stats.mean_confidence_permille == 500 && stats.mean_latency_ms == 200);
+    fresh();
+    stats = battle_decision_stats(&battle);
+    CHECK(stats.laya == 0 && stats.mean_confidence_permille == 0 && stats.mean_latency_ms == 0);
+}
+
 void run_decide_tests(void)
 {
     test_initiative_sums_working_parts_floor_one();
@@ -581,5 +655,8 @@ void run_decide_tests(void)
     test_seed_one_runs_to_a_deterministic_winner();
     test_seed_sweep_ends_within_bound();
     test_resume_mid_battle_matches_straight_run_with_reflex();
+    test_replay_reproduces_a_reflex_battle();
+    test_replay_reproduces_a_delayed_decider();
+    test_decision_stats();
     battle_free(&battle);
 }
