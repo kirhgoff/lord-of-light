@@ -13,9 +13,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 ## In flight
 
-| Ticket | Branch / worktree | State |
-|---|---|---|
-| 06 Tactics + Reflex | `06-reflex-and-scheduling` / `~/Projects/lord-of-light-06-reflex-and-scheduling` | executor done (6 commits); opus review running; must merge main (08) before merging |
+None.
 
 ## Done
 
@@ -27,6 +25,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 - 09 Placeholder sprites — merged after design re-review.
 - 14 Clay+raylib research — merged (`docs/research/clay-raylib.md`).
 - 17 Slot roles — merged after 2 code + 2 design review rounds.
+- 06 Tactics + Reflex — merged after 2 review rounds.
 - 08 Pickups + traps — merged after one review round.
 - 05 Combat — merged after one review round (charm-lock winner rule by user decision).
 - 19 Sound assets — merged after one review round.
@@ -35,7 +34,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 ## Next up (once unblocked)
 
-- After 06: 07 Power + Horde, 10 raylib view (then 11, 12, 16, 20).
+- Frontier: 07 Power + Horde, 10 raylib view, 11 Laya decider. Then 12 Clay UI, 16 save/load keys, 20 sound playback.
 - 20 Sound playback after 05, 10.
 - Later: 16 Save/load keys (after 10).
 
