@@ -930,7 +930,7 @@ static bool arena_objects_from_root(Context *ctx, const cJSON *root, GameData *d
 static bool power_from_root(Context *ctx, const cJSON *root, GameData *data)
 {
     PowerWeights *w = &data->power;
-    return get_int(ctx, root, "", "integrity", &w->integrity, true)
+    if (!(get_int(ctx, root, "", "integrity", &w->integrity, true)
         && get_int(ctx, root, "", "vitality", &w->vitality, true)
         && get_int(ctx, root, "", "damage", &w->damage, true)
         && get_int(ctx, root, "", "range", &w->range, true)
@@ -938,7 +938,12 @@ static bool power_from_root(Context *ctx, const cJSON *root, GameData *data)
         && get_int(ctx, root, "", "initiative", &w->initiative, true)
         && get_int(ctx, root, "", "vision", &w->vision, true)
         && get_int(ctx, root, "", "move_speed", &w->move_speed, true)
-        && get_int(ctx, root, "", "spawning", &w->spawning, true);
+        && get_int(ctx, root, "", "spawning", &w->spawning, true))) return false;
+    int *weights[] = {&w->integrity, &w->vitality, &w->damage, &w->range, &w->resistance, &w->initiative, &w->vision, &w->move_speed, &w->spawning};
+    const char *names[] = {"integrity", "vitality", "damage", "range", "resistance", "initiative", "vision", "move_speed", "spawning"};
+    for (size_t i = 0; i < sizeof weights / sizeof weights[0]; i++)
+        if (!check_range(ctx, "", names[i], *weights[i], 0, POWER_WEIGHT_LIMIT)) return false;
+    return true;
 }
 
 static bool read_deity(Context *ctx, const cJSON *obj, const char *path, const GameData *data,

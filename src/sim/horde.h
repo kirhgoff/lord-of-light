@@ -7,6 +7,8 @@
 
 #define HORDE_MAX_SIZE 8
 
+#define HORDE_MAX_ATTEMPTS 32
+
 typedef struct {
     int plan;
     Body body;
@@ -18,6 +20,7 @@ typedef struct {
     long power;
 } Horde;
 
+Horde horde_attempt(const GameData *data, long target_power, uint32_t *rng);
 Horde generate_horde(const GameData *data, long target_power, uint32_t *rng);
 
 #endif

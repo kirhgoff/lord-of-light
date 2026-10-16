@@ -134,7 +134,7 @@ void battle_setup_pantheon(Battle *battle, const GameData *data, uint32_t seed, 
     Horde horde = generate_horde(data, pantheon_power(data, battle->pantheon), &battle->rng);
     for (int m = 0; m < horde.count; m++)
         battle_add_combatant(battle, data, data->body_plans[horde.monsters[m].plan].id, SIDE_HORDE, &horde.monsters[m].body,
-                             (ARENA_WIDTH_TILES - 2) * TILE_MILLIPX, row_y(m, HORDE_MAX_SIZE));
+                             (ARENA_WIDTH_TILES - 2) * TILE_MILLIPX, row_y(m, horde.count));
     battle_place_floor_objects(battle, data);
 }
 

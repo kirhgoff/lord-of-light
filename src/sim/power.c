@@ -1,10 +1,11 @@
 #include "power.h"
 
 #define TICKS_PER_THOUSAND 1000
+#define PERCENT 100
 
 static long ability_power(const PowerWeights *w, const Ability *ability)
 {
-    long damage_per_thousand_ticks = ability->cooldown_ticks > 0 ? (long)ability->damage * TICKS_PER_THOUSAND / ability->cooldown_ticks : 0;
+    long damage_per_thousand_ticks = ability->cooldown_ticks > 0 ? (long)(ability->damage + ability->heal) * TICKS_PER_THOUSAND / ability->cooldown_ticks : 0;
     return w->damage * damage_per_thousand_ticks + (long)w->range * ability->range;
 }
 
@@ -16,7 +17,7 @@ static long part_power(const GameData *data, const Part *part)
         + (long)w->move_speed * part->move_speed_px_per_second;
     for (int a = 0; a < part->ability_count; a++) power += ability_power(w, &part->abilities[a]);
     for (int e = 0; e < ELEMENT_COUNT; e++) power += (long)w->resistance * part->resistance_percent[e];
-    if (part->spawn_plan >= 0) power += (long)w->spawning * part->spawn_cap;
+    if (part->spawn_plan >= 0) power += part->spawn_cap * body_power(data, &data->body_plans[part->spawn_plan].body) * w->spawning / PERCENT;
     return power;
 }
 

@@ -5,7 +5,6 @@
 #include "battle.h"
 #include "power.h"
 
-#define MAX_ATTEMPTS 32
 #define MAX_DRAWS 24
 #define LOWER_PERCENT 90
 #define UPPER_PERCENT 110
@@ -30,13 +29,13 @@ static Monster random_monster(const GameData *data, uint32_t *rng)
     return monster;
 }
 
-static Horde attempt_horde(const GameData *data, long target_power, uint32_t *rng)
+Horde horde_attempt(const GameData *data, long target_power, uint32_t *rng)
 {
     Horde horde = {0};
-    for (int draw = 0; draw < MAX_DRAWS && horde.count < HORDE_MAX_SIZE && horde.power * 100 < target_power * LOWER_PERCENT; draw++) {
+    for (int draw = 0; draw < MAX_DRAWS && horde.count < HORDE_MAX_SIZE && (horde.count == 0 || horde.power * 100 < target_power * LOWER_PERCENT); draw++) {
         Monster monster = random_monster(data, rng);
         long power = body_power(data, &monster.body);
-        if ((horde.power + power) * 100 > target_power * UPPER_PERCENT) continue;
+        if (horde.count > 0 && (horde.power + power) * 100 > target_power * UPPER_PERCENT) continue;
         horde.monsters[horde.count++] = monster;
         horde.power += power;
     }
@@ -45,19 +44,19 @@ static Horde attempt_horde(const GameData *data, long target_power, uint32_t *rn
 
 static long distance_from(const Horde *horde, long target_power)
 {
-    return horde->count ? labs(horde->power - target_power) : target_power;
+    return labs(horde->power - target_power);
 }
 
 static bool within_band(const Horde *horde, long target_power)
 {
-    return horde->count && horde->power * 100 >= target_power * LOWER_PERCENT && horde->power * 100 <= target_power * UPPER_PERCENT;
+    return horde->power * 100 >= target_power * LOWER_PERCENT && horde->power * 100 <= target_power * UPPER_PERCENT;
 }
 
 Horde generate_horde(const GameData *data, long target_power, uint32_t *rng)
 {
-    Horde best = attempt_horde(data, target_power, rng);
-    for (int attempt = 1; attempt < MAX_ATTEMPTS && !within_band(&best, target_power); attempt++) {
-        Horde next = attempt_horde(data, target_power, rng);
+    Horde best = horde_attempt(data, target_power, rng);
+    for (int attempt = 1; attempt < HORDE_MAX_ATTEMPTS && !within_band(&best, target_power); attempt++) {
+        Horde next = horde_attempt(data, target_power, rng);
         if (distance_from(&next, target_power) < distance_from(&best, target_power)) best = next;
     }
     return best;
