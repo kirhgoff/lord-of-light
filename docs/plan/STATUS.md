@@ -15,7 +15,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 | Ticket | Branch / worktree | State |
 |---|---|---|
 | 03 State + headless | `03-state-and-headless` / `~/Projects/lord-of-light-03-state-and-headless` | fixes done (0c8463d etc., `make asan` added); opus re-review running |
-| 09 Placeholder sprites | `09-placeholder-sprites` / `~/Projects/lord-of-light-09-placeholder-sprites` | executor done (fe0a644); fable design review running (composes whole bodies) |
+| 09 Placeholder sprites | `09-placeholder-sprites` / `~/Projects/lord-of-light-09-placeholder-sprites` | design review CHANGES (clipping, tails, internal Parts 16 px, bigger world objects, idle bob, distinguishability); executor fixing |
 
 If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`, `git status`), then either spawn a new executor to finish from there or review what exists.
 

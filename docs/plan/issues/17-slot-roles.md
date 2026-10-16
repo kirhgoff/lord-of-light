@@ -2,7 +2,7 @@
 
 Type: task
 Status: open
-Blocked by: 15, 03
+Blocked by: 15, 03, 09
 
 ## Question
 
@@ -14,4 +14,5 @@ Extend the schema (loader + validation + tests + data):
 - Optional fixed `part` on a slot: minion plans name their exact Parts, so a spawned minion is always the same body.
 - Part flag `minion_only`: excluded from Horde filling (like `deity_only`).
 - Update `data/bodyplans.json` and `data/parts.json` accordingly; ticket 03's placeholder Horde uses roles.
+- Side-view anchors (from the ticket 09 design review): Body Plans were authored partly top-down. Re-author them for a side view where every sprite faces right: rear Parts (tails, stingers) at −x, paired Parts (spider mandibles, blob lashes, floater tentacles) at near/far depth (small x/y offset, far one drawn first) instead of mirrored ±x, and `compound_eyes`-sized heads not larger than the Core. Check by composing bodies with the reviewer's script (`/private/tmp/claude-502/-Users-kirill-lastovirya-Projects-lord-of-light/ef3c16d3-8a1a-4eda-b2cf-ca50687abf98/scratchpad/review09/compose.py`, copy it into `tools/`).
 - Test: for 200 seeds, every generated placeholder monster has a Heart and can move.
