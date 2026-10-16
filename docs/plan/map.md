@@ -16,6 +16,8 @@ A playable raylib arena: a random Pantheon (from JSON) fights a Power-matched Ho
 
 ## Decisions so far
 
+- [Sound playback](issues/20-sound-playback.md): pure placement/mapping module + thin raylib player; per-category gains; silent without an audio device.
+- [Save/load keys](issues/16-save-load-keys.md): F5/F9 to `saves/` by timestamp name; loads are atomic.
 - [raylib view](issues/10-raylib-view.md): pure scene/atlas modules + one raylib draw module; integer zoom starting at 1×; review via `--screenshot` PNGs.
 - [Power and Horde](issues/07-power-and-horde.md): Power is mostly damage/heal per time; spawners count their minions; Hordes land within ±10 % of the Pantheon.
 - [Tactics and Reflex](issues/06-reflex-and-scheduling.md): Tactics every Tick from a stored Decision; the scheduler and Laya own only the Decision; seek by true position, attack only what is perceived.

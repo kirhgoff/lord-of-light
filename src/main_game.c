@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "decider_setup.h"
 #include "raylib.h"
@@ -11,7 +12,9 @@
 #include "version.h"
 #include "view/atlas.h"
 #include "view/draw.h"
+#include "view/saves.h"
 #include "view/scene.h"
+#include "view/sound.h"
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
@@ -102,6 +105,25 @@ static void advance_ticks(Battle *battle, const GameData *data, Decider *decider
     }
 }
 
+static void handle_save_keys(Battle *battle, const GameData *data, Scene *scene, Hud *hud)
+{
+    char path[SAVES_PATH_SIZE], err[ERR_SIZE], message[TOAST_SIZE];
+    if (IsKeyPressed(KEY_F5)) {
+        bool ok = saves_write(SAVES_DIR, time(NULL), battle, data, path, sizeof path, err, sizeof err);
+        snprintf(message, sizeof message, ok ? "Saved %s" : "Save failed: %s", ok ? path : err);
+        hud_show_toast(hud, message);
+    }
+    if (IsKeyPressed(KEY_F9)) {
+        bool ok = saves_load_newest(SAVES_DIR, battle, data, path, sizeof path, err, sizeof err);
+        if (ok) {
+            scene_reset(scene, battle);
+            sound_reset(battle);
+        }
+        snprintf(message, sizeof message, ok ? "Loaded %s" : "Load failed: %s", ok ? path : err);
+        hud_show_toast(hud, message);
+    }
+}
+
 static void run_window(Battle *battle, const GameData *data, Decider *decider, Scene *scene, const Atlases *atlases,
                        const Sheets *sheets, Viewport *view, Hud *hud)
 {
@@ -111,9 +133,12 @@ static void run_window(Battle *battle, const GameData *data, Decider *decider, S
         if (hud->confirm_quit && (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_Y))) break;
         if (hud->confirm_quit && IsKeyPressed(KEY_N)) hud->confirm_quit = false;
         handle_camera_input(view);
+        if (!hud->confirm_quit) handle_save_keys(battle, data, scene, hud);
         if (IsKeyPressed(KEY_SPACE)) hud->paused = !hud->paused;
         if (IsKeyPressed(KEY_T)) scene->xray = !scene->xray;
+        if (IsKeyPressed(KEY_M)) sound_toggle_mute();
         if (!hud->paused && !hud->confirm_quit && battle_winner(battle) < 0) advance_ticks(battle, data, decider, scene, &accumulated);
+        sound_update(battle, data, view, hud->paused || hud->confirm_quit);
         scene->alpha = accumulated / TICK_SECONDS;
         BeginDrawing();
         draw_frame_contents(battle, data, scene, atlases, sheets, view, hud);
@@ -159,6 +184,7 @@ int main(int argc, char **argv)
     Scene scene = {.xray = args.xray};
     scene_reset(&scene, &battle);
     Hud hud = {0};
+    int exit_code = 0;
 
     if (args.screenshot) {
         for (long t = 0; t < args.ticks && battle_winner(&battle) < 0; t++) {
@@ -167,12 +193,16 @@ int main(int argc, char **argv)
             scene_after_step(&scene, &battle);
         }
         render_to_png(args.screenshot, &battle, &data, &scene, &atlases, &sheets, &view, &hud);
-    } else {
+    } else if (sound_init(&data, &battle, err, ERR_SIZE)) {
         run_window(&battle, &data, setup.decider, &scene, &atlases, &sheets, &view, &hud);
+    } else {
+        fprintf(stderr, "%s\n", err);
+        exit_code = 1;
     }
     decider_setup_close(&setup);
+    sound_close();
     sheets_unload(&sheets);
     battle_free(&battle);
     CloseWindow();
-    return 0;
+    return exit_code;
 }
