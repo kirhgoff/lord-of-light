@@ -267,6 +267,79 @@ static void test_taken_pickup_returns_after_respawn_ticks(void)
     CHECK(battle.combatants[HURT].vitality == 40 && count_events(EVENT_PICKUP) == 2);
 }
 
+static void test_dead_combatant_does_not_take_a_pickup(void)
+{
+    load_fixture();
+    int soma = put_pickup("soma", HURT);
+    battle.combatants[HURT].alive = false;
+    run(1);
+    CHECK(battle.pickups[soma].respawn_in == 0 && count_events(EVENT_PICKUP) == 0 && battle.combatants[HURT].vitality == 10);
+}
+
+static void test_dead_combatant_does_not_spring_a_trap(void)
+{
+    load_fixture();
+    int pit = put_trap("spike_pit", SECOND);
+    battle.combatants[SECOND].alive = false;
+    run(1);
+    CHECK(battle.traps[pit].respawn_in == 0 && count_events(EVENT_TRAP) == 0 && count_events(EVENT_HIT) == 0);
+}
+
+static void stand_on(int mover, int anchor)
+{
+    battle.combatants[mover].x_millipx = battle.combatants[anchor].x_millipx;
+    battle.combatants[mover].y_millipx = battle.combatants[anchor].y_millipx;
+}
+
+static void test_a_pickup_that_does_nothing_for_one_goes_to_the_next(void)
+{
+    load_fixture();
+    stand_on(HURT, DUMMY);
+    put_pickup("soma", DUMMY);
+    run(1);
+    CHECK(battle.combatants[HURT].vitality == 40);
+    CHECK(last_event(EVENT_PICKUP)->actor == HURT);
+}
+
+static void test_lowest_index_takes_a_shared_pickup(void)
+{
+    load_fixture();
+    stand_on(SECOND, DUMMY);
+    put_pickup("ember_seed", DUMMY);
+    run(1);
+    CHECK(battle.combatants[DUMMY].damage_bonus_ticks == 200 && battle.combatants[SECOND].damage_bonus_ticks == 0);
+    CHECK(last_event(EVENT_PICKUP)->actor == DUMMY);
+}
+
+static void test_retaking_a_buff_refreshes_duration_and_replaces_percent(void)
+{
+    load_fixture();
+    Combatant *dummy = &battle.combatants[DUMMY];
+    dummy->damage_bonus_percent = 80;
+    dummy->damage_bonus_ticks = 50;
+    put_pickup("ember_seed", DUMMY);
+    run(1);
+    CHECK(dummy->damage_bonus_percent == 50 && dummy->damage_bonus_ticks == 200);
+}
+
+static void test_haste_expires(void)
+{
+    load_fixture();
+    put_pickup("quickening_leaf", DUMMY);
+    run(201);
+    CHECK(battle.combatants[DUMMY].haste_ticks == 0 && battle.combatants[DUMMY].haste_percent == 0);
+    CHECK(ten_ticks_of_walking_east() == 30000);
+}
+
+static void test_soma_heal_is_capped_by_the_missing_vitality(void)
+{
+    load_fixture();
+    battle.combatants[HURT].vitality = 5;
+    put_pickup("soma", HURT);
+    run(1);
+    CHECK(battle.combatants[HURT].vitality == 35 && last_event(EVENT_PICKUP)->amount == 30);
+}
+
 static void test_buffs_and_trap_events_survive_save_and_load(void)
 {
     load_fixture();
@@ -302,5 +375,12 @@ void run_floor_tests(void)
     test_setup_scatters_objects_apart_from_obstacles_and_each_other();
     test_taken_pickup_returns_after_respawn_ticks();
     test_buffs_and_trap_events_survive_save_and_load();
+    test_dead_combatant_does_not_take_a_pickup();
+    test_dead_combatant_does_not_spring_a_trap();
+    test_a_pickup_that_does_nothing_for_one_goes_to_the_next();
+    test_lowest_index_takes_a_shared_pickup();
+    test_retaking_a_buff_refreshes_duration_and_replaces_percent();
+    test_haste_expires();
+    test_soma_heal_is_capped_by_the_missing_vitality();
     battle_free(&battle);
 }
