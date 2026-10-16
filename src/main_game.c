@@ -20,6 +20,7 @@
 
 #define DEFAULT_WINDOW_WIDTH 1280
 #define DEFAULT_WINDOW_HEIGHT 720
+#define MAX_WINDOW_SIDE 16384
 #define ERR_SIZE 256
 #define MAX_FRAME_SECONDS 0.25f
 #define SCREENSHOT_UI_PASSES 2
@@ -61,10 +62,20 @@ typedef struct {
     int height;
 } Args;
 
+static bool parse_dimension(const char *text, char **end, int *value)
+{
+    errno = 0;
+    long parsed = strtol(text, end, 10);
+    if (errno || *end == text || parsed > MAX_WINDOW_SIDE) return false;
+    *value = (int)parsed;
+    return true;
+}
+
 static bool parse_size(const char *text, int *width, int *height)
 {
-    char extra;
-    return sscanf(text, "%dx%d%c", width, height, &extra) == 2 && *width >= WINDOW_MIN_WIDTH && *height >= WINDOW_MIN_HEIGHT;
+    char *end;
+    if (!parse_dimension(text, &end, width) || *end != 'x' || !parse_dimension(end + 1, &end, height) || *end) return false;
+    return *width >= WINDOW_MIN_WIDTH && *height >= WINDOW_MIN_HEIGHT;
 }
 
 static bool parse_args(int argc, char **argv, Args *args, DeciderSetup *setup)

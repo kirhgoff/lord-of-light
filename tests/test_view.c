@@ -117,8 +117,8 @@ static void test_cover_zoom_follows_the_tighter_axis(void)
     CHECK(near(viewport_cover_zoom(&v), 2.5f));
     viewport_init(&v, 900, 900);
     CHECK(near(viewport_cover_zoom(&v), 900.0f / 512));
-    viewport_init(&v, 640, 480);
-    CHECK(near(viewport_cover_zoom(&v), 480.0f / 512));
+    viewport_init(&v, WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT);
+    CHECK(near(viewport_cover_zoom(&v), 1024.0f / 768));
 }
 
 static void test_viewport_zoom_steps_to_whole_numbers(void)
@@ -176,7 +176,7 @@ static void test_viewport_pan_stops_at_the_arena_edge(void)
 
 static void test_arena_covers_the_window_at_any_size(void)
 {
-    static const int sizes[][2] = {{1280, 720}, {1920, 1080}, {900, 900}, {640, 480}, {700, 1400}};
+    static const int sizes[][2] = {{1280, 720}, {1920, 1080}, {900, 900}, {WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT}, {700, 1400}};
     for (int i = 0; i < 5; i++) {
         Viewport v;
         viewport_init(&v, sizes[i][0], sizes[i][1]);
