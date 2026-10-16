@@ -162,10 +162,11 @@
         {
           "order": "support",
           "element": "radiance",
-          "damage": -10,
           "range": 96,
           "cooldown": 40,
-          "area": 0
+          "area": 0,
+          "heal": 10,
+          "damage": 0
         }
       ]
     },

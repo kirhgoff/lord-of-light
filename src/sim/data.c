@@ -1,6 +1,8 @@
 #include "data.h"
 
 #include <dirent.h>
+#include <limits.h>
+#include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -105,6 +107,16 @@ static bool get_string(Context *ctx, const cJSON *obj, const char *parent, const
     return true;
 }
 
+static bool number_to_int(Context *ctx, const char *path, const cJSON *item, int *out)
+{
+    if (!cJSON_IsNumber(item)) return fail(ctx, path, "expected a number");
+    double value = item->valuedouble;
+    if (value != floor(value) || value < INT_MIN || value > INT_MAX)
+        return fail(ctx, path, "expected an integer");
+    *out = (int)value;
+    return true;
+}
+
 static bool get_int(Context *ctx, const cJSON *obj, const char *parent, const char *key, int *out,
                     bool required)
 {
@@ -112,13 +124,9 @@ static bool get_int(Context *ctx, const cJSON *obj, const char *parent, const ch
     const cJSON *item = get_item(ctx, obj, parent, key, required, &ok);
     if (!ok) return false;
     if (!item) return true;
-    if (!cJSON_IsNumber(item)) {
-        char path[PATH_LEN];
-        join_key(path, parent, key);
-        return fail(ctx, path, "expected a number");
-    }
-    *out = (int)item->valuedouble;
-    return true;
+    char path[PATH_LEN];
+    join_key(path, parent, key);
+    return number_to_int(ctx, path, item, out);
 }
 
 static bool get_bool(Context *ctx, const cJSON *obj, const char *parent, const char *key, bool *out)
@@ -175,12 +183,12 @@ static bool lookup_element(Context *ctx, const char *path, const char *name, Ele
 }
 
 static bool get_element(Context *ctx, const cJSON *obj, const char *parent, const char *key,
-                        Element *out)
+                        Element *out, bool required)
 {
     char name[ID_LEN];
     char path[PATH_LEN];
     join_key(path, parent, key);
-    if (!get_string(ctx, obj, parent, key, name, sizeof name, false)) return false;
+    if (!get_string(ctx, obj, parent, key, name, sizeof name, required)) return false;
     return name[0] == '\0' || lookup_element(ctx, path, name, out);
 }
 
@@ -357,6 +365,15 @@ static bool lookup_slot(Context *ctx, const char *path, const Body *body, const 
     return true;
 }
 
+static bool has_edge(const Body *body, int a, int b)
+{
+    for (int i = 0; i < body->edge_count; i++) {
+        const BodyEdge *edge = &body->edges[i];
+        if ((edge->a == a && edge->b == b) || (edge->a == b && edge->b == a)) return true;
+    }
+    return false;
+}
+
 static bool read_edges(Context *ctx, const cJSON *obj, const char *path, Body *body)
 {
     const cJSON *list;
@@ -376,6 +393,8 @@ static bool read_edges(Context *ctx, const cJSON *obj, const char *path, Body *b
         if (!lookup_slot(ctx, end_path, body, cJSON_GetArrayItem(pair, 0), &edge->a)) return false;
         join_index(end_path, edge_path, 1);
         if (!lookup_slot(ctx, end_path, body, cJSON_GetArrayItem(pair, 1), &edge->b)) return false;
+        if (edge->a == edge->b) return fail(ctx, edge_path, "edge joins a slot to itself");
+        if (has_edge(body, edge->a, edge->b)) return fail(ctx, edge_path, "duplicate edge");
         body->edge_count++;
     }
     return true;
@@ -390,13 +409,39 @@ static bool read_core(Context *ctx, const cJSON *obj, const char *path, Body *bo
     return lookup_slot(ctx, core_path, body, name, &body->core);
 }
 
+static bool check_reachable_from_core(Context *ctx, const char *path, const char *slots_key,
+                                      const Body *body)
+{
+    bool reached[MAX_SLOTS] = { false };
+    reached[body->core] = true;
+    for (bool grew = true; grew;) {
+        grew = false;
+        for (int i = 0; i < body->edge_count; i++) {
+            const BodyEdge *edge = &body->edges[i];
+            if (reached[edge->a] != reached[edge->b]) {
+                reached[edge->a] = reached[edge->b] = true;
+                grew = true;
+            }
+        }
+    }
+    for (int i = 0; i < body->slot_count; i++) {
+        if (reached[i]) continue;
+        char list_path[PATH_LEN], slot_path[PATH_LEN];
+        join_key(list_path, path, slots_key);
+        join_index(slot_path, list_path, i);
+        return fail(ctx, slot_path, "slot \"%s\" is not connected to the core", body->slots[i].id);
+    }
+    return true;
+}
+
 static bool read_body(Context *ctx, const cJSON *obj, const char *path, const char *slots_key,
                       const GameData *data, SlotReader read_slot, Body *body)
 {
     memset(body, 0, sizeof *body);
     return read_slots(ctx, obj, path, slots_key, data, read_slot, body)
         && read_edges(ctx, obj, path, body)
-        && read_core(ctx, obj, path, body);
+        && read_core(ctx, obj, path, body)
+        && check_reachable_from_core(ctx, path, slots_key, body);
 }
 
 static bool body_plans_from_root(Context *ctx, const cJSON *root, GameData *data)
@@ -427,6 +472,13 @@ static bool body_plans_from_root(Context *ctx, const cJSON *root, GameData *data
     return true;
 }
 
+static bool check_non_negative(Context *ctx, const char *path, const char *key, int value)
+{
+    char field_path[PATH_LEN];
+    join_key(field_path, path, key);
+    return value >= 0 || fail(ctx, field_path, "must not be negative");
+}
+
 static bool read_ability(Context *ctx, const cJSON *obj, const char *path, Ability *ability)
 {
     char order[ID_LEN];
@@ -434,11 +486,14 @@ static bool read_ability(Context *ctx, const cJSON *obj, const char *path, Abili
     char order_path[PATH_LEN];
     join_key(order_path, path, "order");
     return lookup_order_kind(ctx, order_path, order, &ability->order)
-        && get_element(ctx, obj, path, "element", &ability->element)
+        && get_element(ctx, obj, path, "element", &ability->element, true)
         && get_int(ctx, obj, path, "damage", &ability->damage, false)
+        && get_int(ctx, obj, path, "heal", &ability->heal, false)
         && get_int(ctx, obj, path, "range", &ability->range, false)
         && get_int(ctx, obj, path, "cooldown", &ability->cooldown_ticks, false)
-        && get_int(ctx, obj, path, "area", &ability->area, false);
+        && get_int(ctx, obj, path, "area", &ability->area, false)
+        && check_non_negative(ctx, path, "damage", ability->damage)
+        && check_non_negative(ctx, path, "heal", ability->heal);
 }
 
 static bool read_abilities(Context *ctx, const cJSON *obj, const char *path, Part *part)
@@ -471,8 +526,9 @@ static bool read_resistances(Context *ctx, const cJSON *obj, const char *path, P
         join_key(item_path, path, "resistances");
         join_key(item_path, item_path, item->string);
         if (!lookup_element(ctx, item_path, item->string, &element)) return false;
-        if (!cJSON_IsNumber(item)) return fail(ctx, item_path, "expected a number");
-        part->resistance_percent[element] = (int)item->valuedouble;
+        if (!number_to_int(ctx, item_path, item, &part->resistance_percent[element])) return false;
+        if (part->resistance_percent[element] < -100 || part->resistance_percent[element] > 100)
+            return fail(ctx, item_path, "resistance must be between -100 and 100");
     }
     return true;
 }
@@ -484,9 +540,13 @@ static bool read_vision(Context *ctx, const cJSON *obj, const char *path, Part *
     if (!vision) return true;
     char vision_path[PATH_LEN];
     join_key(vision_path, path, "vision");
-    return get_int(ctx, vision, vision_path, "close", &part->vision_close, false)
-        && get_int(ctx, vision, vision_path, "medium", &part->vision_medium, false)
-        && get_int(ctx, vision, vision_path, "far", &part->vision_far, false);
+    if (!(get_int(ctx, vision, vision_path, "close", &part->vision_close, false)
+          && get_int(ctx, vision, vision_path, "medium", &part->vision_medium, false)
+          && get_int(ctx, vision, vision_path, "far", &part->vision_far, false)))
+        return false;
+    if (part->vision_close > part->vision_medium || part->vision_medium > part->vision_far)
+        return fail(ctx, vision_path, "bands must satisfy close <= medium <= far");
+    return true;
 }
 
 static bool read_spawning(Context *ctx, const cJSON *obj, const char *path, const GameData *data,
@@ -502,7 +562,10 @@ static bool read_spawning(Context *ctx, const cJSON *obj, const char *path, cons
     if (!get_string(ctx, spawning, spawning_path, "plan", plan_id, sizeof plan_id, true)) return false;
     part->spawn_plan = find_body_plan(data, plan_id);
     if (part->spawn_plan < 0) return fail(ctx, plan_path, "unknown body plan \"%s\"", plan_id);
-    return get_int(ctx, spawning, spawning_path, "cap", &part->spawn_cap, true);
+    if (!get_int(ctx, spawning, spawning_path, "cap", &part->spawn_cap, true)) return false;
+    char cap_path[PATH_LEN];
+    join_key(cap_path, spawning_path, "cap");
+    return part->spawn_cap >= 1 || fail(ctx, cap_path, "must be at least 1");
 }
 
 static bool read_part_kind(Context *ctx, const cJSON *obj, const char *path, Part *part)
@@ -515,16 +578,24 @@ static bool read_part_kind(Context *ctx, const cJSON *obj, const char *path, Par
     return true;
 }
 
+static bool read_part_stats(Context *ctx, const cJSON *obj, const char *path, Part *part)
+{
+    if (!get_int(ctx, obj, path, "integrity", &part->integrity, true)) return false;
+    char integrity_path[PATH_LEN];
+    join_key(integrity_path, path, "integrity");
+    if (part->integrity <= 0) return fail(ctx, integrity_path, "must be positive");
+    return get_int(ctx, obj, path, "vitality", &part->vitality, false)
+        && get_int(ctx, obj, path, "initiative", &part->initiative, false)
+        && get_int(ctx, obj, path, "move_speed", &part->move_speed, false);
+}
+
 static bool read_part(Context *ctx, const cJSON *obj, const char *path, const GameData *data, Part *part)
 {
     return get_string(ctx, obj, path, "id", part->id, sizeof part->id, true)
         && get_string(ctx, obj, path, "name", part->name, sizeof part->name, true)
         && read_part_kind(ctx, obj, path, part)
         && get_bool(ctx, obj, path, "deity_only", &part->deity_only)
-        && get_int(ctx, obj, path, "integrity", &part->integrity, true)
-        && get_int(ctx, obj, path, "vitality", &part->vitality, false)
-        && get_int(ctx, obj, path, "initiative", &part->initiative, false)
-        && get_int(ctx, obj, path, "move_speed", &part->move_speed, false)
+        && read_part_stats(ctx, obj, path, part)
         && get_string(ctx, obj, path, "sprite", part->sprite, sizeof part->sprite, true)
         && read_abilities(ctx, obj, path, part)
         && read_resistances(ctx, obj, path, part)
@@ -565,7 +636,7 @@ static bool read_arena_object(Context *ctx, const cJSON *obj, const char *path, 
     return get_string(ctx, obj, path, "id", def->id, sizeof def->id, true)
         && get_string(ctx, obj, path, "name", def->name, sizeof def->name, true)
         && get_string(ctx, obj, path, "sprite", def->sprite, sizeof def->sprite, true)
-        && get_element(ctx, obj, path, "element", &def->element)
+        && get_element(ctx, obj, path, "element", &def->element, false)
         && get_int(ctx, obj, path, "damage", &def->damage, false)
         && get_int(ctx, obj, path, "heal", &def->heal, false)
         && get_int(ctx, obj, path, "radius", &def->radius, false)
@@ -589,6 +660,12 @@ static bool read_arena_object_list(Context *ctx, const cJSON *root, const char *
         if (!cJSON_IsObject(item)) return fail(ctx, path, "expected an object");
         memset(&out[count], 0, sizeof out[count]);
         if (!read_arena_object(ctx, item, path, &out[count])) return false;
+        for (int i = 0; i < count; i++)
+            if (strcmp(out[i].id, out[count].id) == 0) {
+                char id_path[PATH_LEN];
+                join_key(id_path, path, "id");
+                return fail(ctx, id_path, "duplicate id \"%s\"", out[count].id);
+            }
         count++;
     }
     *out_count = count;
@@ -646,6 +723,9 @@ static bool pantheon_from_root(Context *ctx, const cJSON *root, GameData *data)
         if (!read_deity(ctx, item, path, data, &pantheon.deities[index])) return false;
         index++;
     }
+    for (int i = 0; i < data->pantheon_count; i++)
+        if (strcmp(data->pantheons[i].name, pantheon.name) == 0)
+            return fail(ctx, "name", "duplicate pantheon \"%s\"", pantheon.name);
     data->pantheons[data->pantheon_count++] = pantheon;
     return true;
 }
@@ -685,25 +765,31 @@ static int compare_names(const void *a, const void *b)
     return strcmp((const char *)a, (const char *)b);
 }
 
-static bool load_pantheon_dir(GameData *data, const char *dir, char *err, size_t err_size)
+bool load_pantheons(GameData *data, const char *folder, char *err, size_t err_size)
 {
-    char folder[PATH_LEN];
-    snprintf(folder, sizeof folder, "%s/pantheons", dir);
     DIR *handle = opendir(folder);
     if (!handle) {
         snprintf(err, err_size, "%s: cannot open directory", folder);
         return false;
     }
-    static char names[MAX_PANTHEONS + 1][NAME_LEN];
+    static char names[MAX_PANTHEONS][NAME_LEN];
     int count = 0;
     struct dirent *entry;
     while ((entry = readdir(handle)) != NULL) {
         size_t length = strlen(entry->d_name);
         if (length < 6 || strcmp(entry->d_name + length - 5, ".json") != 0) continue;
-        if (count > MAX_PANTHEONS || length >= NAME_LEN) continue;
+        if (count == MAX_PANTHEONS || length >= NAME_LEN) {
+            closedir(handle);
+            snprintf(err, err_size, "%s/%s: too many pantheon files or file name too long", folder, entry->d_name);
+            return false;
+        }
         strcpy(names[count++], entry->d_name);
     }
     closedir(handle);
+    if (count == 0) {
+        snprintf(err, err_size, "%s: no pantheons found", folder);
+        return false;
+    }
     qsort(names, (size_t)count, NAME_LEN, compare_names);
     for (int i = 0; i < count; i++) {
         char path[PATH_LEN * 2];
@@ -725,7 +811,7 @@ bool load_game_data(GameData *data, const char *dir, char *err, size_t err_size)
         && LOAD(load_parts, "parts.json")
         && LOAD(load_arena_objects, "arena_objects.json")
         && LOAD(load_power, "power.json")
-        && load_pantheon_dir(&fresh, dir, err, err_size);
+        && (snprintf(path, sizeof path, "%s/pantheons", dir), load_pantheons(&fresh, path, err, err_size));
 #undef LOAD
     if (ok) *data = fresh;
     return ok;

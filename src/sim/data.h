@@ -8,7 +8,7 @@
 #define NAME_LEN 64
 #define MAX_PARTS 128
 #define MAX_BODY_PLANS 16
-#define MAX_SLOTS 16
+#define MAX_SLOTS 24
 #define MAX_EDGES 24
 #define MAX_ABILITIES 4
 #define MAX_PANTHEONS 8
@@ -56,6 +56,7 @@ typedef struct {
     OrderKind order;
     Element element;
     int damage;
+    int heal;
     int range;
     int cooldown_ticks;
     int area;
@@ -170,6 +171,7 @@ bool load_body_plans(GameData *data, const char *path, char *err, size_t err_siz
 bool load_parts(GameData *data, const char *path, char *err, size_t err_size);
 bool load_arena_objects(GameData *data, const char *path, char *err, size_t err_size);
 bool load_power(GameData *data, const char *path, char *err, size_t err_size);
+bool load_pantheons(GameData *data, const char *folder, char *err, size_t err_size);
 bool load_pantheon(GameData *data, const char *path, char *err, size_t err_size);
 bool load_game_data(GameData *data, const char *dir, char *err, size_t err_size);
 
