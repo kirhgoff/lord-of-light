@@ -15,3 +15,5 @@ AlignConsecutiveDeclarations: None
 SortIncludes: Never
 PointerAlignment: Right
 IndentCaseLabels: false
+ForEachMacros: [cJSON_ArrayForEach, CLAY]
+SpaceBeforeParens: ControlStatementsExceptControlMacros
