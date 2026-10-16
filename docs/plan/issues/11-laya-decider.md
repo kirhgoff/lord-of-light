@@ -6,8 +6,10 @@ Blocked by: 06, 13
 
 ## Question
 
-- Briefing builder: short English text from Vision bands + own condition (see ticket 13's findings for wording and limits).
-- Request: one `/v1/systemone` call per Combatant, one choice question per acting Part with its options as criteria; use `/batch` when several are due.
+(Shape set by ADR 0003; follow every recommendation in `docs/research/laya.md`.)
+- Briefing builder: plain-string English prose, third person with the name, one fact per sentence, words not numbers, most important first, ≤1,200 chars.
+- Request: one `/v1/systemone` call per Combatant with the two Appraisal questions and the Stance question (rule in `instructions`, keys are the verb phrases); `state` as a string. No batch.
+- If the Stance `x_jev_confidence` is below a threshold (in a data file), use the Reflex's Stance and log why.
 - libcurl on a worker thread; the sim never blocks; results applied at the next Tick; timeouts and unreachable server fall back to Reflex (logged).
 - Record each Decision with source and probabilities in the Battle Log; replay from the log reproduces the Battle.
 - `--decider laya|reflex` flag for both binaries; tests use a fake transport (canned responses), never the network.

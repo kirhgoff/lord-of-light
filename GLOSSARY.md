@@ -119,8 +119,20 @@ One thing that happened in a Battle, such as a hit, a pickup, a Decision or a de
 ### Deciding
 
 **Decision**:
-The set of Orders a Combatant receives at once, one for each of its acting Parts.
+A Decider's answer for one Combatant: its Stance plus its Appraisals, which Tactics turn into Orders.
 _Avoid_: Action, turn
+
+**Stance**:
+A Combatant's overall intent until its next Decision: fight, retreat, support or collect.
+_Avoid_: Mode, goal, plan
+
+**Appraisal**:
+A Decider's judgement of one fact about the situation, such as how hurt a Combatant is or which Element hurts a target most.
+_Avoid_: Assessment, observation
+
+**Tactics**:
+The game's fixed rules that turn a Stance and Appraisals into an Order for each acting Part.
+_Avoid_: Policy, behaviour tree
 
 **Order**:
 What one Part is told to do until the next Decision: strike, cast, block, move to, pick up, support, spawn or idle, with a target where needed.
@@ -135,9 +147,9 @@ The short English text describing what a Combatant perceives and its own conditi
 _Avoid_: Prompt, state, observation
 
 **Laya**:
-The external decision model, reached through its System 1 interface, that picks each Part's Order from a list of options using what the Combatant perceives.
+The external decision model, reached through its System 1 interface, that answers Appraisals and chooses a Stance from a Combatant's Briefing.
 _Avoid_: LLM
 
 **Reflex**:
-The built-in, deterministic Decider used in tests, when Laya is unreachable, and while a Combatant waits for its next Decision.
+The built-in, deterministic Decider that derives Stance and Appraisals straight from the Battle state; used in tests, when Laya is unreachable or unsure, and while a Combatant waits for its next Decision.
 _Avoid_: Fallback AI, heuristic
