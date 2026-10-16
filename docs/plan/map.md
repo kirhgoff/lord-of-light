@@ -16,6 +16,7 @@ A playable raylib arena: a random Pantheon (from JSON) fights a Power-matched Ho
 
 ## Decisions so far
 
+- [Power and Horde](issues/07-power-and-horde.md): Power is mostly damage/heal per time; spawners count their minions; Hordes land within ±10 % of the Pantheon.
 - [Tactics and Reflex](issues/06-reflex-and-scheduling.md): Tactics every Tick from a stored Decision; the scheduler and Laya own only the Decision; seek by true position, attack only what is perceived.
 - [Pickups and Traps](issues/08-pickups-traps.md): walk-over Pickups, Traps reuse the combat hit path, buffs are sibling fields that refresh, one of each object per Battle.
 - [Combat](issues/05-combat-elements.md): data-driven Element effects, 50 % Vitality share, death by Vitality or no working Heart, a side all charmed to the enemy loses.

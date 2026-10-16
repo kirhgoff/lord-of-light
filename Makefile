@@ -19,8 +19,9 @@ VIEW_PURE_OBJECTS := $(BUILD)/obj/src/view/atlas.o $(BUILD)/obj/src/view/scene.o
 TEST_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard tests/*.c))
 GAME_OBJECTS := $(BUILD)/obj/src/main_game.o $(VIEW_OBJECTS) $(SIM_OBJECTS) $(CJSON_OBJECT)
 HEADLESS_OBJECTS := $(BUILD)/obj/src/main_headless.o $(SIM_OBJECTS) $(CJSON_OBJECT)
+BALANCE_OBJECTS := $(BUILD)/obj/src/main_balance.o $(SIM_OBJECTS) $(CJSON_OBJECT)
 
-.PHONY: game headless test run clean asan screenshots
+.PHONY: game headless test run clean asan balance screenshots
 
 game: $(BUILD)/game
 headless: $(BUILD)/headless
@@ -35,6 +36,12 @@ $(BUILD)/game: $(GAME_OBJECTS) $(RAYLIB_LIB)
 	$(CC) $^ $(FRAMEWORKS) -o $@
 
 $(BUILD)/headless: $(HEADLESS_OBJECTS)
+	$(CC) $^ $(SAN) -o $@
+
+balance: $(BUILD)/balance
+	$(BUILD)/balance
+
+$(BUILD)/balance: $(BALANCE_OBJECTS)
 	$(CC) $^ $(SAN) -o $@
 
 $(BUILD)/tests: $(TEST_OBJECTS) $(SIM_OBJECTS) $(VIEW_PURE_OBJECTS) $(CJSON_OBJECT)
