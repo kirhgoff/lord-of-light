@@ -789,8 +789,8 @@ static bool append_pantheons(GameData *data, const char *folder, char *err, size
         size_t length = strlen(entry->d_name);
         if (length < 6 || strcmp(entry->d_name + length - 5, ".json") != 0) continue;
         if (count == MAX_PANTHEONS || length >= NAME_LEN) {
-            closedir(handle);
             snprintf(err, err_size, "%s/%s: too many pantheon files or file name too long", folder, entry->d_name);
+            closedir(handle);
             return false;
         }
         strcpy(names[count++], entry->d_name);
