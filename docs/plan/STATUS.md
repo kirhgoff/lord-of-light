@@ -15,7 +15,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 | Ticket | Branch / worktree | State |
 |---|---|---|
 | 04 Movement + vision | `04-movement-vision` / `~/Projects/lord-of-light-04-movement-vision` | executor done (8c88f90); opus review running (A* per-Tick cost, 5 px radius, LOS corners) |
-| 09 Placeholder sprites | `09-placeholder-sprites` / `~/Projects/lord-of-light-09-placeholder-sprites` | design review CHANGES (clipping, tails, internal Parts 16 px, bigger world objects, idle bob, distinguishability); executor fixing |
+| 09 Placeholder sprites | `09-placeholder-sprites` / `~/Projects/lord-of-light-09-placeholder-sprites` | fixes done (e2e34e6, tools/compose_body.py); fable visual re-review running |
 
 If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`, `git status`), then either spawn a new executor to finish from there or review what exists.
 
