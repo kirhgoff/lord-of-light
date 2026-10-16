@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 #include "check.h"
 #include "../src/sim/decide.h"
@@ -40,6 +41,31 @@ static void test_atlas_missing_names_the_path(void)
     char err[ERR_SIZE];
     CHECK(!atlas_load(&atlas, "parts", "no_such_part", err, ERR_SIZE));
     CHECK(strstr(err, "assets/parts/no_such_part.json") != NULL);
+}
+
+static bool parses(const char *width, const char *pivot_x, const char *frames)
+{
+    char text[512];
+    Atlas atlas;
+    snprintf(text, sizeof text, "{\"frame_w\":%s,\"frame_h\":32,\"pivot\":{\"x\":%s,\"y\":8},\"frames\":{%s}}", width, pivot_x, frames);
+    return atlas_parse(&atlas, text);
+}
+
+static void test_atlas_rejects_hostile_sidecars(void)
+{
+    CHECK(parses("32", "8", "\"idle\":[0,1]"));
+    CHECK(!parses("0", "0", "\"idle\":[0]"));
+    CHECK(!parses("-32", "0", "\"idle\":[0]"));
+    CHECK(!parses("32", "32", "\"idle\":[0]"));
+    CHECK(!parses("32", "-1", "\"idle\":[0]"));
+    CHECK(!parses("2000000000", "0", "\"idle\":[0]"));
+    CHECK(!parses("32", "8", "\"idle\":[0,2]"));
+    CHECK(!parses("32", "8", "\"idle\":[1,0]"));
+    CHECK(!parses("32", "8", "\"idle\":[-1]"));
+    CHECK(!parses("32", "8", "\"idle\":[2000000000]"));
+    CHECK(!parses("32", "8", "\"idle\":[1.5]"));
+    CHECK(!parses("32", "8", "\"idle\":[\"0\"]"));
+    CHECK(!parses("32", "8", "\"idle\":[]"));
 }
 
 static void test_atlas_frame_wraps_within_the_kind(void)
@@ -427,6 +453,7 @@ void run_view_tests(void)
     test_viewport_centre_maps_to_screen_centre();
     test_atlas_reads_sidecar();
     test_atlas_missing_names_the_path();
+    test_atlas_rejects_hostile_sidecars();
     test_atlas_frame_wraps_within_the_kind();
     test_all_atlases_load_for_the_real_data();
 }

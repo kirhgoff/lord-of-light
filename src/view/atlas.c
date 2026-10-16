@@ -6,6 +6,8 @@
 #include "cJSON.h"
 
 #define PATH_SIZE 256
+#define MAX_FRAME_SIZE 1024
+#define MAX_FRAME_INDEX 1024
 
 static const char *const frame_kind_names[FRAMES_KIND_COUNT] = {"idle", "act", "hurt", "broken", "play", "variants"};
 
@@ -28,16 +30,33 @@ static bool read_int(const cJSON *object, const char *name, int *out)
     return json_to_int(cJSON_GetObjectItemCaseSensitive(object, name), out);
 }
 
+static bool read_frame_list(Atlas *atlas, FramesKind kind, const cJSON *list)
+{
+    int count = cJSON_GetArraySize(list);
+    if (!cJSON_IsArray(list) || count == 0 || count > MAX_FRAME_INDEX) return false;
+    for (int i = 0; i < count; i++) {
+        int frame;
+        if (!json_to_int(cJSON_GetArrayItem(list, i), &frame)) return false;
+        if (i == 0 && (frame < 0 || frame + count > MAX_FRAME_INDEX)) return false;
+        if (i == 0) atlas->first[kind] = frame;
+        if (frame != atlas->first[kind] + i) return false;
+    }
+    atlas->count[kind] = count;
+    return true;
+}
+
 static bool read_frames(Atlas *atlas, const cJSON *frames)
 {
     for (int k = 0; k < FRAMES_KIND_COUNT; k++) {
         const cJSON *list = cJSON_GetObjectItemCaseSensitive(frames, frame_kind_names[k]);
-        if (!list) continue;
-        if (!cJSON_IsArray(list) || cJSON_GetArraySize(list) == 0) return false;
-        if (!json_to_int(cJSON_GetArrayItem(list, 0), &atlas->first[k])) return false;
-        atlas->count[k] = cJSON_GetArraySize(list);
+        if (list && !read_frame_list(atlas, (FramesKind)k, list)) return false;
     }
     return true;
+}
+
+static bool in_range(int value, int low, int high)
+{
+    return value >= low && value < high;
 }
 
 static bool read_atlas(Atlas *atlas, const cJSON *root)
@@ -47,7 +66,18 @@ static bool read_atlas(Atlas *atlas, const cJSON *root)
     return cJSON_IsObject(pivot) && cJSON_IsObject(frames)
         && read_int(root, "frame_w", &atlas->frame_w) && read_int(root, "frame_h", &atlas->frame_h)
         && read_int(pivot, "x", &atlas->pivot_x) && read_int(pivot, "y", &atlas->pivot_y)
+        && in_range(atlas->frame_w, 1, MAX_FRAME_SIZE + 1) && in_range(atlas->frame_h, 1, MAX_FRAME_SIZE + 1)
+        && in_range(atlas->pivot_x, 0, atlas->frame_w) && in_range(atlas->pivot_y, 0, atlas->frame_h)
         && read_frames(atlas, frames);
+}
+
+bool atlas_parse(Atlas *atlas, const char *text)
+{
+    cJSON *root = cJSON_Parse(text);
+    *atlas = (Atlas){0};
+    bool ok = root && read_atlas(atlas, root);
+    cJSON_Delete(root);
+    return ok;
 }
 
 bool atlas_load(Atlas *atlas, const char *folder, const char *id, char *err, size_t err_size)
@@ -55,11 +85,8 @@ bool atlas_load(Atlas *atlas, const char *folder, const char *id, char *err, siz
     char path[PATH_SIZE];
     snprintf(path, sizeof path, "assets/%s/%s.json", folder, id);
     char *text = read_text_file(path);
-    cJSON *root = text ? cJSON_Parse(text) : NULL;
+    bool ok = text && atlas_parse(atlas, text);
     free(text);
-    *atlas = (Atlas){0};
-    bool ok = root && read_atlas(atlas, root);
-    cJSON_Delete(root);
     if (!ok) snprintf(err, err_size, "%s: missing or invalid sprite sidecar", path);
     return ok;
 }
