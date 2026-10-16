@@ -1,7 +1,7 @@
 # Clay UI: T panel, event log, end screen
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 10, 11, 14
 
 ## Question

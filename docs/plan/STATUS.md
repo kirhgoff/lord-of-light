@@ -15,6 +15,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
+| 12 Clay UI | `12-clay-ui` | fable plan in progress |
 
 ## Done
 
