@@ -80,6 +80,9 @@ static void init_combatant(Combatant *c, const GameData *data, const char *name,
     c->y_millipx = y_millipx;
     c->body = *body;
     c->charm_side = side;
+    c->dot_element = -1;
+    c->dot_source = -1;
+    c->spawner = -1;
     c->decision.vulnerable_element = -1;
     for (int s = 0; s < body->slot_count; s++) {
         const Part *part = &data->parts[body->slots[s].part];
