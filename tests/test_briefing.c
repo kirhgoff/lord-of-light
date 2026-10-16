@@ -282,6 +282,48 @@ static void test_a_single_element_needs_no_element_question(void)
     free(json);
 }
 
+static bool contains_key(const cJSON *request, const char *id, const char *key)
+{
+    return cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(question(request, id), "criteria"), key) != NULL;
+}
+
+static cJSON *record_for(int c)
+{
+    Event reflex;
+    reflex_decide(NULL, &battle, &data, c, &reflex);
+    char *json = laya_request_record_json(&battle, &data, c, &reflex);
+    cJSON *record = cJSON_Parse(json);
+    free(json);
+    return record;
+}
+
+static void test_request_record_carries_the_reflex_answer_in_criteria_keys(void)
+{
+    int dagda, apollo;
+    int zeus = zeus_with_company(&dagda, &apollo);
+    briefing_of(zeus);
+    cJSON *record = record_for(zeus);
+    const cJSON *request = cJSON_GetObjectItemCaseSensitive(record, "request");
+    const cJSON *reflex = cJSON_GetObjectItemCaseSensitive(record, "reflex");
+    CHECK(cJSON_GetObjectItemCaseSensitive(record, "tick")->valueint == battle.tick);
+    CHECK(strcmp(cJSON_GetObjectItemCaseSensitive(record, "name")->valuestring, "Zeus") == 0);
+    CHECK(strcmp(cJSON_GetObjectItemCaseSensitive(request, "state")->valuestring, text) == 0);
+    CHECK(contains_key(request, "stance", cJSON_GetObjectItemCaseSensitive(reflex, "stance")->valuestring));
+    CHECK(contains_key(request, "hurt", cJSON_GetObjectItemCaseSensitive(reflex, "hurt")->valuestring));
+    CHECK(contains_key(request, "element", cJSON_GetObjectItemCaseSensitive(reflex, "element")->valuestring));
+    cJSON_Delete(record);
+}
+
+static void test_request_record_has_no_reflex_element_when_none_is_asked(void)
+{
+    fresh();
+    int agni = add_deity("Hindu", "Agni", SIDE_PANTHEON, 500, 200);
+    add_deity("Celtic", "Dagda", SIDE_HORDE, 580, 200);
+    cJSON *record = record_for(agni);
+    CHECK(cJSON_IsNull(cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(record, "reflex"), "element")));
+    cJSON_Delete(record);
+}
+
 static Event decide_reply(int zeus, const LayaQuestions *asked, const char *text_reply, Fallback failure, int answer_ms, bool *truncated)
 {
     return laya_decision(&battle, &data, zeus, asked, text_reply, failure, answer_ms, truncated);
@@ -421,6 +463,8 @@ void run_briefing_request_tests(void)
     test_a_lone_combatant_is_offered_only_fight_and_retreat();
     test_a_healer_with_a_hurt_ally_may_support();
     test_a_single_element_needs_no_element_question();
+    test_request_record_carries_the_reflex_answer_in_criteria_keys();
+    test_request_record_has_no_reflex_element_when_none_is_asked();
     test_a_good_reply_becomes_a_laya_decision();
     test_low_confidence_keeps_the_reflex_stance();
     test_unusable_replies_fall_back_to_the_reflex();

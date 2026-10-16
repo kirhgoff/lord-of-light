@@ -352,6 +352,28 @@ char *laya_request_json(const Battle *battle, const GameData *data, int combatan
     return text;
 }
 
+char *laya_request_record_json(const Battle *battle, const GameData *data, int combatant, const Event *reflex)
+{
+    char briefing[BRIEFING_MAX + 1];
+    LayaQuestions asked;
+    briefing_write(battle, data, combatant, briefing, sizeof briefing);
+    char *body = laya_request_json(battle, data, combatant, briefing, &asked);
+    cJSON *record = cJSON_CreateObject();
+    cJSON_AddNumberToObject(record, "tick", battle->tick);
+    cJSON_AddNumberToObject(record, "combatant", combatant);
+    cJSON_AddStringToObject(record, "name", battle->combatants[combatant].name);
+    cJSON_AddItemToObject(record, "request", cJSON_Parse(body));
+    cJSON *answer = cJSON_AddObjectToObject(record, "reflex");
+    cJSON_AddStringToObject(answer, "stance", STANCE_KEYS[reflex->amount]);
+    cJSON_AddStringToObject(answer, "hurt", HURT_WORDS[reflex->detail]);
+    if (asked.element_count > 0 && reflex->element >= 0) cJSON_AddStringToObject(answer, "element", ELEMENT_WORDS[reflex->element]);
+    else cJSON_AddNullToObject(answer, "element");
+    char *text = cJSON_PrintUnformatted(record);
+    cJSON_Delete(record);
+    free(body);
+    return text;
+}
+
 static Event reflex_fallback(const Battle *battle, const GameData *data, int combatant, Fallback fallback, int answer_ms)
 {
     Event event;
