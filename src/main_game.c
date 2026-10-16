@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -94,15 +95,16 @@ static void handle_camera_input(Viewport *view)
     if (IsKeyPressed(KEY_EQUAL)) viewport_zoom(view, 1);
 }
 
-static void advance_ticks(Battle *battle, const GameData *data, Decider *decider, Scene *scene, float *accumulated)
+static void advance_ticks(Battle *battle, const GameData *data, Decider *decider, Scene *scene, float *accumulated, int stop_tick)
 {
     *accumulated += GetFrameTime() < MAX_FRAME_SECONDS ? GetFrameTime() : MAX_FRAME_SECONDS;
-    while (*accumulated >= TICK_SECONDS) {
+    while (*accumulated >= TICK_SECONDS && battle->tick < stop_tick) {
         scene_before_step(scene, battle);
         battle_step(battle, data, decider);
         scene_after_step(scene, battle);
         *accumulated -= TICK_SECONDS;
     }
+    if (battle->tick >= stop_tick) *accumulated = 0;
 }
 
 static void handle_save_keys(Battle *battle, const GameData *data, Scene *scene, Hud *hud)
@@ -125,7 +127,7 @@ static void handle_save_keys(Battle *battle, const GameData *data, Scene *scene,
 }
 
 static void run_window(Battle *battle, const GameData *data, Decider *decider, Scene *scene, const Atlases *atlases,
-                       const Sheets *sheets, Viewport *view, Hud *hud)
+                       const Sheets *sheets, Viewport *view, Hud *hud, int stop_tick)
 {
     float accumulated = 0;
     while (!WindowShouldClose()) {
@@ -137,7 +139,8 @@ static void run_window(Battle *battle, const GameData *data, Decider *decider, S
         if (IsKeyPressed(KEY_SPACE)) hud->paused = !hud->paused;
         if (IsKeyPressed(KEY_T)) scene->xray = !scene->xray;
         if (IsKeyPressed(KEY_M)) sound_toggle_mute();
-        if (!hud->paused && !hud->confirm_quit && battle_winner(battle) < 0) advance_ticks(battle, data, decider, scene, &accumulated);
+        if (!hud->paused && !hud->confirm_quit && battle_winner(battle) < 0) advance_ticks(battle, data, decider, scene, &accumulated, stop_tick);
+        if (battle->tick >= stop_tick) hud->paused = true;
         sound_update(battle, data, view, hud->paused || hud->confirm_quit);
         scene->alpha = accumulated / TICK_SECONDS;
         BeginDrawing();
@@ -194,7 +197,7 @@ int main(int argc, char **argv)
         }
         render_to_png(args.screenshot, &battle, &data, &scene, &atlases, &sheets, &view, &hud);
     } else if (sound_init(&data, &battle, err, ERR_SIZE)) {
-        run_window(&battle, &data, setup.decider, &scene, &atlases, &sheets, &view, &hud);
+        run_window(&battle, &data, setup.decider, &scene, &atlases, &sheets, &view, &hud, setup.replay_path ? setup.source.tick : INT_MAX);
     } else {
         fprintf(stderr, "%s\n", err);
         exit_code = 1;
