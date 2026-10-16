@@ -563,7 +563,7 @@ static bool third_call_decide(Decider *self, const Battle *b, const GameData *d,
     if (++calls_per_combatant[c] <= 3) return false;
     *out = decision_event(c, calls_per_combatant[c] % 2 ? STANCE_RETREAT : STANCE_FIGHT, HURT_UNHURT, -1, DECIDER_LAYA);
     out->confidence_permille = 500;
-    out->latency_ms = 100;
+    out->answer_ms = 100;
     return true;
 }
 
@@ -610,12 +610,12 @@ static void test_decision_stats(void)
     load_data();
     fresh();
     Event laya = decision_event(0, STANCE_FIGHT, HURT_UNHURT, -1, DECIDER_LAYA);
-    laya.confidence_permille = 400, laya.latency_ms = 100;
+    laya.confidence_permille = 400, laya.answer_ms = 100;
     CHECK(battle_log_event(&battle, laya));
-    laya.confidence_permille = 600, laya.latency_ms = 300;
+    laya.confidence_permille = 600, laya.answer_ms = 300;
     CHECK(battle_log_event(&battle, laya));
     Event low = decision_event(0, STANCE_FIGHT, HURT_UNHURT, -1, DECIDER_REFLEX);
-    low.fallback = FALLBACK_LOW_CONFIDENCE, low.latency_ms = 200;
+    low.fallback = FALLBACK_LOW_CONFIDENCE, low.answer_ms = 200;
     CHECK(battle_log_event(&battle, low));
     Event waiting = decision_event(0, STANCE_FIGHT, HURT_UNHURT, -1, DECIDER_REFLEX);
     waiting.fallback = FALLBACK_WAITING;
@@ -623,10 +623,10 @@ static void test_decision_stats(void)
     DecisionStats stats = battle_decision_stats(&battle);
     CHECK(stats.laya == 2 && stats.reflex == 2);
     CHECK(stats.fallback[FALLBACK_LOW_CONFIDENCE] == 1 && stats.fallback[FALLBACK_WAITING] == 1 && stats.fallback[FALLBACK_NONE] == 2);
-    CHECK(stats.mean_confidence_permille == 500 && stats.mean_latency_ms == 200);
+    CHECK(stats.mean_confidence_permille == 500 && stats.mean_answer_ms == 200);
     fresh();
     stats = battle_decision_stats(&battle);
-    CHECK(stats.laya == 0 && stats.mean_confidence_permille == 0 && stats.mean_latency_ms == 0);
+    CHECK(stats.laya == 0 && stats.mean_confidence_permille == 0 && stats.mean_answer_ms == 0);
 }
 
 void run_decide_tests(void)

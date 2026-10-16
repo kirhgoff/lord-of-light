@@ -38,7 +38,7 @@ typedef struct {
     int reflex;
     int fallback[FALLBACK_COUNT];
     int mean_confidence_permille;
-    int mean_latency_ms;
+    int mean_answer_ms;
 } DecisionStats;
 
 DecisionStats battle_decision_stats(const Battle *battle);

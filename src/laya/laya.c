@@ -2,6 +2,14 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
+static int monotonic_ms(void)
+{
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (int)(now.tv_sec * 1000 + now.tv_nsec / 1000000);
+}
 
 Fallback laya_classify_transfer(const TransferOutcome *outcome)
 {
@@ -40,7 +48,7 @@ static Event take_reply(LayaDecider *laya, const Battle *battle, const GameData 
 {
     const LayaReply *reply = &laya->reply[c];
     bool truncated;
-    Event event = laya_decision(battle, data, c, &laya->asked[c], reply->text, reply->failure, reply->latency_ms, &truncated);
+    Event event = laya_decision(battle, data, c, &laya->asked[c], reply->text, reply->failure, laya->clock_ms() - laya->queued_ms[c], &truncated);
     laya->truncated_count += truncated;
     if (reply->failure == FALLBACK_UNREACHABLE || reply->failure == FALLBACK_TIMEOUT) {
         laya->offline_until_tick = battle->tick + LAYA_OFFLINE_TICKS;
@@ -60,6 +68,7 @@ static void ask_laya(LayaDecider *laya, const Battle *battle, const GameData *da
     free(laya->body[c]);
     laya->body[c] = laya_request_json(battle, data, c, laya->briefing[c], &laya->asked[c]);
     laya->url_index[c] = 0;
+    laya->queued_ms[c] = laya->clock_ms();
     laya->in_flight[c] = laya->transport->send(laya->transport, c, data->laya.urls[0], laya->body[c]);
 }
 
@@ -85,6 +94,7 @@ void laya_decider_init(LayaDecider *laya, LayaTransport *transport)
 {
     memset(laya, 0, sizeof *laya);
     laya->base.decide = laya_decide;
+    laya->clock_ms = monotonic_ms;
     laya->transport = transport;
 }
 

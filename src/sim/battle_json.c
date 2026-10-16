@@ -174,7 +174,7 @@ char *battle_save_json(const Battle *battle, const GameData *data)
         cJSON_AddNumberToObject(o, "decider", ev->decider);
         if (ev->kind == EVENT_DECISION) {
             cJSON_AddNumberToObject(o, "confidence_permille", ev->confidence_permille);
-            cJSON_AddNumberToObject(o, "latency_ms", ev->latency_ms);
+            cJSON_AddNumberToObject(o, "answer_ms", ev->answer_ms);
             cJSON_AddStringToObject(o, "fallback", FALLBACK_IDS[ev->fallback]);
             cJSON_AddItemToObject(o, "stance_permille", int_array(ev->stance_permille, STANCE_COUNT));
         }
@@ -463,7 +463,7 @@ static bool load_provenance(Context *ctx, const cJSON *o, Event *event)
     if (event->detail < 0 || event->detail >= HURT_COUNT) return fail_key(ctx, "detail", "decision hurt level out of range");
     const cJSON *permille = cJSON_GetObjectItemCaseSensitive(o, "stance_permille");
     if (!read_int(ctx, o, "confidence_permille", 0, 1000, &event->confidence_permille) ||
-        !read_int(ctx, o, "latency_ms", 0, EVENT_AMOUNT_LIMIT, &event->latency_ms) ||
+        !read_int(ctx, o, "answer_ms", 0, EVENT_AMOUNT_LIMIT, &event->answer_ms) ||
         !read_id(ctx, o, "fallback", FALLBACK_IDS, FALLBACK_COUNT, &fallback))
         return false;
     event->fallback = (Fallback)fallback;

@@ -352,12 +352,12 @@ char *laya_request_json(const Battle *battle, const GameData *data, int combatan
     return text;
 }
 
-static Event reflex_fallback(const Battle *battle, const GameData *data, int combatant, Fallback fallback, int latency_ms)
+static Event reflex_fallback(const Battle *battle, const GameData *data, int combatant, Fallback fallback, int answer_ms)
 {
     Event event;
     reflex_decide(NULL, battle, data, combatant, &event);
     event.fallback = fallback;
-    event.latency_ms = latency_ms;
+    event.answer_ms = answer_ms;
     return event;
 }
 
@@ -392,11 +392,11 @@ static void read_stance_probabilities(const cJSON *answer, const char *const *ke
 }
 
 Event laya_decision(const Battle *battle, const GameData *data, int combatant, const LayaQuestions *asked, const char *reply_text,
-                    Fallback failure, int latency_ms, bool *truncated)
+                    Fallback failure, int answer_ms, bool *truncated)
 {
     *truncated = false;
-    if (failure != FALLBACK_NONE) return reflex_fallback(battle, data, combatant, failure, latency_ms);
-    if (reply_text && strlen(reply_text) > LAYA_REPLY_MAX) return reflex_fallback(battle, data, combatant, FALLBACK_MALFORMED, latency_ms);
+    if (failure != FALLBACK_NONE) return reflex_fallback(battle, data, combatant, failure, answer_ms);
+    if (reply_text && strlen(reply_text) > LAYA_REPLY_MAX) return reflex_fallback(battle, data, combatant, FALLBACK_MALFORMED, answer_ms);
     cJSON *reply = cJSON_Parse(reply_text);
     const cJSON *answers = cJSON_GetObjectItemCaseSensitive(reply, "answers");
     const char *element_keys[ELEMENT_COUNT], *stance_keys[STANCE_COUNT];
@@ -409,18 +409,18 @@ Event laya_decision(const Battle *battle, const GameData *data, int combatant, c
                       (asked->element_count == 0 || choice_answer(answers, "element", element_keys, asked->element_count, &element));
     if (!understood) {
         cJSON_Delete(reply);
-        return reflex_fallback(battle, data, combatant, FALLBACK_MALFORMED, latency_ms);
+        return reflex_fallback(battle, data, combatant, FALLBACK_MALFORMED, answer_ms);
     }
     const cJSON *usage = cJSON_GetObjectItemCaseSensitive(reply, "usage");
     *truncated = cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(usage, "truncated"));
     Event event = decision_event(combatant, stances[stance], (HurtLevel)hurt,
                                  asked->element_count > 0 ? asked->elements[element] : asked->fixed_element, DECIDER_LAYA);
-    event.latency_ms = latency_ms;
+    event.answer_ms = answer_ms;
     event.confidence_permille = clamp_permille(number_or_zero(stance_answer, "x_jev_confidence"));
     read_stance_probabilities(stance_answer, stance_keys, stances, stance_count, &event);
     cJSON_Delete(reply);
     if (event.confidence_permille < data->laya.min_stance_confidence_permille) {
-        Event reflex = reflex_fallback(battle, data, combatant, FALLBACK_LOW_CONFIDENCE, latency_ms);
+        Event reflex = reflex_fallback(battle, data, combatant, FALLBACK_LOW_CONFIDENCE, answer_ms);
         event.amount = reflex.amount;
         event.decider = DECIDER_REFLEX;
         event.fallback = FALLBACK_LOW_CONFIDENCE;

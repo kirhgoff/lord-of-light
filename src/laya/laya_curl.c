@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "laya.h"
 
@@ -53,13 +52,6 @@ static size_t append_download(char *chunk, size_t size, size_t count, void *user
     return added;
 }
 
-static int elapsed_ms(const struct timespec *from)
-{
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    return (int)((now.tv_sec - from->tv_sec) * 1000 + (now.tv_nsec - from->tv_nsec) / 1000000);
-}
-
 static int abort_when_closing(void *user, curl_off_t total_down, curl_off_t down, curl_off_t total_up, curl_off_t up)
 {
     (void)total_down, (void)down, (void)total_up, (void)up;
@@ -81,8 +73,6 @@ static LayaReply perform(CURL *curl, const Request *request, CurlTransport *tran
     curl_easy_setopt(curl, CURLOPT_XFERINFODATA, transport);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, append_download);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &download);
-    struct timespec start;
-    clock_gettime(CLOCK_MONOTONIC, &start);
     CURLcode result = curl_easy_perform(curl);
     long status = 0;
     curl_off_t pretransfer_us = 0;
@@ -91,7 +81,7 @@ static LayaReply perform(CURL *curl, const Request *request, CurlTransport *tran
     curl_slist_free_all(headers);
     TransferOutcome outcome = {.curl_ok = result == CURLE_OK, .timed_out = result == CURLE_OPERATION_TIMEDOUT,
                                .connected = pretransfer_us > 0, .too_large = download.too_large, .http_status = status};
-    LayaReply reply = {request->id, download.text, elapsed_ms(&start), laya_classify_transfer(&outcome)};
+    LayaReply reply = {request->id, download.text, laya_classify_transfer(&outcome)};
     if (reply.failure != FALLBACK_NONE) free(reply.text), reply.text = NULL;
     return reply;
 }
@@ -108,7 +98,7 @@ static void *work(void *arg)
         transport->pending_head = (transport->pending_head + 1) % MAX_COMBATANTS;
         transport->pending_count--;
         pthread_mutex_unlock(&transport->lock);
-        LayaReply reply = curl ? perform(curl, &request, transport) : (LayaReply){request.id, NULL, 0, FALLBACK_UNREACHABLE};
+        LayaReply reply = curl ? perform(curl, &request, transport) : (LayaReply){request.id, NULL, FALLBACK_UNREACHABLE};
         free(request.body);
         pthread_mutex_lock(&transport->lock);
         if (transport->done_count == MAX_COMBATANTS) {

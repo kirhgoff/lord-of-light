@@ -17,6 +17,6 @@ int briefing_write(const Battle *battle, const GameData *data, int combatant, ch
 
 char *laya_request_json(const Battle *battle, const GameData *data, int combatant, const char *briefing, LayaQuestions *asked);
 Event laya_decision(const Battle *battle, const GameData *data, int combatant, const LayaQuestions *asked, const char *reply_text,
-                    Fallback failure, int latency_ms, bool *truncated);
+                    Fallback failure, int answer_ms, bool *truncated);
 
 #endif

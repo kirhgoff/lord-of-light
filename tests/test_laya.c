@@ -7,7 +7,7 @@
 
 #define ERR_SIZE 256
 #define MAX_SENT 256
-#define FAKE_LATENCY_MS 100
+#define TICK_MS 50
 
 typedef struct {
     LayaTransport base;
@@ -28,6 +28,12 @@ static GameData data;
 static Battle battle, again;
 static FakeTransport fake;
 static LayaDecider laya;
+static int fake_now_ms;
+
+static int fake_clock(void)
+{
+    return fake_now_ms;
+}
 
 static char *reply_choosing_first_options(const char *body, double stance_confidence, bool truncated)
 {
@@ -65,7 +71,7 @@ static bool fake_poll(LayaTransport *self, LayaReply *out)
     if (transport->hold_replies || transport->polled >= transport->sent) return false;
     int i = transport->polled++;
     bool reachable = !transport->only_reachable_url || strcmp(transport->only_reachable_url, transport->sent_url[i]) == 0;
-    *out = (LayaReply){transport->sent_id[i], NULL, FAKE_LATENCY_MS, reachable ? transport->failure : FALLBACK_UNREACHABLE};
+    *out = (LayaReply){transport->sent_id[i], NULL, reachable ? transport->failure : FALLBACK_UNREACHABLE};
     if (reachable && transport->failure == FALLBACK_NONE)
         out->text = transport->fixed_text ? strdup(transport->fixed_text)
                                           : reply_choosing_first_options(transport->sent_body[i], transport->stance_confidence, transport->truncated);
@@ -88,6 +94,8 @@ static void start(uint32_t seed, int url_count)
     fake.base = (LayaTransport){fake_send, fake_poll, fake_close};
     fake.stance_confidence = 0.5;
     laya_decider_init(&laya, &fake.base);
+    laya.clock_ms = fake_clock;
+    fake_now_ms = 0;
 }
 
 static void finish(void)
@@ -98,7 +106,10 @@ static void finish(void)
 
 static void run(int ticks)
 {
-    for (int t = 0; t < ticks; t++) battle_step(&battle, &data, &laya.base);
+    for (int t = 0; t < ticks; t++) {
+        battle_step(&battle, &data, &laya.base);
+        fake_now_ms += TICK_MS;
+    }
 }
 
 static int decisions_by(DeciderKind decider, Fallback fallback, int first_combatants)
@@ -180,6 +191,19 @@ static int events_of(int combatant, DeciderKind decider, Fallback fallback)
     return count;
 }
 
+static int nth_laya_answer_ms(int combatant, int nth)
+{
+    for (int e = 0; e < battle.log_count; e++)
+        if (battle.log[e].kind == EVENT_DECISION && battle.log[e].actor == combatant && battle.log[e].decider == DECIDER_LAYA && nth-- == 0)
+            return battle.log[e].answer_ms;
+    return -1;
+}
+
+static int laya_answer_ms(int combatant)
+{
+    return nth_laya_answer_ms(combatant, 0);
+}
+
 static void test_reflex_keeps_deciding_while_a_request_is_pending(void)
 {
     start(3, 1);
@@ -196,6 +220,9 @@ static void test_reflex_keeps_deciding_while_a_request_is_pending(void)
     run(1);
     CHECK(events_of(slowest, DECIDER_REFLEX, FALLBACK_WAITING) == 2);
     CHECK(events_of(slowest, DECIDER_LAYA, FALLBACK_NONE) == 1);
+    CHECK(laya_answer_ms(slowest) == 2 * interval * TICK_MS);
+    run(2 * interval);
+    CHECK(nth_laya_answer_ms(slowest, 1) == TICK_MS);
     finish();
 }
 
@@ -207,7 +234,7 @@ static void test_timeout_falls_back_to_the_reflex(void)
     run(2);
     CHECK(decisions_by(DECIDER_REFLEX, FALLBACK_TIMEOUT, count) == count);
     for (int e = 0; e < battle.log_count; e++)
-        CHECK(battle.log[e].kind != EVENT_DECISION || battle.log[e].actor >= count || battle.log[e].fallback != FALLBACK_TIMEOUT || battle.log[e].latency_ms == FAKE_LATENCY_MS);
+        CHECK(battle.log[e].kind != EVENT_DECISION || battle.log[e].actor >= count || battle.log[e].fallback != FALLBACK_TIMEOUT || battle.log[e].answer_ms == TICK_MS);
     finish();
 }
 
@@ -226,7 +253,7 @@ static void test_unreachable_backs_off_then_asks_again(void)
     for (int e = logged; e < battle.log_count; e++) {
         if (battle.log[e].kind != EVENT_DECISION) continue;
         backed_off++;
-        CHECK(battle.log[e].fallback == FALLBACK_UNREACHABLE && battle.log[e].latency_ms == 0);
+        CHECK(battle.log[e].fallback == FALLBACK_UNREACHABLE && battle.log[e].answer_ms == 0);
     }
     CHECK(backed_off > 0);
     run(LAYA_OFFLINE_TICKS);
@@ -247,6 +274,7 @@ static void test_next_url_answers_when_the_first_is_unreachable(void)
     }
     CHECK(decisions_by(DECIDER_LAYA, FALLBACK_NONE, count) == count);
     CHECK(decisions_by(DECIDER_REFLEX, FALLBACK_UNREACHABLE, count) == 0);
+    for (int c = 0; c < count; c++) CHECK(laya_answer_ms(c) == TICK_MS);
     finish();
 }
 

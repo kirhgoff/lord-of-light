@@ -57,10 +57,10 @@ static void print_decision_stats(const Battle *battle, int truncated)
 {
     DecisionStats stats = battle_decision_stats(battle);
     printf("Decisions: %d Laya, %d Reflex (unreachable %d, timeout %d, malformed %d, low confidence %d, waiting %d); "
-           "mean confidence %d.%03d; mean latency %d ms; truncated %d\n",
+           "mean confidence %d.%03d; mean answer time %d ms; truncated %d\n",
            stats.laya, stats.reflex, stats.fallback[FALLBACK_UNREACHABLE], stats.fallback[FALLBACK_TIMEOUT],
            stats.fallback[FALLBACK_MALFORMED], stats.fallback[FALLBACK_LOW_CONFIDENCE], stats.fallback[FALLBACK_WAITING],
-           stats.mean_confidence_permille / 1000, stats.mean_confidence_permille % 1000, stats.mean_latency_ms, truncated);
+           stats.mean_confidence_permille / 1000, stats.mean_confidence_permille % 1000, stats.mean_answer_ms, truncated);
 }
 
 static const char *winner_name(int winner)

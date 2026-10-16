@@ -9,7 +9,6 @@
 typedef struct {
     int id;
     char *text;
-    int latency_ms;
     Fallback failure;
 } LayaReply;
 
@@ -43,6 +42,8 @@ typedef struct {
     int url_index[MAX_COMBATANTS];
     char *body[MAX_COMBATANTS];
     char briefing[MAX_COMBATANTS][BRIEFING_MAX + 1];
+    int (*clock_ms)(void);
+    int queued_ms[MAX_COMBATANTS];
     int offline_until_tick;
     Fallback offline_reason;
     int truncated_count;

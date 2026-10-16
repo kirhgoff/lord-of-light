@@ -282,9 +282,9 @@ static void test_a_single_element_needs_no_element_question(void)
     free(json);
 }
 
-static Event decide_reply(int zeus, const LayaQuestions *asked, const char *text_reply, Fallback failure, int latency_ms, bool *truncated)
+static Event decide_reply(int zeus, const LayaQuestions *asked, const char *text_reply, Fallback failure, int answer_ms, bool *truncated)
 {
-    return laya_decision(&battle, &data, zeus, asked, text_reply, failure, latency_ms, truncated);
+    return laya_decision(&battle, &data, zeus, asked, text_reply, failure, answer_ms, truncated);
 }
 
 static void test_a_good_reply_becomes_a_laya_decision(void)
@@ -299,7 +299,7 @@ static void test_a_good_reply_becomes_a_laya_decision(void)
     CHECK(!truncated);
     CHECK(event.kind == EVENT_DECISION && event.actor == zeus && event.actor_part == -1 && event.target == -1 && event.target_part == -1);
     CHECK(event.decider == DECIDER_LAYA && event.amount == STANCE_FIGHT && event.detail == HURT_UNHURT && event.element == ELEMENT_LIGHTNING);
-    CHECK(event.confidence_permille == 415 && event.latency_ms == 612 && event.fallback == FALLBACK_NONE);
+    CHECK(event.confidence_permille == 415 && event.answer_ms == 612 && event.fallback == FALLBACK_NONE);
     const int expected[STANCE_COUNT] = {0, 610, 200, 0, 190};
     CHECK(memcmp(event.stance_permille, expected, sizeof expected) == 0);
     canned_reply("collect the pickup", "0.415", "false");
@@ -316,7 +316,7 @@ static void test_low_confidence_keeps_the_reflex_stance(void)
     bool truncated;
     Event event = decide_reply(zeus, &asked, reply, FALLBACK_NONE, 300, &truncated);
     CHECK(event.decider == DECIDER_REFLEX && event.fallback == FALLBACK_LOW_CONFIDENCE && event.amount == STANCE_FIGHT);
-    CHECK(event.confidence_permille == 100 && event.latency_ms == 300 && event.element == ELEMENT_LIGHTNING);
+    CHECK(event.confidence_permille == 100 && event.answer_ms == 300 && event.element == ELEMENT_LIGHTNING);
     CHECK(event.stance_permille[STANCE_RETREAT] == 200);
 }
 
@@ -337,7 +337,7 @@ static void test_unusable_replies_fall_back_to_the_reflex(void)
     for (int i = 0; i < 6; i++) {
         bool truncated;
         Event event = decide_reply(zeus, &asked, bad[i], FALLBACK_NONE, 77, &truncated);
-        CHECK(event.decider == DECIDER_REFLEX && event.fallback == FALLBACK_MALFORMED && event.latency_ms == 77);
+        CHECK(event.decider == DECIDER_REFLEX && event.fallback == FALLBACK_MALFORMED && event.answer_ms == 77);
         CHECK(event.amount == STANCE_FIGHT && event.confidence_permille == 0);
     }
     free(no_stance);
@@ -352,7 +352,7 @@ static void test_transport_failures_fall_back_to_the_reflex(void)
     free(request_for(zeus, &asked));
     bool truncated;
     Event event = decide_reply(zeus, &asked, NULL, FALLBACK_TIMEOUT, 8000, &truncated);
-    CHECK(event.decider == DECIDER_REFLEX && event.fallback == FALLBACK_TIMEOUT && event.latency_ms == 8000 && event.amount == STANCE_FIGHT);
+    CHECK(event.decider == DECIDER_REFLEX && event.fallback == FALLBACK_TIMEOUT && event.answer_ms == 8000 && event.amount == STANCE_FIGHT);
 }
 
 static void test_truncation_is_reported(void)

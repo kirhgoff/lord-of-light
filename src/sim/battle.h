@@ -127,7 +127,7 @@ typedef struct {
     int detail;
     DeciderKind decider;
     int confidence_permille;
-    int latency_ms;
+    int answer_ms;
     Fallback fallback;
     int stance_permille[STANCE_COUNT];
 } Event;

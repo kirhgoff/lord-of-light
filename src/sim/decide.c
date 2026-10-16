@@ -174,18 +174,18 @@ void replay_decider_init(ReplayDecider *replay, const Event *log, int count)
 DecisionStats battle_decision_stats(const Battle *battle)
 {
     DecisionStats stats = {0};
-    long confidence_sum = 0, latency_sum = 0;
-    int latency_count = 0;
+    long confidence_sum = 0, answer_sum = 0;
+    int answer_count = 0;
     for (int e = 0; e < battle->log_count; e++) {
         const Event *event = &battle->log[e];
         if (event->kind != EVENT_DECISION) continue;
         stats.fallback[event->fallback]++;
         if (event->decider == DECIDER_LAYA) stats.laya++, confidence_sum += event->confidence_permille;
         else stats.reflex++;
-        if (event->latency_ms > 0) latency_sum += event->latency_ms, latency_count++;
+        if (event->answer_ms > 0) answer_sum += event->answer_ms, answer_count++;
     }
     stats.mean_confidence_permille = stats.laya ? (int)(confidence_sum / stats.laya) : 0;
-    stats.mean_latency_ms = latency_count ? (int)(latency_sum / latency_count) : 0;
+    stats.mean_answer_ms = answer_count ? (int)(answer_sum / answer_count) : 0;
     return stats;
 }
 

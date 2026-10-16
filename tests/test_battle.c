@@ -111,7 +111,7 @@ static Event decision_event_with_provenance(void)
     Event event = {.tick = 0, .kind = EVENT_DECISION, .actor = 2, .actor_part = -1, .target = -1, .target_part = -1,
                    .element = ELEMENT_FIRE, .amount = STANCE_FIGHT, .detail = HURT_WOUNDED, .decider = DECIDER_REFLEX};
     event.confidence_permille = 415;
-    event.latency_ms = 612;
+    event.answer_ms = 612;
     event.fallback = FALLBACK_LOW_CONFIDENCE;
     memcpy(event.stance_permille, (int[STANCE_COUNT]){0, 610, 200, 0, 190}, sizeof event.stance_permille);
     return event;
@@ -148,7 +148,7 @@ static void test_round_trip_is_identical(void)
     CHECK(memcmp(loaded.obstacle, battle.obstacle, sizeof battle.obstacle) == 0);
     CHECK(loaded.combatants[3].next_decision_tick == 77 && loaded.combatants[3].next_waiting_tick == 88 && loaded.log[1].decider == DECIDER_REFLEX);
     const Event *back = &loaded.log[2];
-    CHECK(back->confidence_permille == 415 && back->latency_ms == 612 && back->fallback == FALLBACK_LOW_CONFIDENCE);
+    CHECK(back->confidence_permille == 415 && back->answer_ms == 612 && back->fallback == FALLBACK_LOW_CONFIDENCE);
     CHECK(back->stance_permille[STANCE_FIGHT] == 610 && back->stance_permille[STANCE_RETREAT] == 200 && back->stance_permille[STANCE_COLLECT] == 190);
     CHECK(loaded.log_count == 3 && loaded.log[0].amount == 12 && loaded.log[0].detail == -4 && loaded.log[0].tick == 30 && loaded.rng == battle.rng);
     free(json);
