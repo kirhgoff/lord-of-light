@@ -947,6 +947,42 @@
           "area": 20
         }
       ]
+    },
+    {
+      "id": "minion_claw",
+      "name": "Minion Claw",
+      "kind": "external",
+      "minion_only": true,
+      "integrity": 20,
+      "sprite": "minion_claw",
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "kinetic",
+          "damage": 8,
+          "range": 20,
+          "cooldown": 10,
+          "area": 0
+        }
+      ]
+    },
+    {
+      "id": "wisp_spark",
+      "name": "Wisp Spark",
+      "kind": "external",
+      "minion_only": true,
+      "integrity": 14,
+      "sprite": "wisp_spark",
+      "abilities": [
+        {
+          "order": "cast",
+          "element": "radiance",
+          "damage": 6,
+          "range": 110,
+          "cooldown": 28,
+          "area": 0
+        }
+      ]
     }
   ]
 }

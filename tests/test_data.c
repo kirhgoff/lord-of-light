@@ -198,6 +198,33 @@ static void test_minion_plans_are_fixed(void)
     CHECK(!data.parts[find_part(&data, "heart")].minion_only);
 }
 
+static void check_same_stats(const Part *minion, const Part *original)
+{
+    CHECK(minion->integrity == original->integrity);
+    CHECK(minion->ability_count == original->ability_count);
+    for (int i = 0; i < original->ability_count; i++) {
+        CHECK(minion->abilities[i].order == original->abilities[i].order);
+        CHECK(minion->abilities[i].element == original->abilities[i].element);
+        CHECK(minion->abilities[i].damage == original->abilities[i].damage);
+        CHECK(minion->abilities[i].range == original->abilities[i].range);
+        CHECK(minion->abilities[i].cooldown_ticks == original->abilities[i].cooldown_ticks);
+        CHECK(minion->abilities[i].area == original->abilities[i].area);
+    }
+}
+
+static void test_minion_attack_parts_match_the_parts_they_replace(void)
+{
+    load_real_data();
+    int claw = find_part(&data, "claw");
+    int minion_claw = find_part(&data, "minion_claw");
+    int glow_lantern = find_part(&data, "glow_lantern");
+    int wisp_spark = find_part(&data, "wisp_spark");
+    CHECK(data.parts[minion_claw].minion_only);
+    CHECK(data.parts[wisp_spark].minion_only);
+    check_same_stats(&data.parts[minion_claw], &data.parts[claw]);
+    check_same_stats(&data.parts[wisp_spark], &data.parts[glow_lantern]);
+}
+
 static void test_part_errors(void)
 {
     load_real_data();
@@ -328,6 +355,7 @@ void run_data_tests(void)
     test_core_parts_stay_out_of_horde_slots();
     test_horde_needs_a_non_spawn_plan();
     test_minion_plans_are_fixed();
+    test_minion_attack_parts_match_the_parts_they_replace();
     test_part_errors();
     test_other_file_errors();
     test_file_errors();

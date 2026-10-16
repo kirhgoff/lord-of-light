@@ -196,9 +196,9 @@ def lightning_hammer(g, p, a, b):
     return (5, 24)
 
 
-def open_hand(g, p, a, b, charge):
-    deg = swing(a) * 0.5 - 10
-    tip = arm(g, (5, 24), deg)
+def open_hand(g, p, a, b, charge, reach=6, lift=0):
+    deg = swing(a) * 0.5 - 10 - lift
+    tip = arm(g, (5, 24), deg, reach)
     for i in range(4):
         fx, fy = local([(3 + (i % 2), -3 + i * 2)], tip, deg)[0]
         ell(g, fx, fy, 1.2, 1.2, SKIN)
@@ -259,7 +259,7 @@ def thunderbolt_hand(g, p, a, b):
 
 
 def healing_hand(g, p, a, b):
-    return open_hand(g, p, a, b, charge_glow)
+    return open_hand(g, p, a, b, charge_glow, reach=11, lift=-30)
 
 
 def hearth_hand(g, p, a, b):
@@ -313,6 +313,16 @@ def claw(g, p, a, b):
         g.polygon([(10, y), (19, y + 2), (26, y + 7 - i), (20, y + 7), (11, y + 5)], fill=BONE)
         g.line([(12, y + 2), (22, y + 5)], fill=p.light)
     return (4, 18)
+
+
+def minion_claw(g, p, a, b):
+    open_amount = int(a * 1.5)
+    g.rectangle([4, 11, 7, 18], fill=p.dark)
+    g.rectangle([4, 11, 6, 17], fill=p.base)
+    for i in range(3):
+        y = 11 + i * 3 + open_amount * (i - 1)
+        g.polygon([(7, y), (10, y), (12, y + 1), (10, y + 1), (7, y + 1)], fill=BONE)
+    return (4, 15)
 
 
 def mandibles(g, p, a, b):
@@ -406,13 +416,13 @@ def void_tendril(g, p, a, b):
 
 def stinger(g, p, a, b):
     thrust = int(a * 4)
-    pts = [(4, 24), (6, 17), (11, 11), (17, 9 + thrust), (22, 12 + thrust)]
+    pts = [(3, 26), (10, 25), (17, 22), (22, 17), (22, 12 + thrust)]
     g.line(pts, fill=p.dark, width=6)
     g.line(pts, fill=p.base, width=4)
     g.line([(p0[0] - 1, p0[1] - 1) for p0 in pts], fill=p.light, width=1)
-    g.polygon([(21, 9 + thrust), (28, 15 + thrust), (21, 16 + thrust)], fill=BONE)
-    ell(g, 26, 17 + thrust, 1.5, 2, p.glow)
-    return (4, 24)
+    g.polygon([(19, 12 + thrust), (25, 12 + thrust), (22, 6 + thrust)], fill=BONE)
+    ell(g, 22, 7 + thrust, 1.5, 1.5, p.glow)
+    return (3, 26)
 
 
 def brain_lobe(g, p, a, b):
@@ -422,7 +432,7 @@ def brain_lobe(g, p, a, b):
         g.line(pts, fill=p.deep)
     pulse = int(a * 3)
     ell(g, 25, 8, 2 + pulse, 2 + pulse, p.glow)
-    return (16, 22)
+    return (13, 22)
 
 
 def lantern(g, p, a, b):
@@ -435,6 +445,17 @@ def lantern(g, p, a, b):
     g.rectangle([14, 11, 18, 21], fill=p.glow)
     g.line([(16, 9), (16, 23)], fill=STEEL)
     return (16, 2)
+
+
+def wisp_spark(g, p, a, b):
+    x, y, s = 16, 16, 3
+    g.polygon([(x, y - s), (x + 1, y - 1), (x + s, y), (x + 1, y + 1),
+               (x, y + s), (x - 1, y + 1), (x - s, y), (x - 1, y - 1)], fill=p.base)
+    ell(g, x, y, 1, 1, p.glow)
+    if a > 0.5:
+        for dx, dy in ((-2, -2), (2, -2), (-2, 2), (2, 2)):
+            g.point((x + dx, y + dy), fill=p.light)
+    return (x, y)
 
 
 def crown(g, p, a, b):
@@ -498,12 +519,12 @@ def eye_stalk(g, p, a, b):
 
 
 def compound_eyes(g, p, a, b):
-    ell(g, 15, 16, 11, 9, p.dark)
-    spots = [(9, 12), (14, 10), (19, 12), (11, 17), (17, 17), (22, 17), (8, 20), (14, 22), (20, 22)]
+    ell(g, 15, 16, 7, 7, p.dark)
+    spots = [(11, 12), (15, 11), (19, 12), (11, 16), (15, 16), (19, 16), (13, 20), (17, 20)]
     for i, (x, y) in enumerate(spots):
-        ell(g, x, y, 3, 3, mix(p.glow, p.dark, 0.2 if (i + int(a * 3)) % 3 else 0.6))
+        ell(g, x, y, 2, 2, mix(p.glow, p.dark, 0.2 if (i + int(a * 3)) % 3 else 0.6))
         g.point((x - 1, y - 1), fill=(255, 255, 255))
-    return (14, 28)
+    return (15, 24)
 
 
 def dim_eye(g, p, a, b):
@@ -683,26 +704,21 @@ def pseudopods(g, p, a, b):
     return blob(g, p, a, b, True)
 
 
-def coil(g, p, a, b, upright):
+def coil(g, p, a, b):
     for i, (x, y, rx) in enumerate([(15, 25, 11), (16, 20, 9), (15, 15, 7)]):
         ell(g, x, y, rx, 4, p.dark)
         ell(g, x, y - 1, rx - 1, 3, p.base)
         for k in range(-rx + 3, rx - 2, 4):
             g.point((x + k, y - 2), fill=p.light)
     sway = int(a * 2) + b
-    neck = [(15, 13), (16, 9), (18 + sway, 6)]
+    neck = [(15, 14), (18 + sway, 12)]
     g.line(neck, fill=p.dark, width=6)
     g.line(neck, fill=p.base, width=4)
-    if upright:
-        hx = 18 + sway
-        g.polygon([(hx - 3, 3), (hx + 6, 5), (hx + 2, 9), (hx - 3, 8)], fill=p.base)
-        g.point((hx + 1, 5), fill=p.glow)
-        g.line([(hx + 6, 6), (hx + 8, 6)], fill=(180, 60, 60))
     return (16, 27)
 
 
 def serpent_coil(g, p, a, b):
-    return coil(g, p, a, b, True)
+    return coil(g, p, a, b)
 
 
 def serpent_tail(g, p, a, b):
@@ -804,23 +820,31 @@ def spider_legs(g, p, a, b):
 
 
 def bat_wings(g, p, a, b):
-    up = int(a * 8) - 2 + b
-    g.polygon([(4, 16), (13, 4 - up // 2), (27, 9), (30, 22), (22, 18), (17, 24), (10, 17)], fill=p.dark)
-    g.polygon([(5, 16), (13, 6 - up // 2), (24, 10), (26, 19), (20, 16), (16, 21), (10, 16)], fill=p.base)
-    for end in [(13, 4 - up // 2), (27, 9), (30, 22)]:
-        g.line([(4, 16), end], fill=p.deep)
-    return (4, 16)
+    drop = int(a * 4) + b
+    root, wrist = (21, 27), (16, 12)
+    tips = [(9, 4 + drop), (3, 11 + drop), (4, 21 + drop // 2)]
+    scallops = [(9, 12), (7, 18), (13, 23)]
+    outline = [root, wrist, tips[0], scallops[0], tips[1], scallops[1], tips[2], scallops[2]]
+    g.polygon(outline, fill=p.dark)
+    g.polygon([(x + (1 if x < 20 else -1), y + (1 if y < 26 else -1)) for x, y in outline], fill=p.base)
+    for tip in tips:
+        g.line([wrist, tip], fill=p.deep)
+    g.line([root, wrist], fill=p.deep, width=2)
+    return (root[0], root[1] - 4)
 
 
 def wings_of_light(g, p, a, b):
-    up = int(a * 6) + b
-    for i in range(5):
-        ang = -55 + i * 20 - up * 2
-        tip = rot([(4 + 19 - i * 2, 18)], (4, 18), ang)[0]
-        g.polygon([(4, 16), tip, (4, 20)], fill=p.light if i % 2 else p.base)
-        g.line([(4, 18), tip], fill=p.glow)
-    ell(g, 5, 18, 3, 3, p.glow)
-    return (4, 18)
+    root = (24, 26)
+    sweep = int(a * 8) + b * 3
+    for i, length in enumerate([26, 25, 23, 20, 16]):
+        angle = math.radians(35 + i * 15 + sweep)
+        tip = (root[0] - math.sin(angle) * length, root[1] - math.cos(angle) * length)
+        side = (math.cos(angle) * 2, -math.sin(angle) * 2)
+        g.polygon([(root[0] - side[0], root[1] - side[1]), tip, (root[0] + side[0], root[1] + side[1])],
+                  fill=p.light if i % 2 else p.base)
+        g.line([root, tip], fill=p.glow)
+    ell(g, root[0], root[1], 3, 3, p.glow)
+    return root
 
 
 def armour_plate(g, p, a, b):
@@ -846,7 +870,7 @@ KIND_DRAWERS = {
     "sword_hand": sword_hand, "spear_hand": spear_hand, "lugh_spear": lugh_spear, "gungnir": gungnir,
     "war_club": war_club, "frost_trident": frost_trident, "lightning_hammer": lightning_hammer,
     "shield_hand": shield_hand, "bow_hand": bow_hand, "sun_bow": sun_bow,
-    "claw": claw, "mandibles": mandibles, "frost_fang": frost_fang, "ember_maw": ember_maw, "void_maw": void_maw,
+    "claw": claw, "minion_claw": minion_claw, "wisp_spark": wisp_spark, "mandibles": mandibles, "frost_fang": frost_fang, "ember_maw": ember_maw, "void_maw": void_maw,
     "electric_tentacle": electric_tentacle, "void_tendril": void_tendril, "venom_stinger": stinger,
     "mind_lobe": brain_lobe, "glow_lantern": lantern, "radiant_crown": crown,
     "fire_hand": fire_hand, "thunderbolt_hand": thunderbolt_hand, "healing_hand": healing_hand,
