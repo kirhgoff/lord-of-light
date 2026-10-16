@@ -1,5 +1,7 @@
 #include "battle.h"
 
+#include "movement.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -168,45 +170,8 @@ int battle_winner(const Battle *battle)
     return -1;
 }
 
-static int step_toward(int from, int to)
-{
-    return from < to ? 1 : from > to ? -1 : 0;
-}
-
-static bool blocked(const Battle *battle, int x_millipx, int y_millipx)
-{
-    if (x_millipx < 0 || y_millipx < 0 || x_millipx >= ARENA_WIDTH_MILLIPX || y_millipx >= ARENA_HEIGHT_MILLIPX) return true;
-    int column = x_millipx / TILE_MILLIPX, row = y_millipx / TILE_MILLIPX;
-    return battle->obstacle[row][column];
-}
-
-static const Combatant *nearest_enemy(const Battle *battle, const Combatant *self)
-{
-    const Combatant *best = NULL;
-    int best_distance = 0;
-    for (int c = 0; c < battle->combatant_count; c++) {
-        const Combatant *other = &battle->combatants[c];
-        if (!other->alive || other->side == self->side) continue;
-        int distance = abs(other->x_millipx - self->x_millipx) + abs(other->y_millipx - self->y_millipx);
-        if (!best || distance < best_distance) best = other, best_distance = distance;
-    }
-    return best;
-}
-
-static void advance_toward_enemy(const Battle *battle, Combatant *self)
-{
-    const Combatant *enemy = nearest_enemy(battle, self);
-    if (!enemy) return;
-    int nx = self->x_millipx + MILLIPX_PER_PX * step_toward(self->x_millipx, enemy->x_millipx);
-    int ny = self->y_millipx + MILLIPX_PER_PX * step_toward(self->y_millipx, enemy->y_millipx);
-    if (!blocked(battle, nx, self->y_millipx)) self->x_millipx = nx;
-    if (!blocked(battle, self->x_millipx, ny)) self->y_millipx = ny;
-}
-
 void battle_step(Battle *battle, const GameData *data)
 {
-    (void)data;
-    for (int c = 0; c < battle->combatant_count; c++)
-        if (battle->combatants[c].alive) advance_toward_enemy(battle, &battle->combatants[c]);
+    battle_move_combatants(battle, data);
     battle->tick++;
 }
