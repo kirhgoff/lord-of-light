@@ -15,7 +15,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 12 Clay UI | `12-clay-ui` | fable plan in progress |
+| 12 Clay UI | `12-clay-ui` / `~/Projects/lord-of-light-12-clay-ui` | plan accepted; sonnet executor running |
 
 ## Done
 
@@ -41,7 +41,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 ## Next up (once unblocked)
 
-- Frontier: 12 Clay UI (last ticket on the map).
+- After 12: 21 Parallel Laya requests (user-requested follow-up).
 - 20 Sound playback after 05, 10.
 - Later: 16 Save/load keys (after 10).
 
