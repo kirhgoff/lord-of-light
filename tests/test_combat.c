@@ -188,6 +188,31 @@ static void test_battle_ends_when_a_side_is_dead(void)
     CHECK(battle_winner(&battle) == SIDE_PANTHEON);
 }
 
+static void test_a_side_charmed_to_the_other_has_lost(void)
+{
+    load_fixture();
+    battle.combatants[SECOND].alive = false;
+    battle.combatants[FAR].alive = false;
+    CHECK(battle_winner(&battle) == -1);
+    battle.combatants[DUMMY].charm_side = SIDE_PANTHEON;
+    battle.combatants[DUMMY].charm_ticks = 50;
+    CHECK(battle_winner(&battle) == SIDE_PANTHEON);
+}
+
+static void test_repeated_charm_wins_a_one_on_one(void)
+{
+    load_fixture();
+    int lobe = slot(STRIKER, "lobe");
+    for (int c = SECOND; c <= HURT; c++) battle.combatants[c].alive = false;
+    battle.combatants[DUMMY].parts[slot(DUMMY, "legs")].order = (Order){ORDER_MOVE_TO, -1, 600000, 176000};
+    order(STRIKER, "lobe", ORDER_CAST, DUMMY);
+    for (int t = 0; t < 400 && battle_winner(&battle) < 0; t++) {
+        battle.combatants[STRIKER].parts[lobe].order = (Order){ORDER_CAST, DUMMY, 0, 0};
+        battle_step(&battle, &data);
+    }
+    CHECK(battle_winner(&battle) == SIDE_PANTHEON && battle.tick < 400);
+}
+
 static void test_strike_order_hits_and_sets_cooldown(void)
 {
     load_fixture();
@@ -581,6 +606,8 @@ void run_combat_tests(void)
     test_death_by_vitality_leaves_remains();
     test_death_when_all_hearts_destroyed();
     test_battle_ends_when_a_side_is_dead();
+    test_a_side_charmed_to_the_other_has_lost();
+    test_repeated_charm_wins_a_one_on_one();
     test_strike_order_hits_and_sets_cooldown();
     test_cooldown_spaces_hits();
     test_out_of_reach_does_nothing();

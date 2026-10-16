@@ -167,7 +167,8 @@ int battle_winner(const Battle *battle)
 {
     bool alive[SIDE_COUNT] = {false};
     for (int c = 0; c < battle->combatant_count; c++)
-        if (battle->combatants[c].alive) alive[battle->combatants[c].side] = true;
+        if (battle->combatants[c].alive && battle->combatants[c].charm_side == battle->combatants[c].side)
+            alive[battle->combatants[c].side] = true;
     if (alive[SIDE_PANTHEON] && !alive[SIDE_HORDE]) return SIDE_PANTHEON;
     if (alive[SIDE_HORDE] && !alive[SIDE_PANTHEON]) return SIDE_HORDE;
     return -1;
