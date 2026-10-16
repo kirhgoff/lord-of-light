@@ -25,7 +25,6 @@ A playable raylib arena: a random Pantheon (from JSON) fights a Power-matched Ho
 
 - Power weight values and Horde size limits: tuned once `make balance` exists and real Battles can be watched.
 - Tuning the Stance confidence threshold and Briefing wording once Laya drives real Battles.
-- What Spawn minions look like as Bodies (fixed tiny Body Plans per spawning Part?), and a cap on their number.
 - Replacing placeholder sprites with real art; whether Parts need per-direction frames.
 
 ## Out of scope

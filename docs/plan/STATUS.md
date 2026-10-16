@@ -15,7 +15,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 | Ticket | Branch / worktree | State |
 |---|---|---|
 | 03 State + headless | `03-state-and-headless` / `~/Projects/lord-of-light-03-state-and-headless` | executor done (1d0285c); opus review running |
-| 15 Content | `15-content` / `~/Projects/lord-of-light-15-content` | executor done (2ab4da0); opus review running |
+| 15 Content | `15-content` / `~/Projects/lord-of-light-15-content` | review PASS; executor making small data fixes (imp speed, Shiva eye anchor, symbolism), then merge |
 
 If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`, `git status`), then either spawn a new executor to finish from there or review what exists.
 
@@ -29,8 +29,8 @@ If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`
 ## Next up (once unblocked)
 
 - After 03: 04 Movement/vision.
+- After 15 merges: 17 Slot roles (blocks 05, 07) and 09 Placeholder sprites.
 - Later: 16 Save/load keys (after 10).
-- After 15: 09 Placeholder sprites.
 
 ## Open questions for the user
 
