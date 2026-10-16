@@ -287,6 +287,10 @@ static void draw_hud(const Battle *b, const Hud *hud, const Viewport *view)
     draw_team_bar(b, SIDE_PANTHEON, 0, view->width / 2);
     draw_team_bar(b, SIDE_HORDE, view->width / 2, view->width);
     draw_status_label(hud, view->width);
+}
+
+static void draw_footer(const Viewport *view)
+{
     draw_text("Space pause  Arrows pan  -/= zoom  T tech view  F5 save  F9 load  Esc quit", 8, view->height - 24, 16, LIGHTGRAY);
 }
 
@@ -323,6 +327,7 @@ static void draw_battle(const Battle *b, const GameData *data, const Scene *scen
     draw_hud(b, hud, view);
     draw_toast(hud, view);
     ui_draw(ui, b, data, scene, view, laya_briefings);
+    draw_footer(view);
 }
 
 void draw_frame_contents(const Battle *b, const GameData *data, const Scene *scene, const Atlases *atlases,
