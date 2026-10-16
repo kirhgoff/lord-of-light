@@ -19,6 +19,7 @@ SHEET = os.path.join(ROOT, "assets", "sounds_sheet.wav")
 RATE = 22050
 PEAK = 10 ** (-3 / 20)
 FADE_SECONDS = 0.05
+FADE_IN_SECONDS = 0.003
 SHEET_GAP_SECONDS = 0.3
 TAU = 2 * math.pi
 
@@ -128,7 +129,8 @@ def voice(element, freqs, rng):
         wobbled = [f * (1 + 0.06 * math.sin(TAU * 7 * i / RATE)) for i, f in enumerate(freqs)]
         return mix(oscillator(wobbled), scale(oscillator([f * 2 for f in wobbled]), 0.3))
     sub = oscillator([f * 0.5 for f in freqs])
-    return mix(oscillator(freqs), sub, scale(lowpass(noise(rng, n), 300), 1.5))
+    burst = apply(lowpass(noise(rng, n), 300), envelope(n, 0.001, 0.08))
+    return mix(oscillator(freqs), sub, scale(burst[::-1], 2.5))
 
 
 def strike(element, rng, pitch=1.0, seconds=0.22):
@@ -265,6 +267,9 @@ def finish(signal):
     fade = min(count(FADE_SECONDS), len(centered) // 3)
     for i in range(fade):
         centered[-1 - i] *= (i / fade) ** 2
+    fade_in = count(FADE_IN_SECONDS)
+    for i in range(fade_in):
+        centered[i] *= i / fade_in
     peak = max(abs(x) for x in centered)
     return [int(round(x / peak * PEAK * 32767)) for x in centered]
 
