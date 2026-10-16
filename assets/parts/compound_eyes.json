@@ -2,8 +2,8 @@
  "frame_w": 32,
  "frame_h": 32,
  "pivot": {
-  "x": 14,
-  "y": 28
+  "x": 15,
+  "y": 24
  },
  "frames": {
   "idle": [

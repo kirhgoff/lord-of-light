@@ -559,7 +559,7 @@
           "id": "claw",
           "kind": "external",
           "role": "attack",
-          "part": "claw",
+          "part": "minion_claw",
           "x": 6,
           "y": 0
         },
@@ -606,9 +606,9 @@
           "id": "beak",
           "kind": "external",
           "role": "attack",
-          "part": "claw",
-          "x": 6,
-          "y": -2
+          "part": "minion_claw",
+          "x": 11,
+          "y": -3
         },
         {
           "id": "heart",
@@ -649,9 +649,9 @@
           "id": "spark",
           "kind": "external",
           "role": "attack",
-          "part": "glow_lantern",
-          "x": 5,
-          "y": 0
+          "part": "wisp_spark",
+          "x": 12,
+          "y": -6
         },
         {
           "id": "heart",
