@@ -29,6 +29,7 @@ If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`
 ## Next up (once unblocked)
 
 - After 03: 04 Movement/vision.
+- Later: 16 Save/load keys (after 10).
 - After 15: 09 Placeholder sprites.
 
 ## Open questions for the user
