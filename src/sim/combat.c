@@ -13,6 +13,11 @@ static int clamp_percent(int value)
     return value < -100 ? -100 : value > 100 ? 100 : value;
 }
 
+static int percent_of(int value, int percent)
+{
+    return (int)((int64_t)value * percent / 100);
+}
+
 static const Ability *find_ability(const Part *part, OrderKind kind)
 {
     for (int a = 0; a < part->ability_count; a++)
@@ -95,13 +100,13 @@ static void hit_once(Battle *battle, const GameData *data, int actor, int actor_
     bool working[MAX_SLOTS];
     body_working_parts(&victim->body, victim->parts, working);
     if (actor >= 0 && battle->combatants[actor].damage_bonus_ticks > 0)
-        damage = damage * (100 + battle->combatants[actor].damage_bonus_percent) / 100;
-    damage = damage * (100 - resistance) / 100;
-    if (is_blocking(victim, data, working)) damage = damage * BLOCK_PERCENT / 100;
+        damage = percent_of(damage, 100 + battle->combatants[actor].damage_bonus_percent);
+    damage = percent_of(damage, 100 - resistance);
+    if (is_blocking(victim, data, working)) damage = percent_of(damage, BLOCK_PERCENT);
     int part = pick_target_part(battle, data, victim, working, element);
     if (part < 0) return death_check(battle, data, target, actor, actor_part, element);
     victim->parts[part].integrity = victim->parts[part].integrity > damage ? victim->parts[part].integrity - damage : 0;
-    victim->vitality -= damage * VITALITY_SHARE_PERCENT / 100;
+    victim->vitality -= percent_of(damage, VITALITY_SHARE_PERCENT);
     if (victim->vitality < 0) victim->vitality = 0;
     battle_log_event(battle, (Event){0, EVENT_HIT, actor, actor_part, target, part, element, damage, victim->parts[part].integrity});
     death_check(battle, data, target, actor, actor_part, element);
@@ -109,12 +114,12 @@ static void hit_once(Battle *battle, const GameData *data, int actor, int actor_
 
 static int scaled(int ticks, int resistance)
 {
-    return ticks * (100 - resistance) / 100;
+    return percent_of(ticks, 100 - resistance);
 }
 
-static void log_effect(Battle *battle, int actor, int target, Element element, int amount, EffectKind kind)
+static void log_effect(Battle *battle, int actor, int actor_part, int target, Element element, int amount, EffectKind kind)
 {
-    battle_log_event(battle, (Event){0, EVENT_EFFECT, actor, -1, target, -1, element, amount, kind});
+    battle_log_event(battle, (Event){0, EVENT_EFFECT, actor, actor_part, target, -1, element, amount, kind});
 }
 
 static void apply_burning(Combatant *victim, const ElementDef *def, int actor, Element element, int resistance)
@@ -127,30 +132,30 @@ static void apply_burning(Combatant *victim, const ElementDef *def, int actor, E
     victim->dot_ticks = ticks;
 }
 
-static void apply_slow(Battle *battle, Combatant *victim, const ElementDef *def, int actor, int target, Element element, int resistance)
+static void apply_slow(Battle *battle, Combatant *victim, const ElementDef *def, int actor, int actor_part, int target, Element element, int resistance)
 {
     int ticks = scaled(def->slow_ticks, resistance);
     if (def->slow_ticks == 0 || ticks == 0) return;
     if (def->slow_percent > victim->slow_percent) victim->slow_percent = def->slow_percent;
     if (ticks > victim->slow_ticks) victim->slow_ticks = ticks;
-    log_effect(battle, actor, target, element, ticks, EFFECT_SLOW);
+    log_effect(battle, actor, actor_part, target, element, ticks, EFFECT_SLOW);
 }
 
-static void apply_charm(Battle *battle, Combatant *victim, const ElementDef *def, int actor, int target, Element element, int resistance)
+static void apply_charm(Battle *battle, Combatant *victim, const ElementDef *def, int actor, int actor_part, int target, Element element, int resistance)
 {
     int ticks = scaled(def->charm_ticks, resistance);
     if (def->charm_ticks == 0 || ticks == 0 || actor < 0) return;
     victim->charm_side = battle->combatants[actor].charm_side;
     victim->charm_ticks = ticks;
-    log_effect(battle, actor, target, element, ticks, EFFECT_CHARM);
+    log_effect(battle, actor, actor_part, target, element, ticks, EFFECT_CHARM);
 }
 
-static void apply_strip(Battle *battle, Combatant *victim, const ElementDef *def, int actor, int target, Element element)
+static void apply_strip(Battle *battle, Combatant *victim, const ElementDef *def, int actor, int actor_part, int target, Element element)
 {
     if (def->buff_strip_count == 0 || victim->damage_bonus_ticks == 0) return;
     victim->damage_bonus_ticks = 0;
     victim->damage_bonus_percent = 0;
-    log_effect(battle, actor, target, element, 1, EFFECT_STRIP);
+    log_effect(battle, actor, actor_part, target, element, 1, EFFECT_STRIP);
 }
 
 static int nearest_chain_target(const Battle *battle, int from, Side side, const bool struck[MAX_COMBATANTS], int range_px)
@@ -191,9 +196,9 @@ static void apply_element(Battle *battle, const GameData *data, int actor, int a
     if (def->chain_targets > 0 && actor >= 0) chain_lightning(battle, data, actor, actor_part, target, damage);
     if (!victim->alive) return;
     apply_burning(victim, def, actor, element, resistance);
-    apply_slow(battle, victim, def, actor, target, element, resistance);
-    apply_charm(battle, victim, def, actor, target, element, resistance);
-    apply_strip(battle, victim, def, actor, target, element);
+    apply_slow(battle, victim, def, actor, actor_part, target, element, resistance);
+    apply_charm(battle, victim, def, actor, actor_part, target, element, resistance);
+    apply_strip(battle, victim, def, actor, actor_part, target, element);
 }
 
 void combatant_hit(Battle *battle, const GameData *data, int actor, int actor_part, int target, Element element, int damage)
@@ -295,7 +300,7 @@ static void pulse_dot(Battle *battle, const GameData *data, int target)
 {
     Combatant *who = &battle->combatants[target];
     who->vitality = who->vitality > who->dot_damage ? who->vitality - who->dot_damage : 0;
-    log_effect(battle, who->dot_source, target, (Element)who->dot_element, who->dot_damage, EFFECT_DOT);
+    log_effect(battle, who->dot_source, -1, target, (Element)who->dot_element, who->dot_damage, EFFECT_DOT);
     death_check(battle, data, target, who->dot_source, -1, (Element)who->dot_element);
 }
 

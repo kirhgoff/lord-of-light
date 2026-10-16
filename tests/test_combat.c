@@ -31,7 +31,7 @@ static char *read_text_file(const char *path)
 
 static void load_fixture(void)
 {
-    CHECK(load_game_data(&data, "data", err, ERR_SIZE));
+    LOAD_OR_EXIT(load_game_data(&data, "data", err, ERR_SIZE), err);
     char *json = read_text_file("tests/fixtures/battle_elements.json");
     CHECK(json != NULL);
     battle_free(&battle);
@@ -113,6 +113,15 @@ static void test_block_halves_damage(void)
     CHECK(battle.combatants[DUMMY].vitality == 39);
 }
 
+static void test_huge_damage_with_a_huge_bonus_does_not_overflow(void)
+{
+    load_fixture();
+    battle.combatants[STRIKER].damage_bonus_percent = 1000;
+    battle.combatants[STRIKER].damage_bonus_ticks = 10;
+    combatant_hit(&battle, &data, STRIKER, slot(STRIKER, "sword"), DUMMY, ELEMENT_KINETIC, 2000000);
+    CHECK(last_event(EVENT_HIT)->amount == 13200000);
+}
+
 static void test_destroyed_shield_does_not_block(void)
 {
     load_fixture();
@@ -153,6 +162,7 @@ static void test_death_by_vitality_leaves_remains(void)
     CHECK(!battle.combatants[DUMMY].alive);
     CHECK(battle.remains_count == 1);
     CHECK(battle.remains[0].x_millipx == battle.combatants[DUMMY].x_millipx && battle.remains[0].part_count == 6);
+    for (int s = 0; s < 6; s++) CHECK(battle.remains[0].parts[s] == battle.combatants[DUMMY].body.slots[s].part);
     const Event *death = last_event(EVENT_DEATH);
     CHECK(death && death->actor == STRIKER && death->actor_part == slot(STRIKER, "sword") && death->target == DUMMY);
     CHECK(death && death->element == ELEMENT_KINETIC && death->detail == 0);
@@ -298,8 +308,11 @@ static void test_spawn_creates_minions_up_to_cap(void)
 {
     load_fixture();
     order(STRIKER, "sac", ORDER_SPAWN, -1);
+    battle.combatants[STRIKER].charm_side = SIDE_HORDE;
+    battle.combatants[STRIKER].charm_ticks = 50;
     battle_act(&battle, &data);
     const Combatant *minion = &battle.combatants[5];
+    CHECK(minion->charm_side == SIDE_HORDE && minion->charm_ticks == 50);
     CHECK(battle.combatant_count == 6);
     CHECK(strcmp(minion->name, "minion_imp") == 0 && minion->side == SIDE_PANTHEON && minion->spawner == STRIKER);
     CHECK(minion->x_millipx == battle.combatants[STRIKER].x_millipx && minion->y_millipx == battle.combatants[STRIKER].y_millipx);
@@ -383,7 +396,7 @@ static void test_frost_slows_then_roots(void)
     CHECK(dummy->x_millipx - start == 20 * 1800);
     CHECK(dummy->slow_percent == 40);
     const Event *slow = last_event(EVENT_EFFECT);
-    CHECK(slow && slow->detail == EFFECT_SLOW && slow->amount == 60);
+    CHECK(slow && slow->detail == EFFECT_SLOW && slow->amount == 60 && slow->actor_part == slot(STRIKER, "fang"));
     clear_order(STRIKER, "fang");
     dummy->slow_percent = 100;
     dummy->slow_ticks = 20;
@@ -464,7 +477,7 @@ static void test_mind_charms_for_a_while(void)
     CHECK(last_event(EVENT_HIT)->amount == 0);
     CHECK(dummy->charm_side == SIDE_PANTHEON && dummy->charm_ticks == 99);
     const Event *charm = last_event(EVENT_EFFECT);
-    CHECK(charm && charm->detail == EFFECT_CHARM && charm->amount == 100);
+    CHECK(charm && charm->detail == EFFECT_CHARM && charm->amount == 100 && charm->actor_part == slot(STRIKER, "lobe"));
     order(STRIKER, "sword", ORDER_STRIKE, DUMMY);
     run(98);
     CHECK(count_events(EVENT_HIT) == 1 && dummy->charm_side == SIDE_PANTHEON);
@@ -490,7 +503,7 @@ static void test_void_strips_buffs(void)
     run(1);
     CHECK(battle.combatants[DUMMY].damage_bonus_ticks == 0 && battle.combatants[DUMMY].damage_bonus_percent == 0);
     const Event *strip = last_event(EVENT_EFFECT);
-    CHECK(strip && strip->detail == EFFECT_STRIP && strip->amount == 1);
+    CHECK(strip && strip->detail == EFFECT_STRIP && strip->amount == 1 && strip->actor_part == slot(STRIKER, "tendril"));
 }
 
 static void test_void_is_plain_without_buffs(void)
@@ -561,6 +574,7 @@ void run_combat_tests(void)
 {
     test_kinetic_hit_splits_part_and_vitality();
     test_block_halves_damage();
+    test_huge_damage_with_a_huge_bonus_does_not_overflow();
     test_destroyed_shield_does_not_block();
     test_core_destruction_cuts_off_parts();
     test_hit_on_a_body_without_working_parts_kills();
