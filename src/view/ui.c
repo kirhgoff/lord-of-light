@@ -20,12 +20,16 @@
 #define OVERLAY_EXTRA_LINES 2
 #define OVERLAY_ZINDEX 1
 #define LOG_FOLLOW_SCROLL 1e9f
+#define DETAIL_HEIGHT 320
+#define DETAIL_PADDING 6
 #define STATUS_TEXT_SIZE 96
 
 enum { FONT_BODY, FONT_COUNT };
 
 static const Clay_Color PANEL_BACKGROUND = {16, 14, 12, 220};
 static const Clay_Color OVERLAY_BACKGROUND = {0, 0, 0, 170};
+static const Clay_Color OVERLAY_FOCUS_BACKGROUND = {70, 60, 10, 200};
+static const Clay_Color DETAIL_BACKGROUND = {30, 26, 22, 230};
 static const Clay_Color TEXT_COLOUR = {235, 235, 235, 255};
 static const Clay_Color DIM_COLOUR = {140, 140, 140, 255};
 static const Clay_Color RED_COLOUR = {240, 90, 80, 255};
@@ -110,7 +114,18 @@ static void follow_log_tail(Ui *ui, float wheel_y)
     if (ui->follow_log) log.scrollPosition->y = -LOG_FOLLOW_SCROLL;
 }
 
-void ui_update(Ui *ui, const Viewport *view)
+static int detail_target(const Ui *ui, const Battle *b)
+{
+    int c = ui->hovered >= 0 ? ui->hovered : ui->selected;
+    return c >= 0 && c < b->combatant_count ? c : -1;
+}
+
+static int pick_under_mouse(const Battle *b, const Scene *scene, const Atlases *atlases, const Viewport *view, Vector2 mouse)
+{
+    return scene_pick(scene, b, atlases, viewport_world_x(view, mouse.x), viewport_world_y(view, mouse.y));
+}
+
+void ui_update(Ui *ui, const Battle *b, const Scene *scene, const Atlases *atlases, const Viewport *view, bool input_blocked)
 {
     frame_text_used = 0;
     Vector2 wheel = GetMouseWheelMoveV();
@@ -119,6 +134,9 @@ void ui_update(Ui *ui, const Viewport *view)
     Clay_SetPointerState((Clay_Vector2){mouse.x, mouse.y}, IsMouseButtonDown(MOUSE_BUTTON_LEFT));
     follow_log_tail(ui, wheel.y);
     Clay_UpdateScrollContainers(false, (Clay_Vector2){wheel.x, wheel.y}, GetFrameTime());
+    bool picking = scene->xray && !input_blocked && !Clay_PointerOver(CLAY_ID("Panel")) && battle_winner(b) < 0;
+    ui->hovered = picking ? pick_under_mouse(b, scene, atlases, view, mouse) : -1;
+    if (picking && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) ui->selected = ui->hovered;
 }
 
 static Clay_Color event_colour(const Event *e)
@@ -160,13 +178,63 @@ static void battle_log(const Battle *b, const GameData *data)
     }
 }
 
-static void panel(const Battle *b, const GameData *data)
+static const char *element_name(int element)
+{
+    return element >= 0 && element < ELEMENT_COUNT ? element_id((Element)element) : "none";
+}
+
+static const char *const HURT_WORDS[HURT_COUNT] = {"unhurt", "wounded", "badly wounded", "near death"};
+
+static void decision_lines(const Battle *b, int c)
+{
+    const Decision *decision = &b->combatants[c].decision;
+    text(frame_string("Stance %s   %s   vulnerable to %s", stance_id(decision->stance), HURT_WORDS[decision->hurt_level],
+                      element_name(decision->vulnerable_element)),
+         TEXT_COLOUR);
+    int last = battle_last_decision(b, c);
+    if (last < 0) return;
+    const Event *e = &b->log[last];
+    text(frame_string("%s   fallback %s   confidence %d.%03d   answer %d ms", e->decider == DECIDER_LAYA ? "Laya" : "Reflex",
+                      fallback_id(e->fallback), e->confidence_permille / 1000, e->confidence_permille % 1000, e->answer_ms),
+         DIM_COLOUR);
+}
+
+static void briefing_text(const Battle *b, const GameData *data, int c, const char (*laya_briefings)[BRIEFING_MAX + 1])
+{
+    char live[BRIEFING_MAX + 1];
+    const char *briefing = laya_briefings ? laya_briefings[c] : "";
+    if (briefing[0] == '\0') {
+        briefing_write(b, data, c, live, sizeof live);
+        briefing = live;
+    }
+    text(frame_string("%s", briefing), TEXT_COLOUR);
+}
+
+static void detail(const Battle *b, const GameData *data, int c, const char (*laya_briefings)[BRIEFING_MAX + 1])
+{
+    char label[LABEL_SIZE];
+    combatant_label(b, c, label, sizeof label);
+    CLAY({.id = CLAY_ID("Detail"),
+          .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(DETAIL_HEIGHT)}, .padding = CLAY_PADDING_ALL(DETAIL_PADDING),
+                     .childGap = 3, .layoutDirection = CLAY_TOP_TO_BOTTOM},
+          .backgroundColor = DETAIL_BACKGROUND,
+          .clip = {.vertical = true}}) {
+        text(frame_string("%s%s", label, b->combatants[c].alive ? "" : " (dead)"), YELLOW_COLOUR);
+        decision_lines(b, c);
+        text(CLAY_STRING("Briefing"), DIM_COLOUR);
+        briefing_text(b, data, c, laya_briefings);
+    }
+}
+
+static void panel(const Ui *ui, const Battle *b, const GameData *data, const char (*laya_briefings)[BRIEFING_MAX + 1])
 {
     CLAY({.id = CLAY_ID("Panel"),
           .layout = {.sizing = {CLAY_SIZING_FIXED(PANEL_WIDTH), CLAY_SIZING_GROW(0)}, .padding = {0, 0, HUD_HEIGHT, 0}}}) {
         CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .layoutDirection = CLAY_TOP_TO_BOTTOM},
               .backgroundColor = PANEL_BACKGROUND}) {
             battle_log(b, data);
+            int target = detail_target(ui, b);
+            if (target >= 0) detail(b, data, target, laya_briefings);
         }
     }
 }
@@ -198,7 +266,7 @@ static void overlay_part_line(const Combatant *who, const GameData *data, int sl
     text(frame_string("%s %d/%d", part->name, integrity > 0 ? integrity : 0, part->integrity), colour);
 }
 
-static void overlay(const Battle *b, const GameData *data, const Scene *scene, const Viewport *view, int c)
+static void overlay(const Battle *b, const GameData *data, const Scene *scene, const Viewport *view, int c, bool focused)
 {
     const Combatant *who = &b->combatants[c];
     float x, y;
@@ -212,7 +280,7 @@ static void overlay(const Battle *b, const GameData *data, const Scene *scene, c
     if (bottom < HUD_HEIGHT + height) bottom = HUD_HEIGHT + height;
     CLAY({.id = CLAY_IDI("Overlay", c),
           .layout = {.padding = CLAY_PADDING_ALL(OVERLAY_PADDING), .layoutDirection = CLAY_TOP_TO_BOTTOM},
-          .backgroundColor = OVERLAY_BACKGROUND,
+          .backgroundColor = focused ? OVERLAY_FOCUS_BACKGROUND : OVERLAY_BACKGROUND,
           .floating = {.attachTo = CLAY_ATTACH_TO_ROOT,
                        .attachPoints = {.element = CLAY_ATTACH_POINT_CENTER_BOTTOM, .parent = CLAY_ATTACH_POINT_LEFT_TOP},
                        .offset = {viewport_screen_x(view, x), bottom},
@@ -224,17 +292,17 @@ static void overlay(const Battle *b, const GameData *data, const Scene *scene, c
     }
 }
 
-void ui_draw(const Ui *ui, const Battle *b, const GameData *data, const Scene *scene, const Viewport *view)
+void ui_draw(const Ui *ui, const Battle *b, const GameData *data, const Scene *scene, const Viewport *view,
+             const char (*laya_briefings)[BRIEFING_MAX + 1])
 {
-    (void)ui;
     Clay_BeginLayout();
     if (scene->xray) {
         CLAY({.id = CLAY_ID("Root"),
               .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .childAlignment = {.x = CLAY_ALIGN_X_RIGHT}}}) {
-            panel(b, data);
+            panel(ui, b, data, laya_briefings);
         }
         for (int c = 0; c < b->combatant_count; c++)
-            if (b->combatants[c].alive) overlay(b, data, scene, view, c);
+            if (b->combatants[c].alive) overlay(b, data, scene, view, c, c == detail_target(ui, b));
     }
     Clay_RenderCommandArray commands = Clay_EndLayout();
     Clay_Raylib_Render(commands, fonts);

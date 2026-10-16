@@ -285,7 +285,8 @@ static void draw_hud(const Battle *b, const Hud *hud, const Viewport *view)
 }
 
 void draw_frame_contents(const Battle *b, const GameData *data, const Scene *scene, const Atlases *atlases,
-                         const Sheets *sheets, const Viewport *view, const Hud *hud, const Ui *ui)
+                         const Sheets *sheets, const Viewport *view, const Hud *hud, const Ui *ui,
+                         const char (*laya_briefings)[BRIEFING_MAX + 1])
 {
     int tick = (int)scene_time(scene, b);
     ClearBackground(FLOOR_COLOUR);
@@ -297,6 +298,6 @@ void draw_frame_contents(const Battle *b, const GameData *data, const Scene *sce
     EndMode2D();
     draw_hud(b, hud, view);
     draw_toast(hud, view);
-    ui_draw(ui, b, data, scene, view);
+    ui_draw(ui, b, data, scene, view, laya_briefings);
     if (hud->confirm_quit) draw_confirm_dialog(view->width, view->height);
 }

@@ -1,5 +1,7 @@
 #include "scene.h"
 
+#include <math.h>
+
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -49,6 +51,16 @@ float viewport_screen_x(const Viewport *v, float world_x)
 float viewport_screen_y(const Viewport *v, float world_y)
 {
     return (float)HUD_HEIGHT + (float)(v->height - HUD_HEIGHT) / 2 + (world_y - v->centre_y) * (float)v->zoom;
+}
+
+float viewport_world_x(const Viewport *v, float screen_x)
+{
+    return v->centre_x + (screen_x - (float)v->width / 2) / (float)v->zoom;
+}
+
+float viewport_world_y(const Viewport *v, float screen_y)
+{
+    return v->centre_y + (screen_y - (float)HUD_HEIGHT - (float)(v->height - HUD_HEIGHT) / 2) / (float)v->zoom;
 }
 
 static void snapshot_positions(Scene *s, const Battle *b)
@@ -235,6 +247,21 @@ int body_feet_offset(const Body *body, const Atlases *atlases)
         if (bottom > feet) feet = bottom;
     }
     return feet ? feet : 32;
+}
+
+int scene_pick(const Scene *s, const Battle *b, const Atlases *atlases, float world_x, float world_y)
+{
+    int picked = -1;
+    float picked_y = 0;
+    for (int c = 0; c < b->combatant_count; c++) {
+        if (!b->combatants[c].alive) continue;
+        float x, y;
+        scene_position(s, b, c, &x, &y);
+        float top = y - (float)body_feet_offset(&b->combatants[c].body, atlases);
+        bool inside = fabsf(world_x - x) <= PICK_HALF_WIDTH_PX && world_y >= top && world_y <= y;
+        if (inside && (picked < 0 || y > picked_y)) picked = c, picked_y = y;
+    }
+    return picked;
 }
 
 void remains_offset(int remains_index, int part_index, int *dx, int *dy)

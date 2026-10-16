@@ -25,6 +25,7 @@
 #define NEVER (-1000000)
 #define REMAINS_SPREAD_PX 12
 #define EFFECT_LIFT_PX 32
+#define PICK_HALF_WIDTH_PX 16
 
 typedef struct {
     float centre_x;
@@ -40,6 +41,8 @@ void viewport_pan(Viewport *v, float dx_screen_px, float dy_screen_px);
 void viewport_zoom(Viewport *v, int step);
 float viewport_screen_x(const Viewport *v, float world_x);
 float viewport_screen_y(const Viewport *v, float world_y);
+float viewport_world_x(const Viewport *v, float screen_x);
+float viewport_world_y(const Viewport *v, float screen_y);
 
 typedef enum { DRAW_OBSTACLE, DRAW_PICKUP, DRAW_TRAP, DRAW_REMAINS, DRAW_COMBATANT } DrawableKind;
 
@@ -87,6 +90,7 @@ int effect_frame(const Effect *effect, int tick);
 int scene_collect(const Scene *s, const Battle *b, Drawable *out);
 int tile_hash(int column, int row);
 int body_feet_offset(const Body *body, const Atlases *atlases);
+int scene_pick(const Scene *s, const Battle *b, const Atlases *atlases, float world_x, float world_y);
 void remains_offset(int remains_index, int part_index, int *dx, int *dy);
 
 #endif

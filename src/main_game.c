@@ -46,7 +46,7 @@ static bool parse_ticks(const char *text, long *ticks)
 
 static int usage(void)
 {
-    fprintf(stderr, "usage: game [--seed N] [--ticks N --screenshot out.png] [--xray] [--decider laya|reflex] [--replay dump.json]\n");
+    fprintf(stderr, "usage: game [--seed N] [--ticks N --screenshot out.png] [--xray] [--select N] [--decider laya|reflex] [--replay dump.json]\n");
     return 2;
 }
 
@@ -56,16 +56,19 @@ typedef struct {
     const char *screenshot;
     bool ticks_given;
     bool xray;
+    int select;
 } Args;
 
 static bool parse_args(int argc, char **argv, Args *args, DeciderSetup *setup)
 {
-    *args = (Args){.seed = 1};
+    *args = (Args){.seed = 1, .select = -1};
+    long selected;
     for (int i = 1; i < argc; i++) {
         bool has_value = i + 1 < argc;
         if (strcmp(argv[i], "--xray") == 0) args->xray = true;
         else if (has_value && strcmp(argv[i], "--seed") == 0 && parse_seed(argv[i + 1], &args->seed)) i++;
         else if (has_value && strcmp(argv[i], "--ticks") == 0 && parse_ticks(argv[i + 1], &args->ticks)) i++, args->ticks_given = true;
+        else if (has_value && strcmp(argv[i], "--select") == 0 && parse_ticks(argv[i + 1], &selected)) i++, args->select = (int)selected;
         else if (has_value && strcmp(argv[i], "--screenshot") == 0) args->screenshot = argv[++i];
         else if (!decider_setup_parse(setup, argc, argv, &i)) return false;
     }
@@ -73,13 +76,14 @@ static bool parse_args(int argc, char **argv, Args *args, DeciderSetup *setup)
 }
 
 static void render_to_png(const char *path, const Battle *b, const GameData *data, const Scene *scene,
-                          const Atlases *atlases, const Sheets *sheets, const Viewport *view, const Hud *hud, Ui *ui)
+                          const Atlases *atlases, const Sheets *sheets, const Viewport *view, const Hud *hud, Ui *ui,
+                          const char (*laya_briefings)[BRIEFING_MAX + 1])
 {
     RenderTexture2D target = LoadRenderTexture(view->width, view->height);
     for (int pass = 0; pass < SCREENSHOT_UI_PASSES; pass++) {
-        ui_update(ui, view);
+        ui_update(ui, b, scene, atlases, view, false);
         BeginTextureMode(target);
-        draw_frame_contents(b, data, scene, atlases, sheets, view, hud, ui);
+        draw_frame_contents(b, data, scene, atlases, sheets, view, hud, ui, laya_briefings);
         EndTextureMode();
     }
     Image image = LoadImageFromTexture(target.texture);
@@ -132,7 +136,8 @@ static void handle_save_keys(Battle *battle, const GameData *data, Scene *scene,
 }
 
 static void run_window(Battle *battle, const GameData *data, Decider *decider, Scene *scene, const Atlases *atlases,
-                       const Sheets *sheets, Viewport *view, Hud *hud, Ui *ui, int stop_tick)
+                       const Sheets *sheets, Viewport *view, Hud *hud, Ui *ui,
+                       const char (*laya_briefings)[BRIEFING_MAX + 1], int stop_tick)
 {
     float accumulated = 0;
     while (!WindowShouldClose()) {
@@ -148,9 +153,9 @@ static void run_window(Battle *battle, const GameData *data, Decider *decider, S
         if (battle->tick >= stop_tick) hud->paused = true;
         sound_update(battle, data, view, hud->paused || hud->confirm_quit);
         scene->alpha = accumulated / TICK_SECONDS;
-        ui_update(ui, view);
+        ui_update(ui, battle, scene, atlases, view, hud->confirm_quit);
         BeginDrawing();
-        draw_frame_contents(battle, data, scene, atlases, sheets, view, hud, ui);
+        draw_frame_contents(battle, data, scene, atlases, sheets, view, hud, ui, laya_briefings);
         EndDrawing();
     }
 }
@@ -198,7 +203,8 @@ int main(int argc, char **argv)
     Scene scene = {.xray = args.xray};
     scene_reset(&scene, &battle);
     Hud hud = {0};
-    Ui ui = {-1, -1, true};
+    Ui ui = {args.select, -1, true};
+    const char (*laya_briefings)[BRIEFING_MAX + 1] = setup.decider == &setup.laya_decider.base ? setup.laya_decider.briefing : NULL;
     int exit_code = 0;
 
     if (args.screenshot) {
@@ -207,9 +213,9 @@ int main(int argc, char **argv)
             battle_step(&battle, &data, setup.decider);
             scene_after_step(&scene, &battle);
         }
-        render_to_png(args.screenshot, &battle, &data, &scene, &atlases, &sheets, &view, &hud, &ui);
+        render_to_png(args.screenshot, &battle, &data, &scene, &atlases, &sheets, &view, &hud, &ui, laya_briefings);
     } else if (sound_init(&data, &battle, err, ERR_SIZE)) {
-        run_window(&battle, &data, setup.decider, &scene, &atlases, &sheets, &view, &hud, &ui, setup.replay_path ? setup.source.tick : INT_MAX);
+        run_window(&battle, &data, setup.decider, &scene, &atlases, &sheets, &view, &hud, &ui, laya_briefings, setup.replay_path ? setup.source.tick : INT_MAX);
     } else {
         fprintf(stderr, "%s\n", err);
         exit_code = 1;

@@ -438,8 +438,45 @@ static void test_combatant_added_mid_battle_faces_its_side(void)
     CHECK(!scene.facing_left[pantheon]);
 }
 
+static void test_viewport_world_inverts_screen(void)
+{
+    Viewport v;
+    viewport_init(&v, WIDTH, HEIGHT);
+    viewport_zoom(&v, 1);
+    viewport_pan(&v, 40, -30);
+    for (float wx = 100; wx < 700; wx += 150)
+        for (float wy = 150; wy < 400; wy += 80) {
+            float dx = viewport_world_x(&v, viewport_screen_x(&v, wx)) - wx;
+            float dy = viewport_world_y(&v, viewport_screen_y(&v, wy)) - wy;
+            CHECK(dx > -0.01f && dx < 0.01f && dy > -0.01f && dy < 0.01f);
+        }
+    CHECK(viewport_world_x(&v, (float)WIDTH / 2) == v.centre_x);
+}
+
+static void test_pick_hits_the_front_combatant(void)
+{
+    static Atlases atlases;
+    char err[ERR_SIZE];
+    setup_battle();
+    CHECK(atlases_load(&atlases, &data, err, ERR_SIZE));
+    Scene scene = {0};
+    for (int c = 2; c < battle.combatant_count; c++) battle.combatants[c].alive = false;
+    battle.combatants[0].x_millipx = 200 * MILLIPX_PER_PX;
+    battle.combatants[0].y_millipx = 200 * MILLIPX_PER_PX;
+    battle.combatants[1].x_millipx = 205 * MILLIPX_PER_PX;
+    battle.combatants[1].y_millipx = 210 * MILLIPX_PER_PX;
+    CHECK(scene_pick(&scene, &battle, &atlases, 200, 195) == 1);
+    CHECK(scene_pick(&scene, &battle, &atlases, 200, 170) == 0);
+    CHECK(scene_pick(&scene, &battle, &atlases, 300, 200) == -1);
+    CHECK(scene_pick(&scene, &battle, &atlases, 200, 150) == -1);
+    battle.combatants[1].alive = false;
+    CHECK(scene_pick(&scene, &battle, &atlases, 200, 195) == 0);
+}
+
 void run_view_tests(void)
 {
+    test_viewport_world_inverts_screen();
+    test_pick_hits_the_front_combatant();
     test_reset_after_stepping_clears_effects_and_syncs_events();
     test_combatant_added_mid_battle_faces_its_side();
     test_collect_sorts_by_y_and_skips_dead_and_respawning();

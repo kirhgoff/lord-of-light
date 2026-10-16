@@ -96,6 +96,7 @@ screenshots: game
 		$(BUILD)/game --seed $$seed --ticks $$ticks --screenshot $(BUILD)/shots/s$${seed}_t$${ticks}.png; \
 	done; done
 	$(BUILD)/game --seed 1 --ticks 60 --xray --screenshot $(BUILD)/shots/s1_t60_xray.png
+	$(BUILD)/game --seed 1 --ticks 60 --xray --select 0 --screenshot $(BUILD)/shots/s1_t60_xray_select0.png
 
 clean:
 	rm -rf $(BUILD)
