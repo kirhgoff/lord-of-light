@@ -179,7 +179,7 @@ static void test_timeout_falls_back_to_the_reflex(void)
     run(2);
     CHECK(decisions_by(DECIDER_REFLEX, FALLBACK_TIMEOUT, count) == count);
     for (int e = 0; e < battle.log_count; e++)
-        CHECK(battle.log[e].kind != EVENT_DECISION || battle.log[e].fallback != FALLBACK_TIMEOUT || battle.log[e].latency_ms == FAKE_LATENCY_MS);
+        CHECK(battle.log[e].kind != EVENT_DECISION || battle.log[e].actor >= count || battle.log[e].fallback != FALLBACK_TIMEOUT || battle.log[e].latency_ms == FAKE_LATENCY_MS);
     finish();
 }
 
@@ -298,9 +298,45 @@ static void test_a_laya_battle_replays_from_its_log(void)
     finish();
 }
 
+static void test_transfer_outcomes_are_classified(void)
+{
+    CHECK(laya_classify_transfer(&(TransferOutcome){.curl_ok = true, .connected = true, .http_status = 200}) == FALLBACK_NONE);
+    CHECK(laya_classify_transfer(&(TransferOutcome){.curl_ok = true, .connected = true, .http_status = 500}) == FALLBACK_MALFORMED);
+    CHECK(laya_classify_transfer(&(TransferOutcome){.timed_out = true, .connected = true}) == FALLBACK_TIMEOUT);
+    CHECK(laya_classify_transfer(&(TransferOutcome){.timed_out = true, .connected = false}) == FALLBACK_UNREACHABLE);
+    CHECK(laya_classify_transfer(&(TransferOutcome){.connected = false}) == FALLBACK_UNREACHABLE);
+    CHECK(laya_classify_transfer(&(TransferOutcome){.connected = true}) == FALLBACK_UNREACHABLE);
+    CHECK(laya_classify_transfer(&(TransferOutcome){.too_large = true, .connected = true}) == FALLBACK_MALFORMED);
+}
+
+static void test_timeout_backs_off_too(void)
+{
+    start(3, 1);
+    int count = battle.combatant_count;
+    fake.failure = FALLBACK_TIMEOUT;
+    run(2);
+    int sent_before = fake.sent;
+    int logged = battle.log_count;
+    run(LAYA_OFFLINE_TICKS - 2);
+    CHECK(fake.sent == sent_before);
+    int backed_off = 0;
+    for (int e = logged; e < battle.log_count; e++) {
+        if (battle.log[e].kind != EVENT_DECISION) continue;
+        backed_off++;
+        CHECK(battle.log[e].fallback == FALLBACK_TIMEOUT && battle.log[e].decider == DECIDER_REFLEX);
+    }
+    CHECK(backed_off > 0);
+    run(LAYA_OFFLINE_TICKS);
+    CHECK(fake.sent > sent_before);
+    CHECK(decisions_by(DECIDER_REFLEX, FALLBACK_TIMEOUT, count) >= count);
+    finish();
+}
+
 void run_laya_tests(void)
 {
     test_laya_asks_once_then_decides();
+    test_transfer_outcomes_are_classified();
+    test_timeout_backs_off_too();
     test_a_pending_request_is_not_asked_again();
     test_timeout_falls_back_to_the_reflex();
     test_unreachable_backs_off_then_asks_again();

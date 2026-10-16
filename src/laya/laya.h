@@ -21,6 +21,16 @@ struct LayaTransport {
     void (*close)(LayaTransport *self);
 };
 
+typedef struct {
+    bool curl_ok;
+    bool timed_out;
+    bool connected;
+    bool too_large;
+    long http_status;
+} TransferOutcome;
+
+Fallback laya_classify_transfer(const TransferOutcome *outcome);
+
 LayaTransport *laya_curl_transport(int timeout_ms);
 
 typedef struct {
@@ -34,6 +44,7 @@ typedef struct {
     char *body[MAX_COMBATANTS];
     char briefing[MAX_COMBATANTS][BRIEFING_MAX + 1];
     int offline_until_tick;
+    Fallback offline_reason;
     int truncated_count;
 } LayaDecider;
 

@@ -3,6 +3,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+Fallback laya_classify_transfer(const TransferOutcome *outcome)
+{
+    if (outcome->too_large) return FALLBACK_MALFORMED;
+    if (outcome->curl_ok) return outcome->http_status == 200 ? FALLBACK_NONE : FALLBACK_MALFORMED;
+    if (outcome->timed_out && outcome->connected) return FALLBACK_TIMEOUT;
+    return FALLBACK_UNREACHABLE;
+}
+
 static bool resend_to_next_url(LayaDecider *laya, const GameData *data, int combatant, Fallback failure)
 {
     int next = laya->url_index[combatant] + 1;
@@ -34,7 +42,10 @@ static Event take_reply(LayaDecider *laya, const Battle *battle, const GameData 
     bool truncated;
     Event event = laya_decision(battle, data, c, &laya->asked[c], reply->text, reply->failure, reply->latency_ms, &truncated);
     laya->truncated_count += truncated;
-    if (reply->failure == FALLBACK_UNREACHABLE) laya->offline_until_tick = battle->tick + LAYA_OFFLINE_TICKS;
+    if (reply->failure == FALLBACK_UNREACHABLE || reply->failure == FALLBACK_TIMEOUT) {
+        laya->offline_until_tick = battle->tick + LAYA_OFFLINE_TICKS;
+        laya->offline_reason = reply->failure;
+    }
     free(laya->reply[c].text);
     laya->reply[c].text = NULL;
     free(laya->body[c]);
@@ -63,7 +74,7 @@ static bool laya_decide(Decider *self, const Battle *battle, const GameData *dat
     if (laya->in_flight[combatant]) return false;
     if (battle->tick < laya->offline_until_tick) {
         reflex_decide(NULL, battle, data, combatant, out);
-        out->fallback = FALLBACK_UNREACHABLE;
+        out->fallback = laya->offline_reason;
         return true;
     }
     ask_laya(laya, battle, data, combatant);

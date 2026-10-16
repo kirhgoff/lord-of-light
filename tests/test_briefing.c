@@ -396,6 +396,25 @@ static void test_out_of_range_numbers_are_clamped(void)
     CHECK(event.stance_permille[STANCE_FIGHT] == 1000 && event.stance_permille[STANCE_RETREAT] == 0 && event.stance_permille[STANCE_COLLECT] == 1000);
 }
 
+static void test_an_oversized_reply_is_malformed(void)
+{
+    int dagda, apollo;
+    int zeus = zeus_with_company(&dagda, &apollo);
+    LayaQuestions asked;
+    free(request_for(zeus, &asked));
+    canned_reply("fight the nearest enemy", "0.9", "false");
+    size_t padding = LAYA_REPLY_MAX + 1;
+    char *huge = malloc(strlen(reply) + padding + 1);
+    sprintf(huge, "%s", reply);
+    memset(huge + strlen(huge), ' ', padding);
+    huge[strlen(reply) + padding] = '\0';
+    bool truncated;
+    CHECK(decide_reply(zeus, &asked, huge, FALLBACK_NONE, 9, &truncated).fallback == FALLBACK_MALFORMED);
+    huge[LAYA_REPLY_MAX - 100] = '\0';
+    CHECK(decide_reply(zeus, &asked, huge, FALLBACK_NONE, 9, &truncated).fallback == FALLBACK_NONE);
+    free(huge);
+}
+
 void run_briefing_request_tests(void)
 {
     test_request_for_the_worked_example();
@@ -409,5 +428,6 @@ void run_briefing_request_tests(void)
     test_truncation_is_reported();
     test_missing_confidence_and_probabilities_count_as_zero();
     test_out_of_range_numbers_are_clamped();
+    test_an_oversized_reply_is_malformed();
     battle_free(&battle);
 }

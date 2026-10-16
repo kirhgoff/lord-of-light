@@ -1,5 +1,6 @@
 #include <curl/curl.h>
 #include <pthread.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +10,6 @@
 
 #define CONNECT_TIMEOUT_MS 1000
 #define REQUEST_PATH "/v1/systemone"
-#define HTTP_OK 200
 
 typedef struct {
     int id;
@@ -30,17 +30,20 @@ typedef struct {
     int done_head;
     int done_count;
     bool closing;
+    atomic_bool abort_transfer;
 } CurlTransport;
 
 typedef struct {
     char *text;
     size_t length;
+    bool too_large;
 } Download;
 
 static size_t append_download(char *chunk, size_t size, size_t count, void *user)
 {
     Download *download = user;
     size_t added = size * count;
+    if (download->length + added > LAYA_REPLY_MAX) return download->too_large = true, 0;
     char *grown = realloc(download->text, download->length + added + 1);
     if (!grown) return 0;
     memcpy(grown + download->length, chunk, added);
@@ -57,28 +60,38 @@ static int elapsed_ms(const struct timespec *from)
     return (int)((now.tv_sec - from->tv_sec) * 1000 + (now.tv_nsec - from->tv_nsec) / 1000000);
 }
 
-static LayaReply perform(CURL *curl, const Request *request, int timeout_ms)
+static int abort_when_closing(void *user, curl_off_t total_down, curl_off_t down, curl_off_t total_up, curl_off_t up)
+{
+    (void)total_down, (void)down, (void)total_up, (void)up;
+    return atomic_load(&((CurlTransport *)user)->abort_transfer);
+}
+
+static LayaReply perform(CURL *curl, const Request *request, CurlTransport *transport)
 {
     Download download = {0};
     struct curl_slist *headers = curl_slist_append(NULL, "Content-Type: application/json");
     curl_easy_setopt(curl, CURLOPT_URL, request->url);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request->body);
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, (long)timeout_ms);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, (long)transport->timeout_ms);
     curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS, (long)CONNECT_TIMEOUT_MS);
     curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+    curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+    curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, abort_when_closing);
+    curl_easy_setopt(curl, CURLOPT_XFERINFODATA, transport);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, append_download);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &download);
     struct timespec start;
     clock_gettime(CLOCK_MONOTONIC, &start);
     CURLcode result = curl_easy_perform(curl);
     long status = 0;
+    curl_off_t pretransfer_us = 0;
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
+    curl_easy_getinfo(curl, CURLINFO_PRETRANSFER_TIME_T, &pretransfer_us);
     curl_slist_free_all(headers);
-    LayaReply reply = {request->id, download.text, elapsed_ms(&start), FALLBACK_NONE};
-    if (result == CURLE_OPERATION_TIMEDOUT) reply.failure = FALLBACK_TIMEOUT;
-    else if (result != CURLE_OK) reply.failure = FALLBACK_UNREACHABLE;
-    else if (status != HTTP_OK) reply.failure = FALLBACK_MALFORMED;
+    TransferOutcome outcome = {.curl_ok = result == CURLE_OK, .timed_out = result == CURLE_OPERATION_TIMEDOUT,
+                               .connected = pretransfer_us > 0, .too_large = download.too_large, .http_status = status};
+    LayaReply reply = {request->id, download.text, elapsed_ms(&start), laya_classify_transfer(&outcome)};
     if (reply.failure != FALLBACK_NONE) free(reply.text), reply.text = NULL;
     return reply;
 }
@@ -95,7 +108,7 @@ static void *work(void *arg)
         transport->pending_head = (transport->pending_head + 1) % MAX_COMBATANTS;
         transport->pending_count--;
         pthread_mutex_unlock(&transport->lock);
-        LayaReply reply = curl ? perform(curl, &request, transport->timeout_ms) : (LayaReply){request.id, NULL, 0, FALLBACK_UNREACHABLE};
+        LayaReply reply = curl ? perform(curl, &request, transport) : (LayaReply){request.id, NULL, 0, FALLBACK_UNREACHABLE};
         free(request.body);
         pthread_mutex_lock(&transport->lock);
         if (transport->done_count == MAX_COMBATANTS) {
@@ -142,6 +155,7 @@ static bool curl_poll(LayaTransport *self, LayaReply *out)
 static void curl_close(LayaTransport *self)
 {
     CurlTransport *transport = (CurlTransport *)self;
+    atomic_store(&transport->abort_transfer, true);
     pthread_mutex_lock(&transport->lock);
     transport->closing = true;
     pthread_cond_signal(&transport->wake);

@@ -396,6 +396,7 @@ Event laya_decision(const Battle *battle, const GameData *data, int combatant, c
 {
     *truncated = false;
     if (failure != FALLBACK_NONE) return reflex_fallback(battle, data, combatant, failure, latency_ms);
+    if (reply_text && strlen(reply_text) > LAYA_REPLY_MAX) return reflex_fallback(battle, data, combatant, FALLBACK_MALFORMED, latency_ms);
     cJSON *reply = cJSON_Parse(reply_text);
     const cJSON *answers = cJSON_GetObjectItemCaseSensitive(reply, "answers");
     const char *element_keys[ELEMENT_COUNT], *stance_keys[STANCE_COUNT];
