@@ -76,7 +76,7 @@ typedef struct {
     int vision_close;
     int vision_medium;
     int vision_far;
-    int move_speed;
+    int move_speed_px_per_second;
     int spawn_plan;
     int spawn_cap;
     char sprite[ID_LEN];
@@ -160,6 +160,9 @@ typedef struct {
     PowerWeights power;
 } GameData;
 
+typedef struct cJSON cJSON;
+
+bool json_to_int(const cJSON *item, int *out);
 const char *element_id(Element element);
 const char *order_kind_id(OrderKind kind);
 int find_part(const GameData *data, const char *id);
