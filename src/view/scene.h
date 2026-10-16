@@ -8,6 +8,7 @@
 #include "atlas.h"
 
 #define HUD_HEIGHT 48
+#define PANEL_WIDTH 360
 #define ZOOM_MIN 1
 #define ZOOM_MAX 4
 #define ZOOM_DEFAULT 1
@@ -33,10 +34,12 @@ typedef struct {
     int zoom;
     int width;
     int height;
+    int inset_right;
 } Viewport;
 
 void viewport_init(Viewport *v, int width, int height);
 void viewport_clamp(Viewport *v);
+void viewport_set_inset(Viewport *v, int inset_right);
 void viewport_pan(Viewport *v, float dx_screen_px, float dy_screen_px);
 void viewport_zoom(Viewport *v, int step);
 float viewport_screen_x(const Viewport *v, float world_x);

@@ -451,6 +451,12 @@ static void test_viewport_world_inverts_screen(void)
             CHECK(dx > -0.01f && dx < 0.01f && dy > -0.01f && dy < 0.01f);
         }
     CHECK(viewport_world_x(&v, (float)WIDTH / 2) == v.centre_x);
+    viewport_set_inset(&v, 360);
+    for (float wx = 100; wx < 700; wx += 150) {
+        float dx = viewport_world_x(&v, viewport_screen_x(&v, wx)) - wx;
+        CHECK(dx > -0.01f && dx < 0.01f);
+    }
+    CHECK(viewport_screen_x(&v, v.centre_x) == (float)(WIDTH - 360) / 2);
 }
 
 static void test_pick_hits_the_front_combatant(void)

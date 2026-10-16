@@ -163,7 +163,10 @@ static void run_window(Battle *battle, const GameData *data, Decider *decider, S
         if (ui->restart_allowed && !hud->confirm_quit && battle_winner(battle) >= 0 && IsKeyPressed(KEY_R))
             restart_battle(battle, data, scene, ui, hud, &accumulated);
         if (IsKeyPressed(KEY_SPACE)) hud->paused = !hud->paused;
-        if (IsKeyPressed(KEY_T)) scene->xray = !scene->xray;
+        if (IsKeyPressed(KEY_T)) {
+            scene->xray = !scene->xray;
+            viewport_set_inset(view, scene->xray ? PANEL_WIDTH : 0);
+        }
         if (IsKeyPressed(KEY_M)) sound_toggle_mute();
         if (!hud->paused && !hud->confirm_quit && battle_winner(battle) < 0) advance_ticks(battle, data, decider, scene, &accumulated, stop_tick);
         if (battle->tick >= stop_tick) hud->paused = true;
@@ -217,6 +220,7 @@ int main(int argc, char **argv)
     Viewport view;
     viewport_init(&view, WINDOW_WIDTH, WINDOW_HEIGHT);
     Scene scene = {.xray = args.xray};
+    if (args.xray) viewport_set_inset(&view, PANEL_WIDTH);
     scene_reset(&scene, &battle);
     Hud hud = {0};
     Ui ui = {args.select, -1, true, !setup.replay_path};

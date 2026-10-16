@@ -12,12 +12,12 @@
 #include "report.h"
 
 #define FRAME_TEXT_SIZE (64 * 1024)
-#define PANEL_WIDTH 360
 #define LOG_LINES 200
 #define FONT_SMALL 10
 #define OVERLAY_LIFT_PX 48
 #define OVERLAY_PADDING 3
-#define OVERLAY_EXTRA_LINES 2
+#define OVERLAY_COMPACT_LINES 2
+#define PANEL_ZINDEX 2
 #define OVERLAY_ZINDEX 1
 #define LOG_FOLLOW_SCROLL 1e9f
 #define DETAIL_HEIGHT 320
@@ -236,10 +236,14 @@ static void detail(const Battle *b, const GameData *data, int c, const char (*la
     }
 }
 
-static void panel(const Ui *ui, const Battle *b, const GameData *data, const char (*laya_briefings)[BRIEFING_MAX + 1])
+static void panel(const Ui *ui, const Battle *b, const GameData *data, const Viewport *view,
+                  const char (*laya_briefings)[BRIEFING_MAX + 1])
 {
     CLAY({.id = CLAY_ID("Panel"),
-          .layout = {.sizing = {CLAY_SIZING_FIXED(PANEL_WIDTH), CLAY_SIZING_GROW(0)}, .padding = {0, 0, HUD_HEIGHT, 0}}}) {
+          .layout = {.sizing = {CLAY_SIZING_FIXED(PANEL_WIDTH), CLAY_SIZING_FIXED((float)view->height)}, .padding = {0, 0, HUD_HEIGHT, 0}},
+          .floating = {.attachTo = CLAY_ATTACH_TO_ROOT,
+                       .attachPoints = {.element = CLAY_ATTACH_POINT_RIGHT_TOP, .parent = CLAY_ATTACH_POINT_RIGHT_TOP},
+                       .zIndex = PANEL_ZINDEX}}) {
         CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .layoutDirection = CLAY_TOP_TO_BOTTOM},
               .backgroundColor = PANEL_BACKGROUND}) {
             battle_log(b, data);
@@ -285,7 +289,8 @@ static void overlay(const Battle *b, const GameData *data, const Scene *scene, c
     combatant_label(b, c, label, sizeof label);
     bool working[MAX_SLOTS];
     body_working_parts(&who->body, who->parts, working);
-    float height = (float)((who->body.slot_count + OVERLAY_EXTRA_LINES) * FONT_SMALL + 2 * OVERLAY_PADDING);
+    int lines = focused ? who->body.slot_count + OVERLAY_COMPACT_LINES : OVERLAY_COMPACT_LINES;
+    float height = (float)(lines * FONT_SMALL + 2 * OVERLAY_PADDING);
     float bottom = viewport_screen_y(view, y) - OVERLAY_LIFT_PX * (float)view->zoom;
     if (bottom < HUD_HEIGHT + height) bottom = HUD_HEIGHT + height;
     CLAY({.id = CLAY_IDI("Overlay", c),
@@ -297,7 +302,8 @@ static void overlay(const Battle *b, const GameData *data, const Scene *scene, c
                        .zIndex = OVERLAY_ZINDEX,
                        .pointerCaptureMode = CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH}}) {
         text(frame_string("%s  %d/%d", label, who->vitality, who->vitality_max), TEXT_COLOUR);
-        for (int s = 0; s < who->body.slot_count; s++) overlay_part_line(who, data, s, working[s]);
+        if (focused)
+            for (int s = 0; s < who->body.slot_count; s++) overlay_part_line(who, data, s, working[s]);
         text(stance_and_statuses(who), DIM_COLOUR);
     }
 }
@@ -326,15 +332,16 @@ static void report_lines(const Battle *b, const GameData *data, const BattleRepo
     text(frame_string("Decisions: Laya %d (%d%%), Reflex %d (%d%%)", d->laya, total ? d->laya * 100 / total : 0, d->reflex,
                       total ? d->reflex * 100 / total : 0),
          TEXT_COLOUR);
-    text(frame_string("Laya mean confidence %d.%03d, mean answer %d ms", d->mean_confidence_permille / 1000,
-                      d->mean_confidence_permille % 1000, d->mean_answer_ms),
+    text(d->laya ? frame_string("Laya mean confidence %d.%03d, mean answer %d ms", d->mean_confidence_permille / 1000,
+                                d->mean_confidence_permille % 1000, d->mean_answer_ms)
+                 : CLAY_STRING("Laya mean confidence n/a"),
          TEXT_COLOUR);
 }
 
 static void death_log(const Battle *b, const GameData *data)
 {
     CLAY({.id = CLAY_ID("DeathLog"),
-          .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(DEATH_LOG_HEIGHT)}, .childGap = 2,
+          .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIT(0, DEATH_LOG_HEIGHT)}, .childGap = 2,
                      .layoutDirection = CLAY_TOP_TO_BOTTOM},
           .clip = {.vertical = true, .childOffset = Clay_GetScrollOffset()}}) {
         char line[EVENT_LINE_SIZE];
@@ -372,10 +379,7 @@ void ui_draw(const Ui *ui, const Battle *b, const GameData *data, const Scene *s
     if (battle_winner(b) >= 0) {
         end_screen(ui, b, data);
     } else if (scene->xray) {
-        CLAY({.id = CLAY_ID("Root"),
-              .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .childAlignment = {.x = CLAY_ALIGN_X_RIGHT}}}) {
-            panel(ui, b, data, laya_briefings);
-        }
+        panel(ui, b, data, view, laya_briefings);
         for (int c = 0; c < b->combatant_count; c++)
             if (b->combatants[c].alive) overlay(b, data, scene, view, c, c == detail_target(ui, b));
     }

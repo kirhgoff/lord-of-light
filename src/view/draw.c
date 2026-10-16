@@ -288,7 +288,7 @@ void draw_frame_contents(const Battle *b, const GameData *data, const Scene *sce
 {
     int tick = (int)scene_time(scene, b);
     ClearBackground(FLOOR_COLOUR);
-    Camera2D camera = {{(float)view->width / 2, (float)(HUD_HEIGHT + (view->height - HUD_HEIGHT) / 2)}, {view->centre_x, view->centre_y}, 0, (float)view->zoom};
+    Camera2D camera = {{(float)(view->width - view->inset_right) / 2, (float)(HUD_HEIGHT + (view->height - HUD_HEIGHT) / 2)}, {view->centre_x, view->centre_y}, 0, (float)view->zoom};
     BeginMode2D(camera);
     draw_floor(atlases, sheets);
     draw_drawables(b, data, scene, atlases, sheets, tick);
