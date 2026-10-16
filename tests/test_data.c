@@ -10,7 +10,7 @@ static char err[ERR_SIZE];
 
 static void load_real_data(void)
 {
-    CHECK(load_game_data(&data, "data", err, ERR_SIZE));
+    LOAD_OR_EXIT(load_game_data(&data, "data", err, ERR_SIZE), err);
 }
 
 static void check_error(bool loaded, const char *expected)
@@ -247,6 +247,21 @@ static void test_other_file_errors(void)
                 "traps[0].element: unknown element \"steam\"");
 }
 
+static void test_sound_errors(void)
+{
+    load_real_data();
+    check_error(load_parts(&data, FIXTURE("parts_invalid_sound.json"), err, ERR_SIZE),
+                "parts[13].abilities[0].sound: invalid sound id \"../sounds_sheet\"");
+    check_error(load_parts(&data, FIXTURE("parts_missing_step_sound.json"), err, ERR_SIZE),
+                "parts[3].step_sound: missing");
+    check_error(load_elements(&data, FIXTURE("elements_invalid_sound.json"), err, ERR_SIZE),
+                "elements[1].hit_sound: invalid sound id \"../sounds_sheet\"");
+    check_error(load_elements(&data, FIXTURE("elements_missing_cue.json"), err, ERR_SIZE),
+                "cues.death: missing");
+    check_error(load_arena_objects(&data, FIXTURE("arena_objects_invalid_sound.json"), err, ERR_SIZE),
+                "traps[1].sound: invalid sound id \"../sounds_sheet\"");
+}
+
 static void test_file_errors(void)
 {
     check_error(load_parts(&data, FIXTURE("invalid.json"), err, ERR_SIZE), "invalid JSON");
@@ -358,6 +373,7 @@ void run_data_tests(void)
     test_minion_attack_parts_match_the_parts_they_replace();
     test_part_errors();
     test_other_file_errors();
+    test_sound_errors();
     test_file_errors();
     test_failed_load_keeps_previous_data();
     test_body_graph_errors();

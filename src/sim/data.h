@@ -50,7 +50,15 @@ typedef struct {
     bool internal_first;
     int charm_ticks;
     int buff_strip_count;
+    char hit_sound[ID_LEN];
+    char effect_sound[ID_LEN];
 } ElementDef;
+
+typedef struct {
+    char death[ID_LEN];
+    char part_destroyed[ID_LEN];
+    char spawn_appear[ID_LEN];
+} SoundCues;
 
 typedef enum {
     SLOT_ROLE_ANY,
@@ -69,6 +77,7 @@ typedef struct {
     int range;
     int cooldown_ticks;
     int area;
+    char sound[ID_LEN];
 } Ability;
 
 typedef struct {
@@ -90,6 +99,7 @@ typedef struct {
     int spawn_plan;
     int spawn_cap;
     char sprite[ID_LEN];
+    char step_sound[ID_LEN];
 } Part;
 
 typedef struct {
@@ -143,6 +153,7 @@ typedef struct {
     int damage_bonus_percent;
     int respawn_ticks;
     char sprite[ID_LEN];
+    char sound[ID_LEN];
 } ArenaObjectDef;
 
 typedef struct {
@@ -159,6 +170,7 @@ typedef struct {
 
 typedef struct {
     ElementDef elements[ELEMENT_COUNT];
+    SoundCues cues;
     Part parts[MAX_PARTS];
     int part_count;
     BodyPlan body_plans[MAX_BODY_PLANS];
