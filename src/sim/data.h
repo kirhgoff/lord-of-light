@@ -33,7 +33,6 @@ typedef enum {
     ORDER_CAST,
     ORDER_BLOCK,
     ORDER_MOVE_TO,
-    ORDER_PICK_UP,
     ORDER_SUPPORT,
     ORDER_SPAWN,
     ORDER_IDLE,

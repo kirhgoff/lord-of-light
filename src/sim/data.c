@@ -18,7 +18,7 @@ static const char *const ELEMENT_IDS[ELEMENT_COUNT] = {
 };
 
 static const char *const ORDER_KIND_IDS[ORDER_KIND_COUNT] = {
-    "strike", "cast", "block", "move_to", "pick_up", "support", "spawn", "idle"
+    "strike", "cast", "block", "move_to", "support", "spawn", "idle"
 };
 
 static const char *const SLOT_ROLE_IDS[SLOT_ROLE_COUNT] = {
