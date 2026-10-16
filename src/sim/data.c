@@ -812,6 +812,7 @@ static bool read_part_stats(Context *ctx, const cJSON *obj, const char *path, Pa
     if (part->integrity <= 0) return fail(ctx, integrity_path, "must be positive");
     return get_count(ctx, obj, path, "vitality", &part->vitality, false)
         && get_count(ctx, obj, path, "initiative", &part->initiative, false)
+        && check_range(ctx, path, "initiative", part->initiative, 0, INITIATIVE_LIMIT)
         && get_count(ctx, obj, path, "move_speed", &part->move_speed_px_per_second, false);
 }
 

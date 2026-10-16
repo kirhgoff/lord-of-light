@@ -335,6 +335,7 @@ static void test_negative_values_and_empty_parts(void)
         { load_parts, FIXTURE("parts_negative_area.json"), "parts[6].abilities[0].area: must not be negative" },
         { load_parts, FIXTURE("parts_negative_vitality.json"), "parts[3].vitality: must not be negative" },
         { load_parts, FIXTURE("parts_negative_initiative.json"), "parts[1].initiative: must not be negative" },
+        { load_parts, FIXTURE("parts_huge_initiative.json"), "parts[1].initiative: must be between 0 and 100" },
         { load_parts, FIXTURE("parts_negative_move_speed.json"), "parts[5].move_speed: must not be negative" },
         { load_parts, FIXTURE("parts_negative_vision.json"), "parts[1].vision.close: must not be negative" },
         { load_parts, FIXTURE("parts_empty.json"), "parts: no parts" },
