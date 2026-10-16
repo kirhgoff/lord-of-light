@@ -184,6 +184,11 @@ static const char *const CANNED_REPLY_FORMAT =
     "\"collect the pickup\":0.19},\"x_jev_confidence\":%s}},"
     "\"usage\":{\"input_tokens\":400,\"truncated\":%s}}";
 
+static const char *const HURT_KEY[HURT_COUNT] = {"unhurt", "wounded", "badly wounded", "near death"};
+static const char *const ELEMENT_KEY[ELEMENT_COUNT] = {"Kinetic", "Fire", "Frost", "Lightning", "Radiance", "Venom", "Mind", "Void"};
+static const char *const STANCE_KEY[STANCE_COUNT] = {NULL, "fight the nearest enemy", "retreat from the enemy", "support the hurt ally",
+                                                     "collect the pickup"};
+
 static char reply[2048];
 
 static void canned_reply(const char *choice, const char *confidence, const char *truncated)
@@ -282,36 +287,75 @@ static void test_a_single_element_needs_no_element_question(void)
     free(json);
 }
 
-static bool contains_key(const cJSON *request, const char *id, const char *key)
+static cJSON *record_for(int c, Event *reflex)
 {
-    return cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(question(request, id), "criteria"), key) != NULL;
-}
-
-static cJSON *record_for(int c)
-{
-    Event reflex;
-    reflex_decide(NULL, &battle, &data, c, &reflex);
-    char *json = laya_request_record_json(&battle, &data, c, &reflex);
+    reflex_decide(NULL, &battle, &data, c, reflex);
+    char *json = laya_request_record_json(&battle, &data, c, reflex);
     cJSON *record = cJSON_Parse(json);
     free(json);
     return record;
 }
 
-static void test_request_record_carries_the_reflex_answer_in_criteria_keys(void)
+static const char *text_of(const cJSON *object, const char *key)
 {
-    int dagda, apollo;
-    int zeus = zeus_with_company(&dagda, &apollo);
-    briefing_of(zeus);
-    cJSON *record = record_for(zeus);
+    return cJSON_GetObjectItemCaseSensitive(object, key)->valuestring;
+}
+
+typedef struct {
+    bool retreated;
+    bool element_index_seen[ELEMENT_COUNT];
+    bool hurt_seen[HURT_COUNT];
+} RecordCoverage;
+
+static void check_record_matches_reflex(int c, RecordCoverage *seen)
+{
+    briefing_of(c);
+    LayaQuestions asked;
+    free(request_for(c, &asked));
+    Event event;
+    cJSON *record = record_for(c, &event);
     const cJSON *request = cJSON_GetObjectItemCaseSensitive(record, "request");
     const cJSON *reflex = cJSON_GetObjectItemCaseSensitive(record, "reflex");
     CHECK(cJSON_GetObjectItemCaseSensitive(record, "tick")->valueint == battle.tick);
-    CHECK(strcmp(cJSON_GetObjectItemCaseSensitive(record, "name")->valuestring, "Zeus") == 0);
-    CHECK(strcmp(cJSON_GetObjectItemCaseSensitive(request, "state")->valuestring, text) == 0);
-    CHECK(contains_key(request, "stance", cJSON_GetObjectItemCaseSensitive(reflex, "stance")->valuestring));
-    CHECK(contains_key(request, "hurt", cJSON_GetObjectItemCaseSensitive(reflex, "hurt")->valuestring));
-    CHECK(contains_key(request, "element", cJSON_GetObjectItemCaseSensitive(reflex, "element")->valuestring));
+    CHECK(cJSON_GetObjectItemCaseSensitive(record, "combatant")->valueint == c);
+    CHECK(strcmp(text_of(record, "name"), battle.combatants[c].name) == 0);
+    CHECK(strcmp(text_of(request, "state"), text) == 0);
+    CHECK(strcmp(text_of(reflex, "stance"), STANCE_KEY[event.amount]) == 0);
+    CHECK(strcmp(text_of(reflex, "hurt"), HURT_KEY[event.detail]) == 0);
+    seen->hurt_seen[event.detail] = true;
+    seen->retreated |= event.amount == STANCE_RETREAT;
+    if (asked.element_count > 0) {
+        CHECK(strcmp(text_of(reflex, "element"), ELEMENT_KEY[event.element]) == 0);
+        for (int e = 0; e < asked.element_count; e++)
+            if (asked.elements[e] == event.element) seen->element_index_seen[e] = true;
+    }
     cJSON_Delete(record);
+}
+
+static void test_request_record_carries_the_reflex_answer_in_criteria_keys(void)
+{
+    RecordCoverage seen = {0};
+    for (int vitality_percent = 100; vitality_percent >= 10; vitality_percent -= 45) {
+        int dagda, apollo;
+        int zeus = zeus_with_company(&dagda, &apollo);
+        int actors[] = {zeus, dagda, apollo};
+        for (int a = 0; a < 3; a++) {
+            Combatant *c = &battle.combatants[actors[a]];
+            if (a < 2) c->vitality = c->vitality_max * vitality_percent / 100;
+            check_record_matches_reflex(actors[a], &seen);
+        }
+    }
+    const char *const enemies[][2] = {{"Norse", "Thor"}, {"Norse", "Odin"}, {"Egyptian", "Ra"}, {"Egyptian", "Set"}, {"Hindu", "Kali"},
+                                      {"Hindu", "Shiva"}, {"Greek", "Hades"}, {"Celtic", "Morrigan"}, {"Celtic", "Brigid"}};
+    for (size_t e = 0; e < sizeof enemies / sizeof enemies[0]; e++) {
+        fresh();
+        int zeus = add_deity("Greek", "Zeus", SIDE_PANTHEON, 500, 200);
+        add_deity(enemies[e][0], enemies[e][1], SIDE_HORDE, 580, 200);
+        check_record_matches_reflex(zeus, &seen);
+    }
+    CHECK(seen.retreated);
+    CHECK(seen.element_index_seen[0] && seen.element_index_seen[1]);
+    CHECK(seen.hurt_seen[HURT_WOUNDED] || seen.hurt_seen[HURT_BADLY_WOUNDED] || seen.hurt_seen[HURT_NEAR_DEATH]);
 }
 
 static void test_request_record_has_no_reflex_element_when_none_is_asked(void)
@@ -319,7 +363,8 @@ static void test_request_record_has_no_reflex_element_when_none_is_asked(void)
     fresh();
     int agni = add_deity("Hindu", "Agni", SIDE_PANTHEON, 500, 200);
     add_deity("Celtic", "Dagda", SIDE_HORDE, 580, 200);
-    cJSON *record = record_for(agni);
+    Event event;
+    cJSON *record = record_for(agni, &event);
     CHECK(cJSON_IsNull(cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(record, "reflex"), "element")));
     cJSON_Delete(record);
 }
