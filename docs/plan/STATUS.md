@@ -14,7 +14,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 03 State + headless | `03-state-and-headless` / `~/Projects/lord-of-light-03-state-and-headless` | re-review PASS; executor adding 3 small fixes (tick cap, fallback test, zero-init note), then merge |
+| 04 Movement + vision | `04-movement-vision` / `~/Projects/lord-of-light-04-movement-vision` | executor running |
 | 09 Placeholder sprites | `09-placeholder-sprites` / `~/Projects/lord-of-light-09-placeholder-sprites` | design review CHANGES (clipping, tails, internal Parts 16 px, bigger world objects, idle bob, distinguishability); executor fixing |
 
 If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`, `git status`), then either spawn a new executor to finish from there or review what exists.
@@ -25,11 +25,13 @@ If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`
 - 13 Laya behaviour — merged; led to ADR 0003 (Stance + Appraisals).
 - 02 Data schema — merged after 2 review rounds.
 - 15 Content — merged.
+- 03 State + headless — merged after 2 review rounds.
 - 14 Clay+raylib research — merged (`docs/research/clay-raylib.md`).
 
 ## Next up (once unblocked)
 
-- After 03 merges: 04 Movement/vision and 17 Slot roles (17 blocks 05, 07).
+- After 09 merges: 17 Slot roles (blocks 05, 07).
+- After 04 + 17: 05 Combat.
 - Later: 16 Save/load keys (after 10).
 
 ## Open questions for the user

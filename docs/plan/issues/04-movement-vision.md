@@ -1,7 +1,7 @@
 # Movement, collision, line of sight, Vision bands
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 03
 
 ## Question
