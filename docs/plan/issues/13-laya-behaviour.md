@@ -1,7 +1,7 @@
 # How Laya behaves with game-style questions
 
 Type: research
-Status: open
+Status: claimed
 Blocked by:
 
 ## Question

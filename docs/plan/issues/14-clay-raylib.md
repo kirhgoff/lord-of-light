@@ -1,7 +1,7 @@
 # Clay with raylib in C
 
 Type: research
-Status: open
+Status: claimed
 Blocked by:
 
 ## Question

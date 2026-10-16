@@ -1,7 +1,7 @@
 # Skeleton: build, vendored deps, test runner
 
 Type: task
-Status: open
+Status: claimed
 Blocked by:
 
 ## Question
