@@ -64,8 +64,9 @@ static void test_moves_at_part_speed(void)
     int speed = combatant_speed_px_per_second(&battle.combatants[0], &data);
     CHECK(speed > 0);
     place(0, 2, 2);
+    battle.combatants[0].y_millipx = 3 * TILE;
     int x = battle.combatants[0].x_millipx;
-    send_to(0, 40 * TILE, 2 * TILE + TILE / 2);
+    send_to(0, 40 * TILE, 3 * TILE);
     run(TICKS_PER_SECOND);
     CHECK(battle.combatants[0].x_millipx - x == speed * PX);
 }
@@ -200,13 +201,52 @@ static void test_path_is_deterministic_and_shortest(void)
 {
     open_field();
     int column, row;
-    CHECK(find_path(&battle, 0, 0, 3, 0, &column, &row) == 30);
-    CHECK(column == 1 && row == 0);
-    battle.obstacle[0][1] = 1;
-    CHECK(find_path(&battle, 0, 0, 3, 0, &column, &row) != PATH_NONE);
-    CHECK(column == 0 && row == 1);
-    battle.obstacle[1][0] = 1;
-    CHECK(find_path(&battle, 0, 0, 3, 0, &column, &row) == PATH_NONE);
+    CHECK(find_path(&battle, 5, 5, 8, 5, &column, &row) == 30);
+    CHECK(column == 6 && row == 5);
+    battle.obstacle[5][7] = 1;
+    CHECK(find_path(&battle, 5, 5, 8, 5, &column, &row) == 50);
+    CHECK(column == 5 && row == 6);
+}
+
+static void wall_with_gap(int gap_tiles)
+{
+    for (int row = 0; row < ARENA_HEIGHT_TILES; row++) battle.obstacle[row][20] = 1;
+    for (int row = 10; row < 10 + gap_tiles; row++) battle.obstacle[row][20] = 0;
+}
+
+static void test_one_tile_gap_is_too_narrow_to_path_through(void)
+{
+    open_field();
+    wall_with_gap(1);
+    int column, row;
+    CHECK(find_path(&battle, 18, 10, 30, 10, &column, &row) == PATH_NONE);
+    place(0, 10, 10);
+    send_to(0, 30 * TILE + TILE / 2, 10 * TILE + TILE / 2);
+    run(1200);
+    CHECK(battle.combatants[0].x_millipx < 20 * TILE - COMBATANT_RADIUS_MILLIPX + 1);
+}
+
+static void test_two_tile_gap_is_wide_enough(void)
+{
+    open_field();
+    wall_with_gap(2);
+    int column, row;
+    CHECK(find_path(&battle, 18, 10, 30, 10, &column, &row) != PATH_NONE);
+    place(0, 10, 10);
+    send_to(0, 30 * TILE + TILE / 2, 11 * TILE);
+    run(1200);
+    CHECK(battle.combatants[0].x_millipx == 30 * TILE + TILE / 2);
+}
+
+static void test_combatants_at_the_same_spot_are_pushed_apart(void)
+{
+    open_field();
+    place(0, 5, 5);
+    place(1, 5, 5);
+    run(1);
+    int dx = battle.combatants[0].x_millipx - battle.combatants[1].x_millipx;
+    int dy = battle.combatants[0].y_millipx - battle.combatants[1].y_millipx;
+    CHECK((long long)dx * dx + (long long)dy * dy >= (long long)22 * PX * 22 * PX);
 }
 
 static void test_obstacle_blocks_line_of_sight(void)
@@ -457,6 +497,9 @@ void run_movement_tests(void)
     test_move_order_on_destroyed_part_is_ignored();
     test_combatants_do_not_overlap();
     test_path_is_deterministic_and_shortest();
+    test_one_tile_gap_is_too_narrow_to_path_through();
+    test_two_tile_gap_is_wide_enough();
+    test_combatants_at_the_same_spot_are_pushed_apart();
     test_obstacle_blocks_line_of_sight();
     test_line_of_sight_blocked_at_diagonal_joint();
     test_line_of_sight_blocked_when_either_corner_neighbour_is_solid();

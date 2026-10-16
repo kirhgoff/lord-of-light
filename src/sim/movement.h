@@ -3,7 +3,7 @@
 
 #include "battle.h"
 
-#define COMBATANT_RADIUS_MILLIPX (5 * MILLIPX_PER_PX)
+#define COMBATANT_RADIUS_MILLIPX (11 * MILLIPX_PER_PX)
 #define TICKS_PER_SECOND 20
 #define PATH_NONE (-1)
 

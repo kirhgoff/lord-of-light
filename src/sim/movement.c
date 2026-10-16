@@ -50,12 +50,18 @@ static int heuristic(int column, int row, int to_column, int to_row)
     return DIAGONAL_COST * diagonal + STRAIGHT_COST * (dx + dy - 2 * diagonal);
 }
 
+static bool footprint_is_blocked(const Battle *battle, int column, int row)
+{
+    return tile_is_solid(battle, column, row) || tile_is_solid(battle, column + 1, row) ||
+           tile_is_solid(battle, column, row + 1) || tile_is_solid(battle, column + 1, row + 1);
+}
+
 static bool step_is_open(const Battle *battle, int column, int row, int dir)
 {
     int nc = column + neighbour_dx[dir], nr = row + neighbour_dy[dir];
-    if (tile_is_solid(battle, nc, nr)) return false;
+    if (footprint_is_blocked(battle, nc, nr)) return false;
     if (dir < 4) return true;
-    return !tile_is_solid(battle, nc, row) && !tile_is_solid(battle, column, nr);
+    return !footprint_is_blocked(battle, nc, row) && !footprint_is_blocked(battle, column, nr);
 }
 
 static int pop_best(int *open, int *open_count, const int *cost, const int *estimate)
@@ -94,7 +100,7 @@ static int closest_reachable_tile(const Battle *battle, int start, int to_column
 
 int find_path(const Battle *battle, int from_column, int from_row, int to_column, int to_row, int *next_column, int *next_row)
 {
-    if (tile_is_solid(battle, from_column, from_row)) return PATH_NONE;
+    if (footprint_is_blocked(battle, from_column, from_row)) return PATH_NONE;
     int start = from_row * ARENA_WIDTH_TILES + from_column;
     int goal = closest_reachable_tile(battle, start, to_column, to_row);
     if (goal == start) return PATH_NONE;
@@ -210,24 +216,49 @@ static void move_towards(Battle *battle, int self, int goal_x, int goal_y, int s
     if (!try_move(battle, self, dx, 0)) try_move(battle, self, 0, dy);
 }
 
+static int anchor_of(int millipx, int last)
+{
+    return clamp((millipx + TILE_MILLIPX / 2) / TILE_MILLIPX - 1, 0, last);
+}
+
 static void advance(Battle *battle, int self, int target_x, int target_y, int step)
 {
     const Combatant *me = &battle->combatants[self];
     target_x = clamp(target_x, 0, ARENA_WIDTH_MILLIPX - 1);
     target_y = clamp(target_y, 0, ARENA_HEIGHT_MILLIPX - 1);
-    int column = me->x_millipx / TILE_MILLIPX, row = me->y_millipx / TILE_MILLIPX;
-    int target_column = target_x / TILE_MILLIPX, target_row = target_y / TILE_MILLIPX;
+    int column = anchor_of(me->x_millipx, ARENA_WIDTH_TILES - 1), row = anchor_of(me->y_millipx, ARENA_HEIGHT_TILES - 1);
+    int target_column = anchor_of(target_x, ARENA_WIDTH_TILES - 1), target_row = anchor_of(target_y, ARENA_HEIGHT_TILES - 1);
     int next_column = target_column, next_row = target_row;
-    bool same_tile = column == target_column && row == target_row;
-    if (!same_tile && find_path(battle, column, row, target_column, target_row, &next_column, &next_row) == PATH_NONE) return;
-    bool final_leg = same_tile || (next_column == target_column && next_row == target_row);
-    int goal_x = final_leg ? target_x : next_column * TILE_MILLIPX + TILE_MILLIPX / 2;
-    int goal_y = final_leg ? target_y : next_row * TILE_MILLIPX + TILE_MILLIPX / 2;
+    bool same_anchor = column == target_column && row == target_row;
+    if (!same_anchor && find_path(battle, column, row, target_column, target_row, &next_column, &next_row) == PATH_NONE) return;
+    bool final_leg = same_anchor || (next_column == target_column && next_row == target_row);
+    int goal_x = final_leg ? target_x : (next_column + 1) * TILE_MILLIPX;
+    int goal_y = final_leg ? target_y : (next_row + 1) * TILE_MILLIPX;
     move_towards(battle, self, goal_x, goal_y, step);
+}
+
+static void push_apart(Battle *battle, int first, int second)
+{
+    Combatant *a = &battle->combatants[first], *b = &battle->combatants[second];
+    int64_t dx = b->x_millipx - a->x_millipx, dy = b->y_millipx - a->y_millipx;
+    int64_t touching = 2 * COMBATANT_RADIUS_MILLIPX, gap = isqrt(squared(dx) + squared(dy));
+    if (gap >= touching) return;
+    int64_t shift = (touching - gap) / 2 + 2;
+    int sx = gap ? (int)(dx * shift / gap) : (int)shift, sy = gap ? (int)(dy * shift / gap) : 0;
+    if (!hits_terrain(battle, a->x_millipx - sx, a->y_millipx - sy)) a->x_millipx -= sx, a->y_millipx -= sy;
+    if (!hits_terrain(battle, b->x_millipx + sx, b->y_millipx + sy)) b->x_millipx += sx, b->y_millipx += sy;
+}
+
+static void separate_combatants(Battle *battle)
+{
+    for (int a = 0; a < battle->combatant_count; a++)
+        for (int b = a + 1; b < battle->combatant_count; b++)
+            if (battle->combatants[a].alive && battle->combatants[b].alive) push_apart(battle, a, b);
 }
 
 void battle_move_combatants(Battle *battle, const GameData *data)
 {
+    separate_combatants(battle);
     for (int c = 0; c < battle->combatant_count; c++) {
         const Combatant *me = &battle->combatants[c];
         int target_x, target_y;
