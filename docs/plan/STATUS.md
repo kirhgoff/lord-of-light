@@ -16,7 +16,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 | Ticket | Branch / worktree | State |
 |---|---|---|
 | 07 Power + Horde | `07-power-and-horde` / `~/Projects/lord-of-light-07-power-and-horde` | sonnet executor running |
-| 10 raylib view | `10-raylib-view` | fable plan in progress |
+| 10 raylib view | `10-raylib-view` / `~/Projects/lord-of-light-10-raylib-view` | plan accepted; sonnet executor running |
 | 11 Laya decider | `11-laya-decider` | fable plan in progress |
 
 ## Done

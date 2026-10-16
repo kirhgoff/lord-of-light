@@ -15,3 +15,7 @@ Blocked by: 06, 09
 - Team bars at top: Pantheon and Horde, each a row of per-Combatant segments.
 - Keys: Space pause, Esc → confirm dialog, arrows pan, `-`/`=` zoom (work while paused), camera clamped to the Arena.
 - Sim runs at 20 Ticks/s with interpolation for drawing.
+
+## Comments
+
+**Plan (fable): `docs/plan/plan-10-view.md`.** User accepted all defaults 2026-10-16: integer zoom 1–4 (default 2), Esc dialog in plain raylib now, team bars without spawned minions, animation clock on sim Ticks, grey tint for cut-off Parts, `--xray` with `--screenshot`.
