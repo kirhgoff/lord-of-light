@@ -20,3 +20,6 @@ Blocked by: 06, 13
 From the ticket 06 review: `most_vulnerable_element` reads the focus's true resistances even at Far Band. Fine for the Reflex, but the Laya Briefing must only expose what the Combatant perceives at that Band.
 
 **Plan (fable): `docs/plan/plan-11-laya.md`.** User accepted all nine defaults 2026-10-16, plus the addendum: URL list with a local `make laya-local` fallback.
+
+**Review 1 (opus): CHANGES.** Confidence parsing verified against the live server (x_jev read correctly; Laya is near-uniform on Stance, as laya.md predicts); TSan clean; queue bounded; replay identical. Fixed in c26ba4d..a19ee9d: connect timeout counted as unreachable (local fallback now reachable), Decision Event bounds on load, double clamp before int cast, backoff after timeouts, quit no longer waits for a request, named Event initialisers instead of a global warning flag, 1 MiB reply cap, game replay pauses at the dump's end, ASCII-only names in the data.
+**User decisions 2026-10-16:** (A) the Reflex keeps re-deciding on its schedule while a Laya request is in flight; (B) keep Laya choosing the Stance with the 0.2 threshold, tune later while watching Battles; (C) latency = request queued → answer applied.
