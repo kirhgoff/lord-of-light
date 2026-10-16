@@ -41,7 +41,7 @@ int combatant_resistance_percent(const Combatant *c, const GameData *data, Eleme
 
 bool combatant_in_reach(const Combatant *from, const Combatant *to, int range_px)
 {
-    int64_t reach = (int64_t)range_px * MILLIPX_PER_PX + 2 * COMBATANT_RADIUS_MILLIPX;
+    int64_t reach = (int64_t)range_px * MILLIPX_PER_PX + 2 * (int64_t)COMBATANT_RADIUS_MILLIPX;
     return squared(from->x_millipx - to->x_millipx) + squared(from->y_millipx - to->y_millipx) <= squared(reach);
 }
 
@@ -323,17 +323,23 @@ static void pulse_dot(Battle *battle, const GameData *data, int target)
     death_check(battle, data, target, who->dot_source, -1, (Element)who->dot_element);
 }
 
+static bool countdown_expired(int *ticks)
+{
+    if (*ticks <= 0) return false;
+    return --*ticks == 0;
+}
+
 void battle_tick_effects(Battle *battle, const GameData *data)
 {
     for (int c = 0; c < battle->combatant_count; c++) {
         Combatant *who = &battle->combatants[c];
         if (!who->alive) continue;
-        if (who->damage_bonus_ticks > 0 && --who->damage_bonus_ticks == 0) who->damage_bonus_percent = 0;
-        if (who->haste_ticks > 0 && --who->haste_ticks == 0) who->haste_percent = 0;
-        if (who->vision_ticks > 0 && --who->vision_ticks == 0) who->vision_percent = 0;
-        if (who->ward_ticks > 0 && --who->ward_ticks == 0) who->ward_percent = 0;
-        if (who->slow_ticks > 0 && --who->slow_ticks == 0) who->slow_percent = 0;
-        if (who->charm_ticks > 0 && --who->charm_ticks == 0) who->charm_side = who->side;
+        if (countdown_expired(&who->damage_bonus_ticks)) who->damage_bonus_percent = 0;
+        if (countdown_expired(&who->haste_ticks)) who->haste_percent = 0;
+        if (countdown_expired(&who->vision_ticks)) who->vision_percent = 0;
+        if (countdown_expired(&who->ward_ticks)) who->ward_percent = 0;
+        if (countdown_expired(&who->slow_ticks)) who->slow_percent = 0;
+        if (countdown_expired(&who->charm_ticks)) who->charm_side = who->side;
         if (who->dot_ticks == 0) continue;
         if (who->dot_ticks % DOT_INTERVAL_TICKS == 0) pulse_dot(battle, data, c);
         who->dot_ticks--;

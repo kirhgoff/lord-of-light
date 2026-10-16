@@ -67,7 +67,7 @@ static Clay_Dimensions measure_text_utf8(Clay_StringSlice text, Clay_TextElement
         i += size;
         glyphs++;
     }
-    float spacing = (float)glyphs * config->letterSpacing;
+    float spacing = (float)glyphs * (float)config->letterSpacing;
     return (Clay_Dimensions){width * scale + spacing, (float)config->fontSize};
 }
 

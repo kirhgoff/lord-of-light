@@ -364,7 +364,7 @@ static void avoid_traps(const Situation *situation, Movement *movement)
     for (int i = 0; i < situation->perception.seen_count; i++) {
         const Perceived *seen = &situation->perception.seen[i];
         if (seen->kind != PERCEIVED_TRAP) continue;
-        int64_t avoid = (int64_t)situation->data->traps[seen->def].radius * MILLIPX_PER_PX + 2 * COMBATANT_RADIUS_MILLIPX;
+        int64_t avoid = (int64_t)situation->data->traps[seen->def].radius * MILLIPX_PER_PX + 2 * (int64_t)COMBATANT_RADIUS_MILLIPX;
         if (waypoint_around(situation->me, movement->x_millipx, movement->y_millipx, seen->x_millipx, seen->y_millipx, avoid,
                             &movement->x_millipx, &movement->y_millipx))
             return;
@@ -381,6 +381,7 @@ static Order attack_order(const Situation *situation, const Part *part)
         if (combatant_in_reach(situation->me, focus, ability->range)) return (Order){ability->order, situation->focus->index, 0, 0};
         if (!first) first = ability;
     }
+    if (!first) return (Order){ORDER_IDLE, -1, 0, 0};
     return (Order){first->order, situation->focus->index, 0, 0};
 }
 

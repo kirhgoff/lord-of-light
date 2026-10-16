@@ -12,10 +12,12 @@ RAYLIB_OBJECTS := $(RAYLIB_SOURCES:%=$(BUILD)/raylib/%.o) $(BUILD)/raylib/rglfw.
 RAYLIB_LIB := $(BUILD)/libraylib.a
 
 ifeq ($(shell uname -s),Darwin)
+TIDY_SYSROOT := -isysroot $(shell xcrun --show-sdk-path)
 PLATFORM_LIBS := -framework Cocoa -framework IOKit -framework CoreVideo -framework OpenGL
 RGLFW_LANGUAGE := objective-c
 RGLFW_DEFINES :=
 else
+TIDY_SYSROOT :=
 PLATFORM_LIBS := -lGL -lm -lpthread -ldl -lrt -lX11
 RGLFW_LANGUAGE := c
 RGLFW_DEFINES := -D_GLFW_X11
@@ -37,7 +39,11 @@ BALANCE_OBJECTS := $(BUILD)/obj/src/main_balance.o $(SIM_OBJECTS) $(CJSON_OBJECT
 FORMAT_FILES := $(shell git ls-files 'src/*.c' 'src/*.h' 'tests/*.c' 'tests/*.h')
 CLANG_FORMAT := uv tool run --exclude-newer 2026-10-15 clang-format==22.1.8
 
-.PHONY: game headless test run clean asan balance screenshots laya-local format format-check
+TIDY_FILES := $(wildcard src/*.c src/sim/*.c src/laya/*.c src/view/*.c)
+CLANG_TIDY := uv tool run --exclude-newer 2026-10-15 clang-tidy==22.1.8
+TIDY_FLAGS := $(STD) -Ivendor/cjson -I$(RAYLIB_DIR) -isystem vendor/clay $(TIDY_SYSROOT)
+
+.PHONY: tidy game headless test run clean asan balance screenshots laya-local format format-check
 
 game: $(BUILD)/game
 headless: $(BUILD)/headless
@@ -117,6 +123,9 @@ format:
 
 format-check:
 	$(CLANG_FORMAT) --dry-run --Werror $(FORMAT_FILES)
+
+tidy:
+	$(CLANG_TIDY) $(TIDY_FILES) -- $(TIDY_FLAGS)
 
 clean:
 	rm -rf $(BUILD)

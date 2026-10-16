@@ -221,7 +221,7 @@ int scene_collect(const Scene *s, const Battle *b, Drawable *out)
     for (int row = 0; row < ARENA_HEIGHT_TILES; row++)
         for (int column = 0; column < ARENA_WIDTH_TILES; column++)
             if (b->obstacle[row][column])
-                out[n++] = (Drawable){DRAW_OBSTACLE, row * ARENA_WIDTH_TILES + column, (float)(column * TILE_SIZE + TILE_SIZE / 2),
+                out[n++] = (Drawable){DRAW_OBSTACLE, row * ARENA_WIDTH_TILES + column, (float)(column * TILE_SIZE) + TILE_SIZE / 2.0f,
                                       (float)(row * TILE_SIZE + TILE_SIZE)};
     collect_floor_objects(b->pickups, b->pickup_count, DRAW_PICKUP, out, &n);
     for (int t = 0; t < b->trap_count; t++)

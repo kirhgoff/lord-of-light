@@ -313,7 +313,9 @@ static void draw_battle(const Battle *b, const GameData *data, const Scene *scen
                         const char (*laya_briefings)[BRIEFING_MAX + 1])
 {
     int tick = (int)scene_time(scene, b);
-    Camera2D camera = {{(float)(view->width - view->inset_right) / 2, (float)(HUD_HEIGHT + (view->height - HUD_HEIGHT) / 2)}, {view->centre_x, view->centre_y}, 0, (float)view->zoom};
+    float screen_centre_x = (float)(view->width - view->inset_right) / 2;
+    float screen_centre_y = (float)HUD_HEIGHT + (float)(view->height - HUD_HEIGHT) / 2;
+    Camera2D camera = {{screen_centre_x, screen_centre_y}, {view->centre_x, view->centre_y}, 0, (float)view->zoom};
     BeginMode2D(camera);
     draw_floor(atlases, sheets);
     draw_drawables(b, data, scene, atlases, sheets, tick);

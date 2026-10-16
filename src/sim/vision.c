@@ -26,7 +26,7 @@ bool line_of_sight(const Battle *battle, int from_x, int from_y, int to_x, int t
     int step_x = (dx > 0) - (dx < 0), step_y = (dy > 0) - (dy < 0);
     int64_t next_x = first_crossing(from_x, column, step_x, absolute(dy));
     int64_t next_y = first_crossing(from_y, row, step_y, absolute(dx));
-    int64_t cost_x = TILE_MILLIPX * absolute(dy), cost_y = TILE_MILLIPX * absolute(dx);
+    int64_t cost_x = (int64_t)TILE_MILLIPX * absolute(dy), cost_y = (int64_t)TILE_MILLIPX * absolute(dx);
     for (;;) {
         if (tile_is_solid(battle, column, row)) return false;
         if (column == end_column && row == end_row) return true;

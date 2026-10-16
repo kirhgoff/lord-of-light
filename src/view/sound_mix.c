@@ -74,7 +74,7 @@ static float px(int millipx)
 
 static bool push(SoundCue *out, int *n, int max, const char *id, float x, float y, SoundCategory category)
 {
-    if (id[0] == '\0' || *n >= max) return false;
+    if (!id || id[0] == '\0' || *n >= max) return false;
     out[(*n)++] = (SoundCue){id, x, y, category};
     return true;
 }

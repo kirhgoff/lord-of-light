@@ -131,12 +131,10 @@ static bool get_string(Context *ctx, const cJSON *obj, const char *parent, const
                        char *out, size_t size, bool required)
 {
     bool ok;
+    out[0] = '\0';
     const cJSON *item = get_item(ctx, obj, parent, key, required, &ok);
     if (!ok) return false;
-    if (!item) {
-        out[0] = '\0';
-        return true;
-    }
+    if (!item) return true;
     char path[PATH_LEN];
     join_key(path, parent, key);
     if (!cJSON_IsString(item)) return fail(ctx, path, "expected a string");
@@ -262,7 +260,7 @@ static char *read_file(const char *path)
     fseek(file, 0, SEEK_END);
     long size = ftell(file);
     fseek(file, 0, SEEK_SET);
-    char *text = malloc((size_t)size + 1);
+    char *text = size < 0 ? NULL : malloc((size_t)size + 1);
     if (text && fread(text, 1, (size_t)size, file) == (size_t)size) {
         text[size] = '\0';
     } else {

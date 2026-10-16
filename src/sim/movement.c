@@ -164,7 +164,7 @@ static bool overlaps_tile(const Battle *battle, int x_millipx, int y_millipx, in
     if (!tile_is_solid(battle, column, row)) return false;
     int left = column * TILE_MILLIPX, top = row * TILE_MILLIPX;
     int nearest_x = clamp(x_millipx, left, left + TILE_MILLIPX), nearest_y = clamp(y_millipx, top, top + TILE_MILLIPX);
-    return squared(x_millipx - nearest_x) + squared(y_millipx - nearest_y) < squared(COMBATANT_RADIUS_MILLIPX);
+    return squared(x_millipx - nearest_x) + squared(y_millipx - nearest_y) < squared((int64_t)COMBATANT_RADIUS_MILLIPX);
 }
 
 static bool hits_terrain(const Battle *battle, int x_millipx, int y_millipx)
@@ -185,7 +185,7 @@ static int64_t distance_squared(int ax, int ay, int bx, int by)
 static int blocking_combatant(const Battle *battle, int self, int x_millipx, int y_millipx)
 {
     const Combatant *me = &battle->combatants[self];
-    int64_t touching = squared(2 * COMBATANT_RADIUS_MILLIPX);
+    int64_t touching = squared(2 * (int64_t)COMBATANT_RADIUS_MILLIPX);
     for (int c = 0; c < battle->combatant_count; c++) {
         const Combatant *other = &battle->combatants[c];
         if (c == self || !other->alive) continue;
@@ -208,7 +208,7 @@ static bool try_move(Battle *battle, int self, int dx, int dy)
 
 static bool is_cramped(const Battle *battle, const Combatant *who, int tx, int ty, int step)
 {
-    int sideways_x = (int)((int64_t)tx * COMBATANT_RADIUS_MILLIPX / step), sideways_y = (int)((int64_t)ty * COMBATANT_RADIUS_MILLIPX / step);
+    int sideways_x = (int)((int64_t)tx * (int64_t)COMBATANT_RADIUS_MILLIPX / step), sideways_y = (int)((int64_t)ty * (int64_t)COMBATANT_RADIUS_MILLIPX / step);
     return hits_terrain(battle, who->x_millipx + sideways_x, who->y_millipx + sideways_y) ||
            hits_terrain(battle, who->x_millipx - sideways_x, who->y_millipx - sideways_y);
 }
@@ -233,7 +233,7 @@ static void move_towards(Battle *battle, int self, int goal_x, int goal_y, int s
     int dx = goal_x - me->x_millipx, dy = goal_y - me->y_millipx;
     int64_t distance = isqrt(squared(dx) + squared(dy));
     if (distance == 0) return;
-    if (distance > step) dx = (int)(dx * step / distance), dy = (int)(dy * step / distance);
+    if (distance > step) dx = (int)(dx * (int64_t)step / distance), dy = (int)(dy * (int64_t)step / distance);
     if (try_move(battle, self, dx, dy)) return;
     int blocker = blocking_combatant(battle, self, me->x_millipx + dx, me->y_millipx + dy);
     if (blocker >= 0) {
@@ -285,7 +285,7 @@ static void push_apart(Battle *battle, int first, int second)
 {
     Combatant *a = &battle->combatants[first], *b = &battle->combatants[second];
     int64_t dx = b->x_millipx - a->x_millipx, dy = b->y_millipx - a->y_millipx;
-    int64_t touching = 2 * COMBATANT_RADIUS_MILLIPX, gap = isqrt(squared(dx) + squared(dy));
+    int64_t touching = 2 * (int64_t)COMBATANT_RADIUS_MILLIPX, gap = isqrt(squared(dx) + squared(dy));
     if (gap >= touching) return;
     int64_t shift = (touching - gap) / 2 + 2;
     int sx = gap ? (int)(dx * shift / gap) : (int)shift, sy = gap ? (int)(dy * shift / gap) : 0;
