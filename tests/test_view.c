@@ -52,8 +52,9 @@ static void test_all_atlases_load_for_the_real_data(void)
     static Atlases atlases;
     char err[ERR_SIZE];
     LOAD_OR_EXIT(load_game_data(&data, "data", err, ERR_SIZE), err);
-    CHECK(atlases_load(&atlases, &data, err, ERR_SIZE));
-    if (err[0]) printf("  %s\n", err);
+    bool loaded = atlases_load(&atlases, &data, err, ERR_SIZE);
+    CHECK(loaded);
+    if (!loaded) printf("  %s\n", err);
 }
 
 static void test_viewport_starts_centred_and_clamped(void)
