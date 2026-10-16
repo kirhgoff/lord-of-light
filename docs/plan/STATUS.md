@@ -15,6 +15,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
+| 23 Quality gates + Linux CI | `23-quality-gates` at `~/Projects/lord-of-light-23-quality-gates` | executor running |
 
 ## Done
 
