@@ -13,7 +13,10 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 ## In flight
 
-None.
+| Ticket | Branch / worktree | State |
+|---|---|---|
+| 05 Combat | `05-combat-elements` / `~/Projects/lord-of-light-05-combat-elements` | sonnet executor running |
+| 18 Sprite proportions | `18-sprite-proportions` / `~/Projects/lord-of-light-18-sprite-proportions` | sonnet executor running |
 
 ## Done
 
@@ -29,7 +32,7 @@ None.
 
 ## Next up (once unblocked)
 
-- Frontier: 05 Combat, 18 Sprite proportions.
+- After 05: 06 Reflex + scheduling, 08 Pickups + traps.
 - Later: 16 Save/load keys (after 10).
 
 ## Open questions for the user

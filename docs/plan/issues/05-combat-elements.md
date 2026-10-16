@@ -1,7 +1,7 @@
 # Orders, combat, Elements, death
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 04, 17
 
 ## Question
