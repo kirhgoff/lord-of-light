@@ -57,6 +57,8 @@ make headless
 build/headless --seed 1 --ticks 300 --dump mid.json   # run and save state
 build/headless --load mid.json --ticks 300             # continue from a state
 build/headless --replay mid.json                       # replay its Decisions
+build/headless --seed 1 --ticks 300 --dump-requests build/requests-seed1.jsonl   # Decision request bodies + Reflex answers
+uv run --python 3.12 python tools/bench_jev_vs_laya.py --corpus build/requests-seed1.jsonl --size 60   # benchmark Jev vs Laya
 ```
 
 ## Development
