@@ -259,13 +259,24 @@ static void draw_confirm_dialog(int screen_width, int screen_height)
     draw_centred_text("Enter / Y: quit   Esc / N: stay", top + 76, 16, LIGHTGRAY, screen_width);
 }
 
+void hud_show_toast(Hud *hud, const char *text)
+{
+    snprintf(hud->toast, sizeof hud->toast, "%s", text);
+    hud->toast_until = GetTime() + TOAST_SECONDS;
+}
+
+static void draw_toast(const Hud *hud, const Viewport *view)
+{
+    if (GetTime() < hud->toast_until) draw_centred_text(hud->toast, view->height - 48, 20, RAYWHITE, view->width);
+}
+
 static void draw_hud(const Battle *b, const Hud *hud, const Viewport *view)
 {
     DrawRectangle(0, 0, view->width, HUD_HEIGHT, Fade(BLACK, 0.6f));
     draw_team_bar(b, SIDE_PANTHEON, 0, view->width / 2);
     draw_team_bar(b, SIDE_HORDE, view->width / 2, view->width);
     draw_status_label(b, hud, view->width);
-    DrawText("Space pause  Arrows pan  -/= zoom  T x-ray  Esc quit", 8, view->height - 18, 12, LIGHTGRAY);
+    DrawText("Space pause  Arrows pan  -/= zoom  T x-ray  F5 save  F9 load  Esc quit", 8, view->height - 18, 12, LIGHTGRAY);
 }
 
 void draw_frame_contents(const Battle *b, const GameData *data, const Scene *scene, const Atlases *atlases,
@@ -280,5 +291,6 @@ void draw_frame_contents(const Battle *b, const GameData *data, const Scene *sce
     draw_effects(scene, atlases, sheets, tick);
     EndMode2D();
     draw_hud(b, hud, view);
+    draw_toast(hud, view);
     if (hud->confirm_quit) draw_confirm_dialog(view->width, view->height);
 }
