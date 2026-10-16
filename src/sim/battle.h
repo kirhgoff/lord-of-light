@@ -130,6 +130,7 @@ int rng_below(uint32_t *state, int bound);
 
 /* A Battle must be zero-initialised (Battle b = {0};) before its first setup or load. */
 void battle_setup(Battle *battle, const GameData *data, uint32_t seed);
+int battle_add_combatant(Battle *battle, const GameData *data, const char *name, Side side, const Body *body, int x_millipx, int y_millipx);
 void battle_step(Battle *battle, const GameData *data);
 void battle_free(Battle *battle);
 bool battle_log_event(Battle *battle, Event event);

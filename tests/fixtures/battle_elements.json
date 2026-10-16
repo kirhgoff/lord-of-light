@@ -1,0 +1,721 @@
+{
+ "seed": 5,
+ "rng": 12345,
+ "tick": 0,
+ "pantheon": "Hindu",
+ "arena": [
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................",
+  "................................................"
+ ],
+ "combatants": [
+  {
+   "name": "Striker",
+   "side": "pantheon",
+   "alive": true,
+   "x_millipx": 168000,
+   "y_millipx": 176000,
+   "body": {
+    "core": 0,
+    "slots": [
+     {
+      "id": "torso",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "torso"
+     },
+     {
+      "id": "heart",
+      "internal": true,
+      "x": 0,
+      "y": 0,
+      "part": "large_heart"
+     },
+     {
+      "id": "sword",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "sword_hand"
+     },
+     {
+      "id": "maw",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "ember_maw"
+     },
+     {
+      "id": "fang",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "frost_fang"
+     },
+     {
+      "id": "tentacle",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "electric_tentacle"
+     },
+     {
+      "id": "lantern",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "glow_lantern"
+     },
+     {
+      "id": "stinger",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "venom_stinger"
+     },
+     {
+      "id": "lobe",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "mind_lobe"
+     },
+     {
+      "id": "tendril",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "void_tendril"
+     },
+     {
+      "id": "sac",
+      "internal": true,
+      "x": 0,
+      "y": 0,
+      "part": "spawning_sac"
+     },
+     {
+      "id": "healer",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "healing_hand"
+     },
+     {
+      "id": "shield",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "shield_hand"
+     }
+    ],
+    "edges": [
+     [
+      0,
+      1
+     ],
+     [
+      0,
+      2
+     ],
+     [
+      0,
+      3
+     ],
+     [
+      0,
+      4
+     ],
+     [
+      0,
+      5
+     ],
+     [
+      0,
+      6
+     ],
+     [
+      0,
+      7
+     ],
+     [
+      0,
+      8
+     ],
+     [
+      0,
+      9
+     ],
+     [
+      0,
+      10
+     ],
+     [
+      0,
+      11
+     ],
+     [
+      0,
+      12
+     ]
+    ]
+   },
+   "parts": [
+    {
+     "integrity": 60,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 25,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 25,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 22,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 20,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 18,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 14,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 15,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 15,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 16,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 20,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 25,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 35,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    }
+   ],
+   "vitality": 60,
+   "vitality_max": 60,
+   "slow_ticks": 0,
+   "dot_ticks": 0,
+   "charm_ticks": 0,
+   "charm_side": "pantheon",
+   "dot_damage": 0,
+   "dot_element": -1,
+   "dot_source": -1,
+   "slow_percent": 0,
+   "spawner": -1,
+   "damage_bonus_percent": 0,
+   "damage_bonus_ticks": 0,
+   "decision": {
+    "stance": "none",
+    "hurt_level": 0,
+    "vulnerable_element": -1
+   }
+  },
+  {
+   "name": "Dummy",
+   "side": "horde",
+   "alive": true,
+   "x_millipx": 200000,
+   "y_millipx": 176000,
+   "body": {
+    "core": 0,
+    "slots": [
+     {
+      "id": "torso",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "torso"
+     },
+     {
+      "id": "heart",
+      "internal": true,
+      "x": 0,
+      "y": 0,
+      "part": "heart"
+     },
+     {
+      "id": "gland",
+      "internal": true,
+      "x": 0,
+      "y": 0,
+      "part": "ganglion"
+     },
+     {
+      "id": "plate",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "armour_plate"
+     },
+     {
+      "id": "legs",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "legs"
+     },
+     {
+      "id": "shield",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "shield_hand"
+     }
+    ],
+    "edges": [
+     [
+      0,
+      1
+     ],
+     [
+      0,
+      2
+     ],
+     [
+      0,
+      3
+     ],
+     [
+      0,
+      4
+     ],
+     [
+      0,
+      5
+     ]
+    ]
+   },
+   "parts": [
+    {
+     "integrity": 60,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 20,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 10,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 50,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 40,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 35,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    }
+   ],
+   "vitality": 40,
+   "vitality_max": 40,
+   "slow_ticks": 0,
+   "dot_ticks": 0,
+   "charm_ticks": 0,
+   "charm_side": "horde",
+   "dot_damage": 0,
+   "dot_element": -1,
+   "dot_source": -1,
+   "slow_percent": 0,
+   "spawner": -1,
+   "damage_bonus_percent": 0,
+   "damage_bonus_ticks": 0,
+   "decision": {
+    "stance": "none",
+    "hurt_level": 0,
+    "vulnerable_element": -1
+   }
+  },
+  {
+   "name": "Second",
+   "side": "horde",
+   "alive": true,
+   "x_millipx": 264000,
+   "y_millipx": 176000,
+   "body": {
+    "core": 0,
+    "slots": [
+     {
+      "id": "torso",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "torso"
+     },
+     {
+      "id": "heart",
+      "internal": true,
+      "x": 0,
+      "y": 0,
+      "part": "heart"
+     }
+    ],
+    "edges": [
+     [
+      0,
+      1
+     ]
+    ]
+   },
+   "parts": [
+    {
+     "integrity": 60,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 20,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    }
+   ],
+   "vitality": 40,
+   "vitality_max": 40,
+   "slow_ticks": 0,
+   "dot_ticks": 0,
+   "charm_ticks": 0,
+   "charm_side": "horde",
+   "dot_damage": 0,
+   "dot_element": -1,
+   "dot_source": -1,
+   "slow_percent": 0,
+   "spawner": -1,
+   "damage_bonus_percent": 0,
+   "damage_bonus_ticks": 0,
+   "decision": {
+    "stance": "none",
+    "hurt_level": 0,
+    "vulnerable_element": -1
+   }
+  },
+  {
+   "name": "Far",
+   "side": "horde",
+   "alive": true,
+   "x_millipx": 360000,
+   "y_millipx": 176000,
+   "body": {
+    "core": 0,
+    "slots": [
+     {
+      "id": "torso",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "torso"
+     },
+     {
+      "id": "heart",
+      "internal": true,
+      "x": 0,
+      "y": 0,
+      "part": "heart"
+     }
+    ],
+    "edges": [
+     [
+      0,
+      1
+     ]
+    ]
+   },
+   "parts": [
+    {
+     "integrity": 60,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 20,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    }
+   ],
+   "vitality": 40,
+   "vitality_max": 40,
+   "slow_ticks": 0,
+   "dot_ticks": 0,
+   "charm_ticks": 0,
+   "charm_side": "horde",
+   "dot_damage": 0,
+   "dot_element": -1,
+   "dot_source": -1,
+   "slow_percent": 0,
+   "spawner": -1,
+   "damage_bonus_percent": 0,
+   "damage_bonus_ticks": 0,
+   "decision": {
+    "stance": "none",
+    "hurt_level": 0,
+    "vulnerable_element": -1
+   }
+  },
+  {
+   "name": "Hurt",
+   "side": "pantheon",
+   "alive": true,
+   "x_millipx": 120000,
+   "y_millipx": 176000,
+   "body": {
+    "core": 0,
+    "slots": [
+     {
+      "id": "torso",
+      "internal": false,
+      "x": 0,
+      "y": 0,
+      "part": "torso"
+     },
+     {
+      "id": "heart",
+      "internal": true,
+      "x": 0,
+      "y": 0,
+      "part": "heart"
+     }
+    ],
+    "edges": [
+     [
+      0,
+      1
+     ]
+    ]
+   },
+   "parts": [
+    {
+     "integrity": 60,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    },
+    {
+     "integrity": 20,
+     "cooldown": 0,
+     "order": {
+      "kind": "idle",
+      "target": -1,
+      "x_millipx": 0,
+      "y_millipx": 0
+     }
+    }
+   ],
+   "vitality": 10,
+   "vitality_max": 40,
+   "slow_ticks": 0,
+   "dot_ticks": 0,
+   "charm_ticks": 0,
+   "charm_side": "pantheon",
+   "dot_damage": 0,
+   "dot_element": -1,
+   "dot_source": -1,
+   "slow_percent": 0,
+   "spawner": -1,
+   "damage_bonus_percent": 0,
+   "damage_bonus_ticks": 0,
+   "decision": {
+    "stance": "none",
+    "hurt_level": 0,
+    "vulnerable_element": -1
+   }
+  }
+ ],
+ "pickups": [],
+ "traps": [],
+ "remains": [],
+ "log": []
+}
