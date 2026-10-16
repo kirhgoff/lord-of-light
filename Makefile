@@ -43,7 +43,7 @@ TIDY_FILES := $(wildcard src/*.c src/sim/*.c src/laya/*.c src/view/*.c)
 CLANG_TIDY := uv tool run --exclude-newer 2026-10-15 clang-tidy==22.1.8
 TIDY_FLAGS := $(STD) -Ivendor/cjson -I$(RAYLIB_DIR) -isystem vendor/clay $(TIDY_SYSROOT)
 
-.PHONY: tidy game headless test run clean asan balance screenshots laya-local format format-check
+.PHONY: cppcheck tidy game headless test run clean asan balance screenshots laya-local format format-check
 
 game: $(BUILD)/game
 headless: $(BUILD)/headless
@@ -126,6 +126,9 @@ format-check:
 
 tidy:
 	$(CLANG_TIDY) $(TIDY_FILES) -- $(TIDY_FLAGS)
+
+cppcheck:
+	cppcheck --enable=warning,performance,portability --error-exitcode=1 --quiet --std=c11 -Ivendor/cjson --suppress=missingInclude -i src/view/ui.c src
 
 clean:
 	rm -rf $(BUILD)

@@ -665,7 +665,7 @@ static bool body_plans_from_root(Context *ctx, const cJSON *root, GameData *data
     const cJSON *list;
     if (!get_array(ctx, root, "", "bodyplans", &list, true)) return false;
     int count = 0;
-    BodyPlan plans[MAX_BODY_PLANS];
+    BodyPlan plans[MAX_BODY_PLANS] = {0};
     const cJSON *item;
     cJSON_ArrayForEach(item, list)
     {
