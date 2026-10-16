@@ -126,6 +126,7 @@ static void test_round_trip_is_identical(void)
     battle.combatants[2].parts[1].order = (Order){ORDER_STRIKE, 5, 10000, 20000};
     battle.combatants[2].decision = (Decision){STANCE_FIGHT, HURT_WOUNDED, ELEMENT_FIRE};
     battle.combatants[3].next_decision_tick = 77;
+    battle.combatants[3].next_waiting_tick = 88;
     battle.combatants[5].charm_ticks = 9;
     battle.combatants[5].charm_side = SIDE_PANTHEON;
     battle.combatants[5].dot_damage = 2;
@@ -145,7 +146,7 @@ static void test_round_trip_is_identical(void)
     char *again = battle_save_json(&loaded, &data);
     CHECK(strcmp(json, again) == 0);
     CHECK(memcmp(loaded.obstacle, battle.obstacle, sizeof battle.obstacle) == 0);
-    CHECK(loaded.combatants[3].next_decision_tick == 77 && loaded.log[1].decider == DECIDER_REFLEX);
+    CHECK(loaded.combatants[3].next_decision_tick == 77 && loaded.combatants[3].next_waiting_tick == 88 && loaded.log[1].decider == DECIDER_REFLEX);
     const Event *back = &loaded.log[2];
     CHECK(back->confidence_permille == 415 && back->latency_ms == 612 && back->fallback == FALLBACK_LOW_CONFIDENCE);
     CHECK(back->stance_permille[STANCE_FIGHT] == 610 && back->stance_permille[STANCE_RETREAT] == 200 && back->stance_permille[STANCE_COLLECT] == 190);
@@ -239,6 +240,7 @@ static void test_load_rejects_bad_input(void)
     check_rejected(json, "\"hurt_level\":0", "\"hurt_level\":4");
     check_rejected(json, "\"decider\":0", "\"decider\":3");
     check_rejected(json, "\"next_decision_tick\":0", "\"next_decision_tick\":-1");
+    check_rejected(json, "\"next_waiting_tick\":0", "\"next_waiting_tick\":-1");
     check_rejected(json, "\"decision\":{\"stance\"", "\"decisionx\":{\"stance\"");
     check_rejected(json, "\"slots\":[{", "\"slots\":[5,{");
     check_rejected(json, "\"def\":\"soma\"", "\"def\":\"no_such_pickup\"");

@@ -81,6 +81,7 @@ typedef struct {
     int damage_bonus_percent;
     int damage_bonus_ticks;
     int next_decision_tick;
+    int next_waiting_tick;
     int haste_percent;
     int haste_ticks;
     int vision_percent;

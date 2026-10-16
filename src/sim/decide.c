@@ -440,6 +440,12 @@ static int collect_due(const Battle *battle, const GameData *data, int due[MAX_C
     return count;
 }
 
+static int decision_interval(const Combatant *who, const GameData *data)
+{
+    int interval = DECISION_INTERVAL_K / combatant_initiative(who, data);
+    return interval > 1 ? interval : 1;
+}
+
 static void ask(Battle *battle, const GameData *data, Decider *decider, int combatant)
 {
     Combatant *who = &battle->combatants[combatant];
@@ -447,12 +453,13 @@ static void ask(Battle *battle, const GameData *data, Decider *decider, int comb
     if (decider->decide(decider, battle, data, combatant, &event)) {
         event.actor = combatant;
         store_decision(battle, event);
-        int interval = DECISION_INTERVAL_K / combatant_initiative(who, data);
-        who->next_decision_tick = battle->tick + (interval > 1 ? interval : 1);
-    } else if (who->decision.stance == STANCE_NONE) {
+        who->next_decision_tick = battle->tick + decision_interval(who, data);
+        who->next_waiting_tick = who->next_decision_tick;
+    } else if (battle->tick >= who->next_waiting_tick) {
         reflex_decide(NULL, battle, data, combatant, &event);
         event.fallback = FALLBACK_WAITING;
         store_decision(battle, event);
+        who->next_waiting_tick = battle->tick + decision_interval(who, data);
     }
 }
 

@@ -171,6 +171,34 @@ static void test_a_pending_request_is_not_asked_again(void)
     finish();
 }
 
+static int events_of(int combatant, DeciderKind decider, Fallback fallback)
+{
+    int count = 0;
+    for (int e = 0; e < battle.log_count; e++)
+        count += battle.log[e].kind == EVENT_DECISION && battle.log[e].actor == combatant && battle.log[e].decider == decider &&
+                 battle.log[e].fallback == fallback;
+    return count;
+}
+
+static void test_reflex_keeps_deciding_while_a_request_is_pending(void)
+{
+    start(3, 1);
+    int slowest = 0;
+    for (int c = 0; c < battle.combatant_count; c++)
+        if (combatant_initiative(&battle.combatants[c], &data) < combatant_initiative(&battle.combatants[slowest], &data)) slowest = c;
+    int interval = DECISION_INTERVAL_K / combatant_initiative(&battle.combatants[slowest], &data);
+    CHECK(interval > 1);
+    fake.hold_replies = true;
+    run(2 * interval);
+    CHECK(events_of(slowest, DECIDER_REFLEX, FALLBACK_WAITING) == 2);
+    CHECK(events_of(slowest, DECIDER_LAYA, FALLBACK_NONE) == 0);
+    fake.hold_replies = false;
+    run(1);
+    CHECK(events_of(slowest, DECIDER_REFLEX, FALLBACK_WAITING) == 2);
+    CHECK(events_of(slowest, DECIDER_LAYA, FALLBACK_NONE) == 1);
+    finish();
+}
+
 static void test_timeout_falls_back_to_the_reflex(void)
 {
     start(3, 1);
@@ -338,6 +366,7 @@ void run_laya_tests(void)
     test_transfer_outcomes_are_classified();
     test_timeout_backs_off_too();
     test_a_pending_request_is_not_asked_again();
+    test_reflex_keeps_deciding_while_a_request_is_pending();
     test_timeout_falls_back_to_the_reflex();
     test_unreachable_backs_off_then_asks_again();
     test_next_url_answers_when_the_first_is_unreachable();

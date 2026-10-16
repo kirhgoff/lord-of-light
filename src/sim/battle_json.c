@@ -94,6 +94,7 @@ static cJSON *save_combatant(const Combatant *c, const GameData *data)
     cJSON_AddNumberToObject(o, "damage_bonus_percent", c->damage_bonus_percent);
     cJSON_AddNumberToObject(o, "damage_bonus_ticks", c->damage_bonus_ticks);
     cJSON_AddNumberToObject(o, "next_decision_tick", c->next_decision_tick);
+    cJSON_AddNumberToObject(o, "next_waiting_tick", c->next_waiting_tick);
     cJSON_AddNumberToObject(o, "haste_percent", c->haste_percent);
     cJSON_AddNumberToObject(o, "haste_ticks", c->haste_ticks);
     cJSON_AddNumberToObject(o, "vision_percent", c->vision_percent);
@@ -385,6 +386,7 @@ static bool load_combatant(Context *ctx, const cJSON *obj, Combatant *c)
            read_int(ctx, obj, "damage_bonus_percent", 0, 1000, &c->damage_bonus_percent) &&
            read_int(ctx, obj, "damage_bonus_ticks", 0, 1000000, &c->damage_bonus_ticks) &&
            read_int(ctx, obj, "next_decision_tick", 0, MAX_TICK, &c->next_decision_tick) &&
+           read_int(ctx, obj, "next_waiting_tick", 0, MAX_TICK, &c->next_waiting_tick) &&
            read_int(ctx, obj, "haste_percent", 0, 1000, &c->haste_percent) &&
            read_int(ctx, obj, "haste_ticks", 0, 1000000, &c->haste_ticks) &&
            read_int(ctx, obj, "vision_percent", 0, 1000, &c->vision_percent) &&
