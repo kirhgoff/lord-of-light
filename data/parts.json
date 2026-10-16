@@ -71,6 +71,11 @@
       "minion_only": true,
       "integrity": 10,
       "sprite": "crow_body",
+      "vision": {
+        "close": 48,
+        "medium": 96,
+        "far": 160
+      },
       "move_speed": 80,
       "step_sound": "step_wings"
     },
@@ -81,6 +86,11 @@
       "minion_only": true,
       "integrity": 8,
       "sprite": "wisp_core",
+      "vision": {
+        "close": 48,
+        "medium": 96,
+        "far": 160
+      },
       "move_speed": 70,
       "resistances": {
         "kinetic": 50

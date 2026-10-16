@@ -195,6 +195,8 @@ static void test_minion_plans_are_fixed(void)
         for (int s = 0; s < body->slot_count; s++) CHECK(body->slots[s].part >= 0);
     }
     CHECK(data.parts[find_part(&data, "imp_body")].minion_only);
+    CHECK(data.parts[find_part(&data, "crow_body")].vision_far > 0);
+    CHECK(data.parts[find_part(&data, "wisp_core")].vision_far > 0);
     CHECK(!data.parts[find_part(&data, "heart")].minion_only);
 }
 
