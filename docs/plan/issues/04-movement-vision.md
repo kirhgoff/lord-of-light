@@ -24,3 +24,7 @@ In `src/sim/`:
 Noted for ticket 06: opposing groups deadlock at a gap (steering aims at tile centres, no sidestep).
 Design questions for the user (see STATUS): collision radius (5 px now; reviewer suggests a 10–12 px feet footprint with clearance-aware A*), and whether a Combatant charmed to your side stops counting as an enemy to you.
 Reviewer probes (volatile): scratchpad `perf/`.
+
+**User decisions 2026-10-16 (added as findings 6–7):**
+6. Collision radius becomes an ~11 px feet footprint; A* is clearance-aware (no paths through gaps narrower than the footprint).
+7. Charm flips both views: a monster charmed to the Pantheon also stops counting as an enemy to the Pantheon's Combatants.

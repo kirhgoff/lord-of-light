@@ -17,8 +17,8 @@ Handover 2026-10-16: the user asked to stop starting new tasks. The agents below
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 04 Movement + vision | `04-movement-vision` / `~/Projects/lord-of-light-04-movement-vision` | review CHANGES — findings in the ticket's `## Comments`; next: send them to a sonnet executor on this branch, then re-review |
-| 17 Slot roles | `17-slot-roles` / `~/Projects/lord-of-light-17-slot-roles` | executor done (363786d), not reviewed — see the ticket's `## Comments`; next: opus review + fable look at composed bodies |
+| 04 Movement + vision | `04-movement-vision` / `~/Projects/lord-of-light-04-movement-vision` | sonnet executor fixing review findings 1–7 (2026-10-16); next: re-review |
+| 17 Slot roles | `17-slot-roles` / `~/Projects/lord-of-light-17-slot-roles` | opus code review + fable body-sprite review running (2026-10-16) |
 
 If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`, `git status`), then either spawn a new executor to finish from there or review what exists.
 
@@ -39,5 +39,4 @@ If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`
 
 ## Open questions for the user
 
-- Collision radius (ticket 04): keep 5 px, or a ~10–12 px feet footprint with clearance-aware A* (Combatants overlap less, can't squeeze through 1-tile gaps)? Reviewer recommends the latter.
-- Charm (ticket 04/06): should a monster charmed to the Pantheon stop counting as an enemy to the Pantheon? Currently only the charmed Combatant's own view changes.
+None. Answered 2026-10-16: collision is an ~11 px feet footprint with clearance-aware A*; a monster charmed to the Pantheon also stops counting as an enemy to the Pantheon (both views flip). Both folded into ticket 04 as findings 6–7.
