@@ -11,9 +11,11 @@ RAYLIB_OBJECTS := $(RAYLIB_SOURCES:%=$(BUILD)/raylib/%.o) $(BUILD)/raylib/rglfw.
 RAYLIB_LIB := $(BUILD)/libraylib.a
 FRAMEWORKS := -framework Cocoa -framework IOKit -framework CoreVideo -framework OpenGL
 
-SIM_SOURCES := $(wildcard src/sim/*.c)
-VIEW_SOURCES := $(wildcard src/view/*.c)
-TEST_SOURCES := $(wildcard tests/*.c)
+SIM_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard src/sim/*.c))
+VIEW_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard src/view/*.c))
+TEST_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard tests/*.c))
+GAME_OBJECTS := $(BUILD)/obj/src/main_game.o $(VIEW_OBJECTS) $(SIM_OBJECTS)
+HEADLESS_OBJECTS := $(BUILD)/obj/src/main_headless.o $(SIM_OBJECTS)
 
 .PHONY: game headless test run clean
 
@@ -26,16 +28,20 @@ run: game
 test: $(BUILD)/tests
 	$(BUILD)/tests
 
-$(BUILD)/game: src/main_game.c $(SIM_SOURCES) $(VIEW_SOURCES) $(RAYLIB_LIB)
-	$(CC) $(STRICT) -I$(RAYLIB_DIR) $^ $(FRAMEWORKS) -o $@
+$(BUILD)/game: $(GAME_OBJECTS) $(RAYLIB_LIB)
+	$(CC) $^ $(FRAMEWORKS) -o $@
 
-$(BUILD)/headless: src/main_headless.c $(SIM_SOURCES)
-	@mkdir -p $(BUILD)
-	$(CC) $(STRICT) $^ -o $@
+$(BUILD)/headless: $(HEADLESS_OBJECTS)
+	$(CC) $^ -o $@
 
-$(BUILD)/tests: $(TEST_SOURCES) $(SIM_SOURCES)
-	@mkdir -p $(BUILD)
-	$(CC) $(STRICT) $^ -o $@
+$(BUILD)/tests: $(TEST_OBJECTS) $(SIM_OBJECTS)
+	$(CC) $^ -o $@
+
+$(BUILD)/obj/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) $(STRICT) -MMD -MP -c $< -o $@
+
+$(BUILD)/obj/src/main_game.o $(VIEW_OBJECTS): STRICT += -I$(RAYLIB_DIR)
 
 $(RAYLIB_LIB): $(RAYLIB_OBJECTS)
 	ar rcs $@ $^
@@ -50,3 +56,5 @@ $(BUILD)/raylib/%.o: $(RAYLIB_DIR)/%.c
 
 clean:
 	rm -rf $(BUILD)
+
+-include $(shell find $(BUILD)/obj -name "*.d" 2>/dev/null)
