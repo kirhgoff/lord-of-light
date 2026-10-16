@@ -108,7 +108,8 @@ static void test_step_advances_tick_and_moves_only_with_orders(void)
 
 static Event decision_event_with_provenance(void)
 {
-    Event event = {0, EVENT_DECISION, 2, -1, -1, -1, ELEMENT_FIRE, STANCE_FIGHT, HURT_WOUNDED, DECIDER_REFLEX};
+    Event event = {.tick = 0, .kind = EVENT_DECISION, .actor = 2, .actor_part = -1, .target = -1, .target_part = -1,
+                   .element = ELEMENT_FIRE, .amount = STANCE_FIGHT, .detail = HURT_WOUNDED, .decider = DECIDER_REFLEX};
     event.confidence_permille = 415;
     event.latency_ms = 612;
     event.fallback = FALLBACK_LOW_CONFIDENCE;
@@ -121,7 +122,7 @@ static void test_round_trip_is_identical(void)
     load_data();
     battle_setup(&battle, &data, 11);
     run(&battle, 30);
-    CHECK(battle_log_event(&battle, (Event){0, EVENT_HIT, 1, 2, 5, 3, ELEMENT_FIRE, 12, -4, DECIDER_NONE}));
+    CHECK(battle_log_event(&battle, (Event){.tick = 0, .kind = EVENT_HIT, .actor = 1, .actor_part = 2, .target = 5, .target_part = 3, .element = ELEMENT_FIRE, .amount = 12, .detail = -4, .decider = DECIDER_NONE}));
     battle.combatants[2].parts[1].order = (Order){ORDER_STRIKE, 5, 10000, 20000};
     battle.combatants[2].decision = (Decision){STANCE_FIGHT, HURT_WOUNDED, ELEMENT_FIRE};
     battle.combatants[3].next_decision_tick = 77;
@@ -134,7 +135,7 @@ static void test_round_trip_is_identical(void)
     battle.combatants[5].spawner = 2;
     battle.combatants[5].damage_bonus_percent = 50;
     battle.combatants[5].damage_bonus_ticks = 7;
-    CHECK(battle_log_event(&battle, (Event){0, EVENT_DECISION, 2, -1, -1, -1, ELEMENT_FIRE, STANCE_FIGHT, HURT_WOUNDED, DECIDER_REFLEX}));
+    CHECK(battle_log_event(&battle, (Event){.tick = 0, .kind = EVENT_DECISION, .actor = 2, .actor_part = -1, .target = -1, .target_part = -1, .element = ELEMENT_FIRE, .amount = STANCE_FIGHT, .detail = HURT_WOUNDED, .decider = DECIDER_REFLEX}));
     Event provenance = decision_event_with_provenance();
     CHECK(battle_log_event(&battle, provenance));
     battle.remains[0] = (Remains){5000, 6000, 2, {1, 2}};
@@ -186,7 +187,7 @@ static void test_rng_is_deterministic_and_never_zero(void)
 static char *saved_json(uint32_t seed)
 {
     battle_setup(&battle, &data, seed);
-    battle_log_event(&battle, (Event){0, EVENT_HIT, 0, 0, 1, 0, ELEMENT_FIRE, 5, 0, DECIDER_NONE});
+    battle_log_event(&battle, (Event){.tick = 0, .kind = EVENT_HIT, .actor = 0, .actor_part = 0, .target = 1, .target_part = 0, .element = ELEMENT_FIRE, .amount = 5, .detail = 0, .decider = DECIDER_NONE});
     return battle_save_json(&battle, &data);
 }
 
@@ -283,7 +284,7 @@ static void test_decision_provenance_is_validated_and_hits_stay_small(void)
     free(json);
     battle_free(&battle);
     battle_setup(&battle, &data, 3);
-    CHECK(battle_log_event(&battle, (Event){0, EVENT_HIT, 0, 0, 1, 0, ELEMENT_FIRE, 5, 0, DECIDER_NONE}));
+    CHECK(battle_log_event(&battle, (Event){.tick = 0, .kind = EVENT_HIT, .actor = 0, .actor_part = 0, .target = 1, .target_part = 0, .element = ELEMENT_FIRE, .amount = 5, .detail = 0, .decider = DECIDER_NONE}));
     json = battle_save_json(&battle, &data);
     CHECK(strstr(json, "confidence_permille") == NULL);
     CHECK(battle_load_json(&loaded, &data, json, err, ERR_SIZE));
@@ -311,7 +312,7 @@ static void test_log_grows_without_dropping(void)
     load_data();
     reset(&battle);
     battle_setup(&battle, &data, 3);
-    for (int i = 0; i < 5000; i++) CHECK(battle_log_event(&battle, (Event){0, EVENT_HIT, 0, 0, 1, 0, -1, i, 0, DECIDER_NONE}));
+    for (int i = 0; i < 5000; i++) CHECK(battle_log_event(&battle, (Event){.tick = 0, .kind = EVENT_HIT, .actor = 0, .actor_part = 0, .target = 1, .target_part = 0, .element = -1, .amount = i, .detail = 0, .decider = DECIDER_NONE}));
     CHECK(battle.log_count == 5000 && battle.log[4999].amount == 4999);
     char *json = battle_save_json(&battle, &data);
     CHECK(battle_load_json(&loaded, &data, json, err, ERR_SIZE));

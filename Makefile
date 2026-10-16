@@ -2,7 +2,7 @@ CC := clang
 BUILD := build
 SAN :=
 STD := -std=c11
-STRICT := $(STD) -O2 -Wall -Wextra -Wno-missing-field-initializers -Werror -Ivendor/cjson $(SAN)
+STRICT := $(STD) -O2 -Wall -Wextra -Werror -Ivendor/cjson $(SAN)
 VENDOR_FLAGS := $(STD) -w -O2 $(SAN)
 
 RAYLIB_DIR := vendor/raylib/src

@@ -347,7 +347,7 @@ static void test_buffs_and_trap_events_survive_save_and_load(void)
     dummy->haste_percent = 50, dummy->haste_ticks = 7;
     dummy->vision_percent = 60, dummy->vision_ticks = 8;
     dummy->ward_percent = 40, dummy->ward_ticks = 9;
-    battle_log_event(&battle, (Event){0, EVENT_TRAP, -1, -1, DUMMY, -1, ELEMENT_FROST, 8, 1, DECIDER_NONE});
+    battle_log_event(&battle, (Event){.tick = 0, .kind = EVENT_TRAP, .actor = -1, .actor_part = -1, .target = DUMMY, .target_part = -1, .element = ELEMENT_FROST, .amount = 8, .detail = 1, .decider = DECIDER_NONE});
     char *json = battle_save_json(&battle, &data);
     static Battle loaded;
     CHECK(battle_load_json(&loaded, &data, json, err, ERR_SIZE));

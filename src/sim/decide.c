@@ -48,7 +48,7 @@ int combatant_initiative(const Combatant *c, const GameData *data)
 
 Event decision_event(int combatant, Stance stance, HurtLevel hurt, int element, DeciderKind decider)
 {
-    return (Event){0, EVENT_DECISION, combatant, -1, -1, -1, element, stance, hurt, decider};
+    return (Event){.tick = 0, .kind = EVENT_DECISION, .actor = combatant, .actor_part = -1, .target = -1, .target_part = -1, .element = element, .amount = stance, .detail = hurt, .decider = decider};
 }
 
 Decision event_decision(const Event *event)
