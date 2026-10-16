@@ -381,6 +381,21 @@ static void test_missing_confidence_and_probabilities_count_as_zero(void)
     for (int s = 0; s < STANCE_COUNT; s++) CHECK(event.stance_permille[s] == 0);
 }
 
+static void test_out_of_range_numbers_are_clamped(void)
+{
+    int dagda, apollo;
+    int zeus = zeus_with_company(&dagda, &apollo);
+    LayaQuestions asked;
+    free(request_for(zeus, &asked));
+    const char *wild =
+        "{\"answers\":{\"hurt\":{\"choice\":\"unhurt\"},\"element\":{\"choice\":\"Kinetic\"},\"stance\":{\"choice\":\"fight the nearest enemy\","
+        "\"probabilities\":{\"fight the nearest enemy\":1e400,\"retreat from the enemy\":-1e400,\"collect the pickup\":5},\"x_jev_confidence\":1e400}}}";
+    bool truncated;
+    Event event = decide_reply(zeus, &asked, wild, FALLBACK_NONE, 5, &truncated);
+    CHECK(event.decider == DECIDER_LAYA && event.confidence_permille == 1000);
+    CHECK(event.stance_permille[STANCE_FIGHT] == 1000 && event.stance_permille[STANCE_RETREAT] == 0 && event.stance_permille[STANCE_COLLECT] == 1000);
+}
+
 void run_briefing_request_tests(void)
 {
     test_request_for_the_worked_example();
@@ -393,5 +408,6 @@ void run_briefing_request_tests(void)
     test_transport_failures_fall_back_to_the_reflex();
     test_truncation_is_reported();
     test_missing_confidence_and_probabilities_count_as_zero();
+    test_out_of_range_numbers_are_clamped();
     battle_free(&battle);
 }

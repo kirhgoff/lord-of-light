@@ -363,8 +363,9 @@ static Event reflex_fallback(const Battle *battle, const GameData *data, int com
 
 static int clamp_permille(double probability)
 {
-    int permille = (int)(probability * 1000 + 0.5);
-    return permille < 0 ? 0 : permille > 1000 ? 1000 : permille;
+    if (!(probability > 0)) return 0;
+    if (probability >= 1) return 1000;
+    return (int)(probability * 1000 + 0.5);
 }
 
 static const cJSON *choice_answer(const cJSON *answers, const char *id, const char *const *keys, int count, int *chosen)
