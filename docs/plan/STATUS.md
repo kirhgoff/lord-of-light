@@ -15,7 +15,6 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 21 Parallel Laya requests | `21-laya-parallel` / `~/Projects/lord-of-light-21-laya-parallel` | sonnet executor running |
 
 ## Done
 
@@ -27,6 +26,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 - 09 Placeholder sprites — merged after design re-review.
 - 14 Clay+raylib research — merged (`docs/research/clay-raylib.md`).
 - 17 Slot roles — merged after 2 code + 2 design review rounds.
+- 21 Parallel Laya requests — closed unmerged: the server serialises inference (laya.md), no speedup measured.
 - 12 Clay UI — merged after a code + design review and a design re-check. The map's destination is reached.
 - 11 Laya decider — merged after one review round and three user decisions.
 - 20 Sound playback — merged after one review round.
