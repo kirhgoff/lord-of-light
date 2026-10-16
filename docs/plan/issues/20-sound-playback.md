@@ -14,3 +14,7 @@ Blocked by: 05, 10, 19
 - Pause: no new sounds while paused. `M` mutes and unmutes; master volume constant in one place.
 - Headless runs and `make test` never open the audio device.
 - Loudness (from the ticket 19 review): every WAV peaks at −3 dBFS but RMS ranges −30 dB (`fire_hit`) to −10 dB (`lightning_cast`), and steps peak as loud as `cue_death`. Add per-category gain (steps quieter, cues louder), or switch the generator to loudness normalisation.
+
+## Comments
+
+**Review 1 (opus): CHANGES.** Pan conversion verified against raudio.c (`left = pan`): right of viewport → right speaker. Accepted: heal plays the support ability sound, ability chosen by Element, part_destroyed on detail ≤ 0, pickups/traps as cues, cap drops later cues. To fix: chain-lightning hops stack the cast sound (+9.5 dB), no audio device → exit 1 naming a WAV, cast branch untested, `sound_reset` not called after F9. Known limitation: a Part with both a strike and a cast of the same Element (Thor's `lightning_hammer`) always plays the strike sound, because Events don't carry the ability.
