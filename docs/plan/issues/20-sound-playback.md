@@ -1,7 +1,7 @@
 # Sound playback relative to the viewport
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 05, 10, 19
 
 ## Question

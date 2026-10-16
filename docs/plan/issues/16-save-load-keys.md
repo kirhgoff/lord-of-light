@@ -1,7 +1,7 @@
 # Save and load the Battle from the keyboard
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 03, 10
 
 ## Question

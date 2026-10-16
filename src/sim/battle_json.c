@@ -372,7 +372,7 @@ static bool load_combatant(Context *ctx, const cJSON *obj, Combatant *c)
         return false;
     c->side = (Side)side;
     c->charm_side = (Side)charm_side;
-    return read_int(ctx, obj, "vitality", 0, 1000000, &c->vitality) &&
+    bool read = read_int(ctx, obj, "vitality", 0, 1000000, &c->vitality) &&
            read_int(ctx, obj, "vitality_max", 0, 1000000, &c->vitality_max) &&
            read_int(ctx, obj, "slow_ticks", 0, 1000000, &c->slow_ticks) &&
            read_int(ctx, obj, "dot_ticks", 0, 1000000, &c->dot_ticks) &&
@@ -391,6 +391,8 @@ static bool load_combatant(Context *ctx, const cJSON *obj, Combatant *c)
            read_int(ctx, obj, "vision_ticks", 0, 1000000, &c->vision_ticks) &&
            read_int(ctx, obj, "ward_percent", 0, 1000, &c->ward_percent) &&
            read_int(ctx, obj, "ward_ticks", 0, 1000000, &c->ward_ticks);
+    if (read && c->dot_ticks > 0 && c->dot_element < 0) return fail(ctx, "dot_ticks needs a dot_element");
+    return read;
 }
 
 static bool read_object_def(Context *ctx, const cJSON *obj, const ArenaObjectDef *defs, int def_count, int *out)
