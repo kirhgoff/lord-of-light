@@ -8,7 +8,7 @@ Repo: /Users/kirill.lastovirya/Projects/lord-of-light (main branch, no remote). 
    - `src/sim/` never includes raylib.
    - No code comments, except a single short line for genuinely tricky logic. Self-describing names, small functions.
    - Keep it minimal: no speculative abstractions, no new deps beyond those vendored.
-   - Add tests for every piece of logic; `make test` must stay green with zero warnings.
+   - Add tests for every piece of logic; `make test` and `make asan` (once it exists) must stay green with zero warnings.
    - Shell is zsh; search with `git grep` or `rg`.
 4. Commits: small, signed (signing is automatic; never disable it), with explicit pathspecs (`git commit -- <paths>`). End every commit message with:
    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>

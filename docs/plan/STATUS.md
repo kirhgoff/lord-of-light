@@ -7,14 +7,14 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 1. Pick frontier tickets: `Status: open`, every `Blocked by` ticket `resolved`. Set `Status: claimed` on main and commit.
 2. Spawn one executor agent per ticket (model: sonnet) with `docs/plan/executor-brief.md` + the ticket path + branch/worktree name `NN-slug` at `~/Projects/lord-of-light-NN-slug`. Research tickets: an opus agent using the `mattpocock-skills:research` skill on branch `research/<name>`.
 3. When it hands back, spawn a separate reviewer (model: opus) with `docs/plan/reviewer-brief.md`. CHANGES → send findings back to the executor, re-review if non-trivial.
-4. Verify yourself (`make test` in the worktree, `git log --format='%h %G? %s' main..<branch>` all `G`), then on main: `git merge --no-ff <branch>` (signed, trailer), set the ticket `Status: resolved` with an `## Answer`, add a line to map.md "Decisions so far", update this file, commit.
+4. Verify yourself (`make test` and `make asan` in the worktree, `git log --format='%h %G? %s' main..<branch>` all `G`), then on main: `git merge --no-ff <branch>` (signed, trailer), set the ticket `Status: resolved` with an `## Answer`, add a line to map.md "Decisions so far", update this file, commit.
 5. Remove the merged worktree: `remove-worktree --force lord-of-light-NN-slug` (user approved --force for worktrees whose branch is merged into main; it refuses otherwise because there is no remote).
 
 ## In flight
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 03 State + headless | `03-state-and-headless` / `~/Projects/lord-of-light-03-state-and-headless` | fixes done (0c8463d etc., `make asan` added); opus re-review running |
+| 03 State + headless | `03-state-and-headless` / `~/Projects/lord-of-light-03-state-and-headless` | re-review PASS; executor adding 3 small fixes (tick cap, fallback test, zero-init note), then merge |
 | 09 Placeholder sprites | `09-placeholder-sprites` / `~/Projects/lord-of-light-09-placeholder-sprites` | design review CHANGES (clipping, tails, internal Parts 16 px, bigger world objects, idle bob, distinguishability); executor fixing |
 
 If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`, `git status`), then either spawn a new executor to finish from there or review what exists.
