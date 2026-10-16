@@ -117,7 +117,7 @@ static void advance_ticks(Battle *battle, const GameData *data, Decider *decider
     if (battle->tick >= stop_tick) *accumulated = 0;
 }
 
-static void handle_save_keys(Battle *battle, const GameData *data, Scene *scene, Hud *hud)
+static void handle_save_keys(Battle *battle, const GameData *data, Scene *scene, Hud *hud, Ui *ui, LayaDecider *laya)
 {
     char path[SAVES_PATH_SIZE], err[ERR_SIZE], message[TOAST_SIZE];
     if (IsKeyPressed(KEY_F5)) {
@@ -130,18 +130,22 @@ static void handle_save_keys(Battle *battle, const GameData *data, Scene *scene,
         if (ok) {
             scene_reset(scene, battle);
             sound_reset(battle);
+            ui->selected = ui->hovered = -1;
+            if (laya) laya_decider_reset(laya);
         }
         snprintf(message, sizeof message, ok ? "Loaded %s" : "Load failed: %s", ok ? path : err);
         hud_show_toast(hud, message);
     }
 }
 
-static void restart_battle(Battle *battle, const GameData *data, Scene *scene, Ui *ui, Hud *hud, float *accumulated)
+static void restart_battle(Battle *battle, const GameData *data, Scene *scene, Ui *ui, Hud *hud, LayaDecider *laya,
+                           float *accumulated)
 {
     char message[TOAST_SIZE];
     battle_setup(battle, data, battle->seed + 1);
     scene_reset(scene, battle);
     sound_reset(battle);
+    if (laya) laya_decider_reset(laya);
     ui->selected = ui->hovered = -1;
     ui->follow_log = true;
     *accumulated = 0;
@@ -151,7 +155,7 @@ static void restart_battle(Battle *battle, const GameData *data, Scene *scene, U
 
 static void run_window(Battle *battle, const GameData *data, Decider *decider, Scene *scene, const Atlases *atlases,
                        const Sheets *sheets, Viewport *view, Hud *hud, Ui *ui,
-                       const char (*laya_briefings)[BRIEFING_MAX + 1], int stop_tick)
+                       LayaDecider *laya, int stop_tick)
 {
     float accumulated = 0;
     while (!WindowShouldClose()) {
@@ -159,9 +163,9 @@ static void run_window(Battle *battle, const GameData *data, Decider *decider, S
         if (hud->confirm_quit && (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_Y))) break;
         if (hud->confirm_quit && IsKeyPressed(KEY_N)) hud->confirm_quit = false;
         handle_camera_input(view);
-        if (!hud->confirm_quit) handle_save_keys(battle, data, scene, hud);
+        if (!hud->confirm_quit) handle_save_keys(battle, data, scene, hud, ui, laya);
         if (ui->restart_allowed && !hud->confirm_quit && battle_winner(battle) >= 0 && IsKeyPressed(KEY_R))
-            restart_battle(battle, data, scene, ui, hud, &accumulated);
+            restart_battle(battle, data, scene, ui, hud, laya, &accumulated);
         if (IsKeyPressed(KEY_SPACE)) hud->paused = !hud->paused;
         if (IsKeyPressed(KEY_T)) {
             scene->xray = !scene->xray;
@@ -174,7 +178,7 @@ static void run_window(Battle *battle, const GameData *data, Decider *decider, S
         scene->alpha = accumulated / TICK_SECONDS;
         ui_update(ui, battle, scene, atlases, view, hud->confirm_quit);
         BeginDrawing();
-        draw_frame_contents(battle, data, scene, atlases, sheets, view, hud, ui, laya_briefings);
+        draw_frame_contents(battle, data, scene, atlases, sheets, view, hud, ui, laya ? laya->briefing : NULL);
         EndDrawing();
     }
 }
@@ -224,7 +228,8 @@ int main(int argc, char **argv)
     scene_reset(&scene, &battle);
     Hud hud = {0};
     Ui ui = {args.select, -1, true, !setup.replay_path};
-    const char (*laya_briefings)[BRIEFING_MAX + 1] = setup.decider == &setup.laya_decider.base ? setup.laya_decider.briefing : NULL;
+    LayaDecider *laya = setup.decider == &setup.laya_decider.base ? &setup.laya_decider : NULL;
+    const char (*laya_briefings)[BRIEFING_MAX + 1] = laya ? laya->briefing : NULL;
     int exit_code = 0;
 
     if (args.screenshot) {
@@ -235,7 +240,7 @@ int main(int argc, char **argv)
         }
         render_to_png(args.screenshot, &battle, &data, &scene, &atlases, &sheets, &view, &hud, &ui, laya_briefings);
     } else if (sound_init(&data, &battle, err, ERR_SIZE)) {
-        run_window(&battle, &data, setup.decider, &scene, &atlases, &sheets, &view, &hud, &ui, laya_briefings, setup.replay_path ? setup.source.tick : INT_MAX);
+        run_window(&battle, &data, setup.decider, &scene, &atlases, &sheets, &view, &hud, &ui, laya, setup.replay_path ? setup.source.tick : INT_MAX);
     } else {
         fprintf(stderr, "%s\n", err);
         exit_code = 1;
