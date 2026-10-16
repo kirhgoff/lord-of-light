@@ -75,6 +75,100 @@
       ]
     },
     {
+      "id": "quadruped",
+      "core": "body",
+      "slots": [
+        {
+          "id": "body",
+          "kind": "external",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "head",
+          "kind": "external",
+          "x": 16,
+          "y": -4
+        },
+        {
+          "id": "fore_legs",
+          "kind": "external",
+          "x": 8,
+          "y": 10
+        },
+        {
+          "id": "hind_legs",
+          "kind": "external",
+          "x": -10,
+          "y": 10
+        },
+        {
+          "id": "weapon",
+          "kind": "external",
+          "x": 22,
+          "y": 2
+        },
+        {
+          "id": "tail",
+          "kind": "external",
+          "x": -18,
+          "y": -2
+        },
+        {
+          "id": "heart",
+          "kind": "internal",
+          "x": 2,
+          "y": -2
+        },
+        {
+          "id": "gland",
+          "kind": "internal",
+          "x": -2,
+          "y": 4
+        },
+        {
+          "id": "ganglion",
+          "kind": "internal",
+          "x": 6,
+          "y": 0
+        }
+      ],
+      "edges": [
+        [
+          "body",
+          "head"
+        ],
+        [
+          "body",
+          "fore_legs"
+        ],
+        [
+          "body",
+          "hind_legs"
+        ],
+        [
+          "body",
+          "weapon"
+        ],
+        [
+          "body",
+          "tail"
+        ],
+        [
+          "body",
+          "heart"
+        ],
+        [
+          "body",
+          "gland"
+        ],
+        [
+          "body",
+          "ganglion"
+        ]
+      ]
+    },
+    {
       "id": "serpent",
       "core": "coil",
       "slots": [
@@ -97,10 +191,22 @@
           "y": 2
         },
         {
+          "id": "fang",
+          "kind": "external",
+          "x": 18,
+          "y": 2
+        },
+        {
           "id": "heart",
           "kind": "internal",
           "x": 2,
           "y": 0
+        },
+        {
+          "id": "gland",
+          "kind": "internal",
+          "x": -2,
+          "y": 2
         }
       ],
       "edges": [
@@ -114,7 +220,287 @@
         ],
         [
           "coil",
+          "fang"
+        ],
+        [
+          "coil",
           "heart"
+        ],
+        [
+          "coil",
+          "gland"
+        ]
+      ]
+    },
+    {
+      "id": "blob",
+      "core": "mass",
+      "slots": [
+        {
+          "id": "mass",
+          "kind": "external",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "eye",
+          "kind": "external",
+          "x": 0,
+          "y": -12
+        },
+        {
+          "id": "pseudopods",
+          "kind": "external",
+          "x": 0,
+          "y": 12
+        },
+        {
+          "id": "lash_left",
+          "kind": "external",
+          "x": -12,
+          "y": 0
+        },
+        {
+          "id": "lash_right",
+          "kind": "external",
+          "x": 12,
+          "y": 0
+        },
+        {
+          "id": "heart_a",
+          "kind": "internal",
+          "x": -3,
+          "y": -2
+        },
+        {
+          "id": "heart_b",
+          "kind": "internal",
+          "x": 3,
+          "y": 2
+        },
+        {
+          "id": "gland",
+          "kind": "internal",
+          "x": 0,
+          "y": 4
+        },
+        {
+          "id": "sac",
+          "kind": "internal",
+          "x": 0,
+          "y": -4
+        }
+      ],
+      "edges": [
+        [
+          "mass",
+          "eye"
+        ],
+        [
+          "mass",
+          "pseudopods"
+        ],
+        [
+          "mass",
+          "lash_left"
+        ],
+        [
+          "mass",
+          "lash_right"
+        ],
+        [
+          "mass",
+          "heart_a"
+        ],
+        [
+          "mass",
+          "heart_b"
+        ],
+        [
+          "mass",
+          "gland"
+        ],
+        [
+          "mass",
+          "sac"
+        ]
+      ]
+    },
+    {
+      "id": "spider",
+      "core": "carapace",
+      "slots": [
+        {
+          "id": "carapace",
+          "kind": "external",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "head",
+          "kind": "external",
+          "x": 0,
+          "y": -12
+        },
+        {
+          "id": "legs",
+          "kind": "external",
+          "x": 0,
+          "y": 10
+        },
+        {
+          "id": "mandible_left",
+          "kind": "external",
+          "x": -6,
+          "y": -16
+        },
+        {
+          "id": "mandible_right",
+          "kind": "external",
+          "x": 6,
+          "y": -16
+        },
+        {
+          "id": "stinger",
+          "kind": "external",
+          "x": 0,
+          "y": 16
+        },
+        {
+          "id": "heart",
+          "kind": "internal",
+          "x": 0,
+          "y": -2
+        },
+        {
+          "id": "gland",
+          "kind": "internal",
+          "x": -3,
+          "y": 3
+        },
+        {
+          "id": "ganglion",
+          "kind": "internal",
+          "x": 3,
+          "y": 3
+        }
+      ],
+      "edges": [
+        [
+          "carapace",
+          "head"
+        ],
+        [
+          "carapace",
+          "legs"
+        ],
+        [
+          "carapace",
+          "mandible_left"
+        ],
+        [
+          "carapace",
+          "mandible_right"
+        ],
+        [
+          "carapace",
+          "stinger"
+        ],
+        [
+          "carapace",
+          "heart"
+        ],
+        [
+          "carapace",
+          "gland"
+        ],
+        [
+          "carapace",
+          "ganglion"
+        ]
+      ]
+    },
+    {
+      "id": "floater",
+      "core": "bladder",
+      "slots": [
+        {
+          "id": "bladder",
+          "kind": "external",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "eye",
+          "kind": "external",
+          "x": 0,
+          "y": -12
+        },
+        {
+          "id": "levitator",
+          "kind": "external",
+          "x": 0,
+          "y": 12
+        },
+        {
+          "id": "tentacle_a",
+          "kind": "external",
+          "x": -10,
+          "y": 6
+        },
+        {
+          "id": "tentacle_b",
+          "kind": "external",
+          "x": 0,
+          "y": 8
+        },
+        {
+          "id": "tentacle_c",
+          "kind": "external",
+          "x": 10,
+          "y": 6
+        },
+        {
+          "id": "heart",
+          "kind": "internal",
+          "x": 0,
+          "y": -2
+        },
+        {
+          "id": "gland",
+          "kind": "internal",
+          "x": 0,
+          "y": 3
+        }
+      ],
+      "edges": [
+        [
+          "bladder",
+          "eye"
+        ],
+        [
+          "bladder",
+          "levitator"
+        ],
+        [
+          "bladder",
+          "tentacle_a"
+        ],
+        [
+          "bladder",
+          "tentacle_b"
+        ],
+        [
+          "bladder",
+          "tentacle_c"
+        ],
+        [
+          "bladder",
+          "heart"
+        ],
+        [
+          "bladder",
+          "gland"
         ]
       ]
     },
@@ -145,6 +531,84 @@
         [
           "body",
           "claw"
+        ],
+        [
+          "body",
+          "heart"
+        ]
+      ]
+    },
+    {
+      "id": "minion_crow",
+      "core": "body",
+      "slots": [
+        {
+          "id": "body",
+          "kind": "external",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "beak",
+          "kind": "external",
+          "x": 6,
+          "y": -2
+        },
+        {
+          "id": "wing",
+          "kind": "external",
+          "x": -4,
+          "y": -4
+        },
+        {
+          "id": "heart",
+          "kind": "internal",
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "edges": [
+        [
+          "body",
+          "beak"
+        ],
+        [
+          "body",
+          "wing"
+        ],
+        [
+          "body",
+          "heart"
+        ]
+      ]
+    },
+    {
+      "id": "minion_wisp",
+      "core": "body",
+      "slots": [
+        {
+          "id": "body",
+          "kind": "external",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "spark",
+          "kind": "external",
+          "x": 5,
+          "y": 0
+        },
+        {
+          "id": "heart",
+          "kind": "internal",
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "edges": [
+        [
+          "body",
+          "spark"
         ],
         [
           "body",
