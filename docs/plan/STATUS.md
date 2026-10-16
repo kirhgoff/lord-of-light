@@ -15,8 +15,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 06 Tactics + Reflex | `06-reflex-and-scheduling` / `~/Projects/lord-of-light-06-reflex-and-scheduling` | plan accepted; sonnet executor running |
-| 08 Pickups + traps | `08-pickups-traps` / `~/Projects/lord-of-light-08-pickups-traps` | plan accepted; sonnet executor running |
+| 06 Tactics + Reflex | `06-reflex-and-scheduling` / `~/Projects/lord-of-light-06-reflex-and-scheduling` | executor done (6 commits); opus review running; must merge main (08) before merging |
 
 ## Done
 
@@ -28,6 +27,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 - 09 Placeholder sprites — merged after design re-review.
 - 14 Clay+raylib research — merged (`docs/research/clay-raylib.md`).
 - 17 Slot roles — merged after 2 code + 2 design review rounds.
+- 08 Pickups + traps — merged after one review round.
 - 05 Combat — merged after one review round (charm-lock winner rule by user decision).
 - 19 Sound assets — merged after one review round.
 - 18 Sprite proportions — merged after a design review.

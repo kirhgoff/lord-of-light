@@ -16,6 +16,7 @@ A playable raylib arena: a random Pantheon (from JSON) fights a Power-matched Ho
 
 ## Decisions so far
 
+- [Pickups and Traps](issues/08-pickups-traps.md): walk-over Pickups, Traps reuse the combat hit path, buffs are sibling fields that refresh, one of each object per Battle.
 - [Combat](issues/05-combat-elements.md): data-driven Element effects, 50 % Vitality share, death by Vitality or no working Heart, a side all charmed to the enemy loses.
 - [Sound assets](issues/19-sound-assets.md): generated WAVs named per action in the data; the sim validates id format only, asset tests check the files.
 - [Sprite proportions](issues/18-sprite-proportions.md): minion bodies use their own small Parts (`minion_claw`, `wisp_spark`); shared sprites are tuned by anchors, not per-Deity pivots.
