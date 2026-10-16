@@ -20,7 +20,7 @@ TEST_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard tests/*.c))
 GAME_OBJECTS := $(BUILD)/obj/src/main_game.o $(VIEW_OBJECTS) $(SIM_OBJECTS) $(CJSON_OBJECT)
 HEADLESS_OBJECTS := $(BUILD)/obj/src/main_headless.o $(SIM_OBJECTS) $(CJSON_OBJECT)
 
-.PHONY: game headless test run clean asan
+.PHONY: game headless test run clean asan screenshots
 
 game: $(BUILD)/game
 headless: $(BUILD)/headless
@@ -70,6 +70,16 @@ asan:
 		build/asan/headless --seed $$seed --ticks 300 --dump build/asan/mid.json > /dev/null; \
 		build/asan/headless --load build/asan/mid.json --ticks 300 > /dev/null; \
 	done
+
+SHOT_SEEDS := 1 2 3
+SHOT_TICKS := 0 60 200 100000
+
+screenshots: game
+	mkdir -p $(BUILD)/shots
+	set -e; for seed in $(SHOT_SEEDS); do for ticks in $(SHOT_TICKS); do \
+		$(BUILD)/game --seed $$seed --ticks $$ticks --screenshot $(BUILD)/shots/s$${seed}_t$${ticks}.png; \
+	done; done
+	$(BUILD)/game --seed 1 --ticks 60 --xray --screenshot $(BUILD)/shots/s1_t60_xray.png
 
 clean:
 	rm -rf $(BUILD)
