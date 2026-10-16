@@ -117,6 +117,7 @@ uint32_t scramble_seed(uint32_t seed);
 uint32_t rng_next(uint32_t *state);
 int rng_below(uint32_t *state, int bound);
 
+/* A Battle must be zero-initialised (Battle b = {0};) before its first setup or load. */
 void battle_setup(Battle *battle, const GameData *data, uint32_t seed);
 void battle_step(Battle *battle, const GameData *data);
 void battle_free(Battle *battle);

@@ -7,6 +7,8 @@
 #include "battle.h"
 #include "cJSON.h"
 
+#define MAX_TICK 1000000000
+
 static const char *const SIDE_IDS[SIDE_COUNT] = {"pantheon", "horde"};
 static const char *const STANCE_IDS[STANCE_COUNT] = {"none", "fight", "retreat", "support", "collect"};
 static const char *const EVENT_IDS[EVENT_KIND_COUNT] = {"decision", "hit", "pickup", "death"};
@@ -417,7 +419,7 @@ static bool load_event(Context *ctx, const cJSON *o, Event *event)
 {
     int kind;
     if (!cJSON_IsObject(o)) return fail(ctx, "log entry is not an object");
-    if (!read_int(ctx, o, "tick", 0, INT_MAX, &event->tick) || !read_id(ctx, o, "kind", EVENT_IDS, EVENT_KIND_COUNT, &kind) ||
+    if (!read_int(ctx, o, "tick", 0, MAX_TICK, &event->tick) || !read_id(ctx, o, "kind", EVENT_IDS, EVENT_KIND_COUNT, &kind) ||
         !read_combatant_ref(ctx, o, "actor", &event->actor) || !read_slot_ref(ctx, o, "actor_part", &event->actor_part) ||
         !read_combatant_ref(ctx, o, "target", &event->target) || !read_slot_ref(ctx, o, "target_part", &event->target_part) ||
         !read_int(ctx, o, "element", -1, ELEMENT_COUNT - 1, &event->element) ||
@@ -445,7 +447,7 @@ static bool load_header(Context *ctx, const cJSON *root, Battle *battle)
 {
     char pantheon[NAME_LEN];
     if (!read_u32(ctx, root, "seed", &battle->seed) || !read_u32(ctx, root, "rng", &battle->rng) ||
-        !read_int(ctx, root, "tick", 0, INT_MAX, &battle->tick) || !read_text(ctx, root, "pantheon", pantheon, NAME_LEN))
+        !read_int(ctx, root, "tick", 0, MAX_TICK, &battle->tick) || !read_text(ctx, root, "pantheon", pantheon, NAME_LEN))
         return false;
     if (battle->rng == 0) return fail_key(ctx, "rng", "must not be zero");
     battle->pantheon = -1;

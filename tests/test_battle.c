@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include "cJSON.h"
 #include "check.h"
 #include "../src/sim/battle.h"
 
@@ -152,6 +153,19 @@ static void check_rejected(const char *json, const char *from, const char *to)
     free(mutated);
 }
 
+static void test_silent_failure_gets_generic_message(char *json)
+{
+    cJSON *root = cJSON_Parse(json);
+    cJSON *parts = cJSON_GetObjectItem(cJSON_GetArrayItem(cJSON_GetObjectItem(root, "combatants"), 0), "parts");
+    cJSON_ReplaceItemInArray(parts, 0, cJSON_CreateNumber(5));
+    char *broken = cJSON_PrintUnformatted(root);
+    err[0] = '\0';
+    CHECK(!battle_load_json(&loaded, &data, broken, err, ERR_SIZE));
+    CHECK(strcmp(err, "invalid battle state") == 0);
+    free(broken);
+    cJSON_Delete(root);
+}
+
 static void test_load_rejects_bad_input(void)
 {
     load_data();
@@ -166,6 +180,7 @@ static void test_load_rejects_bad_input(void)
     check_rejected(json, "\"seed\":3", "\"seed\":4294967296");
     check_rejected(json, "\"rng\":", "\"rng\":0,\"old\":");
     check_rejected(json, "\"tick\":0", "\"tick\":1e19");
+    check_rejected(json, "\"tick\":0", "\"tick\":2147483647");
     check_rejected(json, "\"x_millipx\":", "\"x_millipx\":1e300,\"z\":");
     check_rejected(json, "\"x_millipx\":", "\"x_millipx\":-1e999,\"z\":");
     check_rejected(json, "\"edges\":[[", "\"edges\":[{\"a\":0},[");
@@ -175,6 +190,7 @@ static void test_load_rejects_bad_input(void)
     check_rejected(json, "\"actor_part\":0", "\"actor_part\":24");
     check_rejected(json, "\"amount\":5", "\"amount\":2000000000");
     check_rejected(json, "\"kind\":\"hit\"", "\"kind\":7");
+    test_silent_failure_gets_generic_message(json);
     CHECK(!battle_load_json(&loaded, &data, "{", err, ERR_SIZE));
     CHECK(!battle_load_json(&loaded, &data, "{}", err, ERR_SIZE) && err[0] != '\0');
     CHECK(!battle_load_json(&loaded, &data, "[1]", err, ERR_SIZE) && err[0] != '\0');
