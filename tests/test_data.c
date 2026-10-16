@@ -251,6 +251,8 @@ static void test_other_file_errors(void)
     check_error(load_elements(&data, FIXTURE("elements_huge_chain_range.json"), err, ERR_SIZE),
                 "elements[3].chain_range: must be between 0 and 1000000");
     check_error(load_power(&data, FIXTURE("power_missing_weight.json"), err, ERR_SIZE), "vision: missing");
+    check_error(load_power(&data, FIXTURE("power_huge_weight.json"), err, ERR_SIZE), "damage: must be between 0 and 1000");
+    check_error(load_power(&data, FIXTURE("power_negative_weight.json"), err, ERR_SIZE), "integrity: must be between 0 and 1000");
     check_error(load_arena_objects(&data, FIXTURE("arena_objects_unknown_element.json"), err, ERR_SIZE),
                 "traps[0].element: unknown element \"steam\"");
 }
