@@ -1,7 +1,7 @@
 # Battle state, JSON round-trip, headless runner
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 02
 
 ## Question

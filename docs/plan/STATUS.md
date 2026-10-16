@@ -14,7 +14,8 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 02 Data schema | `02-data-schema` / `~/Projects/lord-of-light-02-data-schema` | review CHANGES (failed loads mutate GameData, long pantheon names skipped, no range checks, trailer); executor fixing |
+| 03 State + headless | `03-state-and-headless` / `~/Projects/lord-of-light-03-state-and-headless` | executor running |
+| 15 Content | `15-content` / `~/Projects/lord-of-light-15-content` | executor running |
 
 If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`, `git status`), then either spawn a new executor to finish from there or review what exists.
 
@@ -22,11 +23,12 @@ If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`
 
 - 01 Skeleton — merged.
 - 13 Laya behaviour — merged; led to ADR 0003 (Stance + Appraisals).
+- 02 Data schema — merged after 2 review rounds.
 - 14 Clay+raylib research — merged (`docs/research/clay-raylib.md`).
 
 ## Next up (once unblocked)
 
-- After 02: 03 State + headless, and 15 Content (parallel).
+- After 03: 04 Movement/vision.
 - After 15: 09 Placeholder sprites.
 
 ## Open questions for the user

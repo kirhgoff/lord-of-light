@@ -1,7 +1,7 @@
 # Data schema and loaders
 
 Type: task
-Status: claimed
+Status: resolved
 Blocked by: 01
 
 ## Question
@@ -16,3 +16,7 @@ Define the JSON schemas and the `src/sim/` loaders (cJSON) for:
 - `data/power.json`: Power weights.
 
 Ship a small but valid sample of each (≥10 Parts, 3 Body Plans, the Hindu Pantheon, 2 Pickups, 2 Traps). Loader validates references (unknown part id, edge to missing slot, no Core) and reports file+path on error. Tests cover a valid load and each validation error.
+
+## Answer
+
+Merged `02-data-schema`. Structs + loaders in `src/sim/data.{h,c}` (fixed arrays, ids resolved to indices; MAX_PARTS 128, MAX_SLOTS 24, MAX_PANTHEONS 8). Every load is all-or-nothing (scratch copy). Shapes: Body Plan `{id, core, slots:[{id,kind,x,y}], edges:[[a,b]]}`; Deity `{name, epithet?, body:{core, parts:[{id,part,x,y}], edges}}`; resistances are percent -100..100 keyed by Element id; Vision `{close,medium,far}` ascending; support abilities heal via non-negative `heal`. Validation rejects unknown refs, duplicates, self-loop/duplicate edges, slots unreachable from the Core, non-integers, out-of-range numbers, zero Pantheons. Sample data: 22 Parts, 3 Body Plans, Hindu Pantheon.

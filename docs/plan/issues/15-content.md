@@ -1,7 +1,7 @@
 # Content: full Part library, Body Plans, five Pantheons
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 02
 
 ## Question
