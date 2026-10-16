@@ -1,7 +1,7 @@
 # Placeholder sprites and atlas
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 02, 15
 
 ## Question
