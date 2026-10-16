@@ -133,8 +133,136 @@ static void test_facing_follows_horizontal_movement(void)
     CHECK(scene.facing_left[pantheon] && !scene.facing_left[horde]);
 }
 
+static Event hit_event(int tick, int actor, int actor_part, int target, int target_part)
+{
+    return (Event){.tick = tick, .kind = EVENT_HIT, .actor = actor, .actor_part = actor_part, .target = target,
+                   .target_part = target_part, .element = ELEMENT_FIRE};
+}
+
+static int live_effects(const Scene *scene)
+{
+    int live = 0;
+    for (int e = 0; e < MAX_EFFECTS; e++) live += scene->effects[e].since_tick != NEVER;
+    return live;
+}
+
+static void test_hit_event_marks_actor_target_and_effect(void)
+{
+    setup_battle();
+    Scene scene = {0};
+    scene_reset(&scene, &battle);
+    Event hit = hit_event(7, 0, 1, 5, 2);
+    scene_apply_event(&scene, &battle, &hit);
+    CHECK(scene.act_since[0][1] == 7);
+    CHECK(scene.hit_since[5][2] == 7 && scene.hit_element[5][2] == ELEMENT_FIRE);
+    CHECK(live_effects(&scene) == 1 && scene.effects[0].element == ELEMENT_FIRE);
+}
+
+static void test_trap_hit_without_actor_marks_only_the_target(void)
+{
+    setup_battle();
+    Scene scene = {0};
+    scene_reset(&scene, &battle);
+    Event hit = hit_event(3, -1, -1, 5, 0);
+    scene_apply_event(&scene, &battle, &hit);
+    CHECK(scene.hit_since[5][0] == 3);
+    CHECK(scene.act_since[0][0] == NEVER);
+}
+
+static void test_trap_event_marks_the_trap(void)
+{
+    setup_battle();
+    CHECK(battle.trap_count > 0);
+    Scene scene = {0};
+    scene_reset(&scene, &battle);
+    Event trap = {.tick = 9, .kind = EVENT_TRAP, .target = 0, .element = ELEMENT_FROST, .detail = 0};
+    scene_apply_event(&scene, &battle, &trap);
+    CHECK(scene.trap_since[0] == 9);
+    CHECK(live_effects(&scene) == 1);
+}
+
+static void test_decision_and_death_events_change_nothing(void)
+{
+    setup_battle();
+    Scene scene = {0};
+    scene_reset(&scene, &battle);
+    Event decision = {.tick = 4, .kind = EVENT_DECISION, .actor = 0};
+    Event death = {.tick = 4, .kind = EVENT_DEATH, .target = 0};
+    scene_apply_event(&scene, &battle, &decision);
+    scene_apply_event(&scene, &battle, &death);
+    CHECK(live_effects(&scene) == 0 && scene.act_since[0][0] == NEVER && scene.hit_since[0][0] == NEVER);
+}
+
+static void test_after_step_consumes_only_new_events(void)
+{
+    setup_battle();
+    Scene scene = {0};
+    scene_reset(&scene, &battle);
+    CHECK(scene.seen_events == battle.log_count);
+    battle_log_event(&battle, hit_event(1, 0, 0, 5, 0));
+    scene_after_step(&scene, &battle);
+    CHECK(scene.seen_events == battle.log_count && live_effects(&scene) == 1);
+    scene_after_step(&scene, &battle);
+    CHECK(live_effects(&scene) == 1);
+}
+
+static void test_effect_ring_overwrites_the_oldest(void)
+{
+    setup_battle();
+    Scene scene = {0};
+    scene_reset(&scene, &battle);
+    for (int i = 0; i < MAX_EFFECTS + 3; i++) {
+        Event hit = hit_event(i, 0, 0, 5, 0);
+        scene_apply_event(&scene, &battle, &hit);
+    }
+    CHECK(live_effects(&scene) == MAX_EFFECTS);
+    CHECK(scene.effects[0].since_tick == MAX_EFFECTS && scene.effects[3].since_tick == 3);
+}
+
+static Atlas test_atlas(void)
+{
+    return (Atlas){.first = {[FRAMES_IDLE] = 0, [FRAMES_ACT] = 2, [FRAMES_HURT] = 5, [FRAMES_BROKEN] = 6},
+                   .count = {[FRAMES_IDLE] = 2, [FRAMES_ACT] = 3, [FRAMES_HURT] = 1, [FRAMES_BROKEN] = 1}};
+}
+
+static void test_part_frame_priorities(void)
+{
+    Atlas atlas = test_atlas();
+    Combatant who = {0};
+    who.parts[0].integrity = 10;
+    Part mover = {.move_speed_px_per_second = 40};
+    Part still = {0};
+    CHECK(part_frame(&atlas, &who, 0, &still, false, NEVER, NEVER, 0, 100) == 0);
+    CHECK(part_frame(&atlas, &who, 0, &still, false, NEVER, NEVER, 0, 100 + IDLE_FRAME_TICKS) == 1);
+    CHECK(part_frame(&atlas, &who, 0, &still, false, NEVER, 99, 0, 100) == 5);
+    CHECK(part_frame(&atlas, &who, 0, &still, false, 98, NEVER, 0, 100) == 3);
+    who.parts[0].order.kind = ORDER_BLOCK;
+    CHECK(part_frame(&atlas, &who, 0, &still, false, NEVER, NEVER, 0, 100) == 3);
+    who.parts[0].order.kind = ORDER_MOVE_TO;
+    CHECK(part_frame(&atlas, &who, 0, &mover, true, NEVER, NEVER, 0, WALK_FRAME_TICKS) == 3);
+    CHECK(part_frame(&atlas, &who, 0, &still, true, NEVER, NEVER, 0, WALK_FRAME_TICKS) == 0);
+    who.parts[0].integrity = 0;
+    CHECK(part_frame(&atlas, &who, 0, &still, false, 99, 99, 0, 100) == 6);
+}
+
+static void test_effect_frame_expires(void)
+{
+    Effect effect = {0, 0, ELEMENT_FIRE, 10};
+    CHECK(effect_frame(&effect, 10) == 0);
+    CHECK(effect_frame(&effect, 10 + EFFECT_TICKS - 1) == 4);
+    CHECK(effect_frame(&effect, 10 + EFFECT_TICKS) == -1);
+}
+
 void run_view_tests(void)
 {
+    test_hit_event_marks_actor_target_and_effect();
+    test_trap_hit_without_actor_marks_only_the_target();
+    test_trap_event_marks_the_trap();
+    test_decision_and_death_events_change_nothing();
+    test_after_step_consumes_only_new_events();
+    test_effect_ring_overwrites_the_oldest();
+    test_part_frame_priorities();
+    test_effect_frame_expires();
     test_position_interpolates_between_ticks();
     test_facing_follows_horizontal_movement();
     test_viewport_starts_centred_and_clamped();

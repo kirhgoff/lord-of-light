@@ -24,6 +24,7 @@
 #define NEVER (-1000000)
 #define HUD_HEIGHT 48
 #define REMAINS_SPREAD_PX 12
+#define EFFECT_LIFT_PX 16
 
 typedef struct {
     float centre_x;
@@ -67,6 +68,10 @@ void scene_reset(Scene *s, const Battle *b);
 void scene_before_step(Scene *s, const Battle *b);
 void scene_after_step(Scene *s, const Battle *b);
 float scene_time(const Scene *s, const Battle *b);
+void scene_apply_event(Scene *s, const Battle *b, const Event *e);
 void scene_position(const Scene *s, const Battle *b, int c, float *x_px, float *y_px);
+int part_frame(const Atlas *atlas, const Combatant *who, int slot, const Part *part, bool moving, int act_since,
+               int hit_since, int idle_phase, int tick);
+int effect_frame(const Effect *effect, int tick);
 
 #endif

@@ -85,6 +85,7 @@ void scene_after_step(Scene *s, const Battle *b)
         else if (who->x_millipx < s->prev_x[c]) s->facing_left[c] = true;
         else if (who->x_millipx > s->prev_x[c]) s->facing_left[c] = false;
     }
+    for (; s->seen_events < b->log_count; s->seen_events++) scene_apply_event(s, b, &b->log[s->seen_events]);
 }
 
 float scene_time(const Scene *s, const Battle *b)
@@ -102,4 +103,76 @@ void scene_position(const Scene *s, const Battle *b, int c, float *x_px, float *
     }
     *x_px = x / MILLIPX_PER_PX;
     *y_px = y / MILLIPX_PER_PX;
+}
+
+static void push_effect(Scene *s, float x, float y, int element, int tick)
+{
+    s->effects[s->effect_next++ % MAX_EFFECTS] = (Effect){x, y, element, tick};
+}
+
+static void push_effect_at_combatant(Scene *s, const Battle *b, int c, int element, int tick)
+{
+    if (c < 0 || c >= b->combatant_count) return;
+    float x, y;
+    scene_position(s, b, c, &x, &y);
+    push_effect(s, x, y - EFFECT_LIFT_PX, element, tick);
+}
+
+static void mark_act(Scene *s, const Battle *b, int actor, int part, int tick)
+{
+    if (actor >= 0 && actor < b->combatant_count && part >= 0 && part < MAX_SLOTS) s->act_since[actor][part] = tick;
+}
+
+static void apply_hit(Scene *s, const Battle *b, const Event *e)
+{
+    mark_act(s, b, e->actor, e->actor_part, e->tick);
+    if (e->target >= 0 && e->target < b->combatant_count && e->target_part >= 0 && e->target_part < MAX_SLOTS) {
+        s->hit_since[e->target][e->target_part] = e->tick;
+        s->hit_element[e->target][e->target_part] = e->element;
+    }
+    push_effect_at_combatant(s, b, e->target, e->element, e->tick);
+}
+
+void scene_apply_event(Scene *s, const Battle *b, const Event *e)
+{
+    switch (e->kind) {
+    case EVENT_HIT:
+        apply_hit(s, b, e);
+        break;
+    case EVENT_EFFECT:
+        mark_act(s, b, e->actor, e->actor_part, e->tick);
+        push_effect_at_combatant(s, b, e->target, e->element, e->tick);
+        break;
+    case EVENT_SPAWN:
+        mark_act(s, b, e->actor, e->actor_part, e->tick);
+        push_effect_at_combatant(s, b, e->target, ELEMENT_KINETIC, e->tick);
+        break;
+    case EVENT_TRAP:
+        if (e->detail >= 0 && e->detail < b->trap_count) {
+            const FloorObject *trap = &b->traps[e->detail];
+            s->trap_since[e->detail] = e->tick;
+            push_effect(s, (float)trap->x_millipx / MILLIPX_PER_PX, (float)trap->y_millipx / MILLIPX_PER_PX, e->element, e->tick);
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+int part_frame(const Atlas *atlas, const Combatant *who, int slot, const Part *part, bool moving, int act_since,
+               int hit_since, int idle_phase, int tick)
+{
+    if (who->parts[slot].integrity <= 0) return atlas_frame(atlas, FRAMES_BROKEN, 0);
+    if (tick - hit_since < HURT_TICKS) return atlas_frame(atlas, FRAMES_HURT, 0);
+    if (tick - act_since < ACT_TICKS) return atlas_frame(atlas, FRAMES_ACT, (tick - act_since) * 3 / ACT_TICKS);
+    if (who->parts[slot].order.kind == ORDER_BLOCK) return atlas_frame(atlas, FRAMES_ACT, 1);
+    if (moving && part->move_speed_px_per_second > 0) return atlas_frame(atlas, FRAMES_ACT, (tick / WALK_FRAME_TICKS) % 3);
+    return atlas_frame(atlas, FRAMES_IDLE, tick / IDLE_FRAME_TICKS + idle_phase);
+}
+
+int effect_frame(const Effect *effect, int tick)
+{
+    int age = tick - effect->since_tick;
+    if (age < 0 || age >= EFFECT_TICKS) return -1;
+    return age * 5 / EFFECT_TICKS;
 }
