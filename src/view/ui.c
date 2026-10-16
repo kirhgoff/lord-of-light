@@ -1,6 +1,5 @@
 #include "ui.h"
 
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -9,9 +8,9 @@
 #include "raylib.h"
 #include "clay_renderer_raylib.c"
 
+#include "frame_text.h"
 #include "report.h"
 
-#define FRAME_TEXT_SIZE (64 * 1024)
 #define LOG_LINES 200
 #define FONT_SMALL 10
 #define OVERLAY_LIFT_PX 48
@@ -45,8 +44,7 @@ static const Clay_Color ORANGE_COLOUR = {240, 160, 80, 255};
 
 static Font fonts[FONT_COUNT];
 static void *clay_memory;
-static char frame_text[FRAME_TEXT_SIZE];
-static int frame_text_used;
+static FrameText frame_text;
 
 static Clay_Dimensions measure_text_utf8(Clay_StringSlice text, Clay_TextElementConfig *config, void *user_data)
 {
@@ -74,16 +72,12 @@ static void handle_clay_error(Clay_ErrorData error)
 
 static Clay_String frame_string(const char *format, ...)
 {
-    char *out = frame_text + frame_text_used;
-    int capacity = FRAME_TEXT_SIZE - frame_text_used - 1;
     va_list args;
     va_start(args, format);
-    int length = vsnprintf(out, (size_t)capacity + 1, format, args);
+    int length;
+    const char *chars = frame_text_vformat(&frame_text, &length, format, args);
     va_end(args);
-    if (length < 0) length = 0;
-    if (length > capacity) length = capacity;
-    frame_text_used += length + 1;
-    return (Clay_String){.isStaticallyAllocated = false, .length = length, .chars = out};
+    return (Clay_String){.isStaticallyAllocated = false, .length = length, .chars = chars};
 }
 
 static void sized_text(Clay_String string, Clay_Color colour, int size)
@@ -137,7 +131,7 @@ static int pick_under_mouse(const Battle *b, const Scene *scene, const Atlases *
 
 void ui_update(Ui *ui, const Battle *b, const Scene *scene, const Atlases *atlases, const Viewport *view, bool input_blocked)
 {
-    frame_text_used = 0;
+    frame_text_reset(&frame_text);
     Vector2 wheel = GetMouseWheelMoveV();
     Vector2 mouse = GetMousePosition();
     Clay_SetLayoutDimensions((Clay_Dimensions){(float)view->width, (float)view->height});
