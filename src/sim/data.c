@@ -107,12 +107,16 @@ static bool fail(Context *ctx, const char *path, const char *format, ...)
 
 static void join_key(char *out, const char *parent, const char *key)
 {
-    snprintf(out, PATH_LEN, parent[0] ? "%s.%s" : "%s%s", parent, key);
+    char parent_copy[PATH_LEN];
+    snprintf(parent_copy, PATH_LEN, "%s", parent);
+    snprintf(out, PATH_LEN, parent_copy[0] ? "%s.%s" : "%s%s", parent_copy, key);
 }
 
 static void join_index(char *out, const char *parent, int index)
 {
-    snprintf(out, PATH_LEN, "%s[%d]", parent, index);
+    char parent_copy[PATH_LEN];
+    snprintf(parent_copy, PATH_LEN, "%s", parent);
+    snprintf(out, PATH_LEN, "%s[%d]", parent_copy, index);
 }
 
 static const cJSON *get_item(Context *ctx, const cJSON *obj, const char *parent, const char *key,
@@ -660,9 +664,9 @@ static bool resolve_body_plan(Context *ctx, GameData *data, int index)
     Body *body = &data->body_plans[index].body;
     bool has_heart = false, can_move = false;
     for (int s = 0; s < body->slot_count; s++) {
-        char path[PATH_LEN], list_path[PATH_LEN];
-        join_index(list_path, "bodyplans", index);
-        join_key(list_path, list_path, "slots");
+        char path[PATH_LEN], plan_path[PATH_LEN], list_path[PATH_LEN];
+        join_index(plan_path, "bodyplans", index);
+        join_key(list_path, plan_path, "slots");
         join_index(path, list_path, s);
         if (body->slots[s].fixed_part_id[0] && !resolve_fixed_part(ctx, data, is_spawn_plan(data, index), path, &body->slots[s])) return false;
         has_heart |= body->slots[s].role == SLOT_ROLE_HEART;

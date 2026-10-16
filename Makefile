@@ -49,7 +49,7 @@ $(BUILD)/game: $(GAME_OBJECTS) $(RAYLIB_LIB)
 	$(CC) $^ $(PLATFORM_LIBS) -lcurl -o $@
 
 $(BUILD)/headless: $(HEADLESS_OBJECTS)
-	$(CC) $^ $(SAN) -lcurl -o $@
+	$(CC) $^ $(SAN) -lm -lcurl -o $@
 
 laya-local:
 	LAYA_HOST=127.0.0.1 LAYA_PORT=8765 LAYA_DEVICE=cpu LAYA_THREADS=8 LAYA_MODELS=english LAYA_DEFAULT_MODEL=english \
@@ -59,10 +59,10 @@ balance: $(BUILD)/balance
 	$(BUILD)/balance
 
 $(BUILD)/balance: $(BALANCE_OBJECTS)
-	$(CC) $^ $(SAN) -o $@
+	$(CC) $^ $(SAN) -lm -o $@
 
 $(BUILD)/tests: $(TEST_OBJECTS) $(SIM_OBJECTS) $(VIEW_PURE_OBJECTS) $(BUILD)/obj/src/laya/laya.o $(CJSON_OBJECT)
-	$(CC) $^ $(SAN) -o $@
+	$(CC) $^ $(SAN) -lm -o $@
 
 $(BUILD)/obj/%.o: %.c
 	@mkdir -p $(@D)
