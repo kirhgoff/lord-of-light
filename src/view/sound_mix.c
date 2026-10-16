@@ -55,7 +55,7 @@ static void snapshot(SoundTracker *t, const Battle *b)
 
 void sound_tracker_reset(SoundTracker *t, const Battle *b)
 {
-    *t = (SoundTracker){0};
+    *t = (SoundTracker){.hit_tick = -1};
     t->seen_events = b->log_count;
     t->last_tick = b->tick;
     snapshot(t, b);
@@ -100,10 +100,19 @@ static const Ability *find_ability(const Part *part, OrderKind kind, int element
     return NULL;
 }
 
-static void map_hit(const Battle *b, const GameData *data, const Event *e, SoundCue *out, int *n, int max)
+static bool first_hit_of_action(SoundTracker *t, const Event *e)
+{
+    bool repeat = t->hit_tick == e->tick && t->hit_actor == e->actor && t->hit_actor_part == e->actor_part;
+    t->hit_tick = e->tick;
+    t->hit_actor = e->actor;
+    t->hit_actor_part = e->actor_part;
+    return !repeat;
+}
+
+static void map_hit(SoundTracker *t, const Battle *b, const GameData *data, const Event *e, SoundCue *out, int *n, int max)
 {
     const Ability *ability = find_ability(slot_part(b, data, e->actor, e->actor_part), ORDER_STRIKE, e->element);
-    if (ability) push_at_combatant(out, n, max, ability->sound, b, e->actor, SOUND_ABILITY);
+    if (ability && first_hit_of_action(t, e)) push_at_combatant(out, n, max, ability->sound, b, e->actor, SOUND_ABILITY);
     if (in_range(e->element, ELEMENT_COUNT)) push_at_combatant(out, n, max, data->elements[e->element].hit_sound, b, e->target, SOUND_ABILITY);
     if (e->detail <= 0) push_at_combatant(out, n, max, data->cues.part_destroyed, b, e->target, SOUND_CUE);
 }
@@ -125,11 +134,11 @@ static void map_floor_object(const FloorObject *objects, int count, const ArenaO
     push(out, n, max, defs[object->def].sound, px(object->x_millipx), px(object->y_millipx), SOUND_CUE);
 }
 
-static void map_event(const Battle *b, const GameData *data, const Event *e, SoundCue *out, int *n, int max)
+static void map_event(SoundTracker *t, const Battle *b, const GameData *data, const Event *e, SoundCue *out, int *n, int max)
 {
     switch (e->kind) {
     case EVENT_HIT:
-        map_hit(b, data, e, out, n, max);
+        map_hit(t, b, data, e, out, n, max);
         break;
     case EVENT_EFFECT:
         map_effect(b, data, e, out, n, max);
@@ -187,7 +196,7 @@ static void collect_steps(SoundTracker *t, const Battle *b, const GameData *data
 int sound_collect(SoundTracker *t, const Battle *b, const GameData *data, SoundCue *out, int max)
 {
     int n = 0;
-    for (; t->seen_events < b->log_count; t->seen_events++) map_event(b, data, &b->log[t->seen_events], out, &n, max);
+    for (; t->seen_events < b->log_count; t->seen_events++) map_event(t, b, data, &b->log[t->seen_events], out, &n, max);
     collect_steps(t, b, data, b->tick - t->last_tick, out, &n, max);
     t->last_tick = b->tick;
     snapshot(t, b);

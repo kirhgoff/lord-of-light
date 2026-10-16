@@ -33,6 +33,9 @@ typedef struct {
     int prev_x[MAX_COMBATANTS];
     int prev_y[MAX_COMBATANTS];
     int step_ticks[MAX_COMBATANTS];
+    int hit_tick;
+    int hit_actor;
+    int hit_actor_part;
     int prev_count;
 } SoundTracker;
 

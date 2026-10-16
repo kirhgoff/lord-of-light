@@ -278,8 +278,48 @@ static void test_dead_combatants_make_no_steps(void)
     CHECK(sound_collect(&tracker, &battle, &data, cues, OUT_MAX) == 0);
 }
 
+static void test_chain_hits_of_one_action_play_the_ability_once(void)
+{
+    setup();
+    int slot = slot_with_ability(0, ORDER_STRIKE);
+    if (slot < 0) slot = slot_with_ability(0, ORDER_CAST);
+    const Part *part = &data.parts[battle.combatants[0].body.slots[slot].part];
+    int element = -1;
+    for (int a = 0; a < part->ability_count; a++)
+        if (part->abilities[a].order == ORDER_STRIKE || part->abilities[a].order == ORDER_CAST) element = part->abilities[a].element;
+    log_event(EVENT_HIT, 0, slot, 1, element, 5);
+    log_event(EVENT_HIT, 0, slot, 2, element, 5);
+    int n = sound_collect(&tracker, &battle, &data, cues, OUT_MAX);
+    CHECK(n == 3);
+    CHECK(cues[0].category == SOUND_ABILITY && cues[0].x == combatant_x(0));
+    CHECK(cues[1].x == combatant_x(1) && cues[2].x == combatant_x(2));
+    battle.tick++;
+    log_event(EVENT_HIT, 0, slot, 1, element, 5);
+    battle.log[battle.log_count - 1].tick = battle.tick;
+    CHECK(sound_collect(&tracker, &battle, &data, cues, OUT_MAX) == 2);
+}
+
+static void test_cast_only_part_plays_its_cast_sound(void)
+{
+    setup();
+    int cast_part = -1;
+    for (int p = 0; p < data.part_count && cast_part < 0; p++) {
+        bool only_cast = data.parts[p].ability_count > 0;
+        for (int a = 0; a < data.parts[p].ability_count; a++) only_cast = only_cast && data.parts[p].abilities[a].order == ORDER_CAST;
+        if (only_cast) cast_part = p;
+    }
+    CHECK(cast_part >= 0);
+    battle.combatants[0].body.slots[0].part = cast_part;
+    const Ability *cast = &data.parts[cast_part].abilities[0];
+    log_event(EVENT_HIT, 0, 0, 1, cast->element, 5);
+    CHECK(sound_collect(&tracker, &battle, &data, cues, OUT_MAX) == 2);
+    CHECK(strcmp(cues[0].id, cast->sound) == 0);
+}
+
 void run_sound_tests(void)
 {
+    test_chain_hits_of_one_action_play_the_ability_once();
+    test_cast_only_part_plays_its_cast_sound();
     test_place_centre_is_full_volume_and_centred();
     test_place_pan_follows_horizontal_offset_and_clamps();
     test_place_volume_is_full_inside_and_falls_off_to_zero_one_half_width_outside();
