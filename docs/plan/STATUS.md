@@ -17,6 +17,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 |---|---|---|
 | 23 Quality gates + Linux CI | `23-quality-gates` at `~/Projects/lord-of-light-23-quality-gates` | executor running |
 | 24 Resizable window + overlay tech panel | `24-resizable-arena` at `~/Projects/lord-of-light-24-resizable-arena` | executor running |
+| 25 Jev vs Laya benchmark | `25-jev-vs-laya-bench` at `~/Projects/lord-of-light-25-jev-vs-laya-bench` | executor running |
 
 ## Done
 
