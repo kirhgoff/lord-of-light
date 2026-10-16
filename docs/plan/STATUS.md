@@ -13,6 +13,8 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 ## In flight
 
+Handover 2026-10-16: the user asked to stop starting new tasks. The agents below were left to finish; their results are recorded here. A new session continues with step 3/4 of the loop for each row, then the frontier.
+
 | Ticket | Branch / worktree | State |
 |---|---|---|
 | 04 Movement + vision | `04-movement-vision` / `~/Projects/lord-of-light-04-movement-vision` | executor done (8c88f90); opus review running (A* per-Tick cost, 5 px radius, LOS corners) |
