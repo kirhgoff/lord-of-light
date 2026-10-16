@@ -175,6 +175,32 @@ static void test_heal_is_separate_from_damage(void)
     CHECK(heal->order == ORDER_SUPPORT && heal->heal == 10 && heal->damage == 0);
 }
 
+typedef struct {
+    bool (*loader)(GameData *, const char *, char *, size_t);
+    const char *fixture;
+    const char *expected;
+} ErrorCase;
+
+static void test_negative_values_and_empty_parts(void)
+{
+    static const ErrorCase cases[] = {
+        { load_parts, FIXTURE("parts_negative_range.json"), "parts[6].abilities[0].range: must not be negative" },
+        { load_parts, FIXTURE("parts_negative_cooldown.json"), "parts[6].abilities[0].cooldown: must not be negative" },
+        { load_parts, FIXTURE("parts_negative_area.json"), "parts[6].abilities[0].area: must not be negative" },
+        { load_parts, FIXTURE("parts_negative_vitality.json"), "parts[3].vitality: must not be negative" },
+        { load_parts, FIXTURE("parts_negative_initiative.json"), "parts[1].initiative: must not be negative" },
+        { load_parts, FIXTURE("parts_negative_move_speed.json"), "parts[5].move_speed: must not be negative" },
+        { load_parts, FIXTURE("parts_negative_vision.json"), "parts[1].vision.close: must not be negative" },
+        { load_parts, FIXTURE("parts_empty.json"), "parts: no parts" },
+        { load_arena_objects, FIXTURE("arena_objects_negative_heal.json"), "pickups[0].heal: must not be negative" },
+        { load_arena_objects, FIXTURE("arena_objects_negative_radius.json"), "traps[0].radius: must not be negative" },
+        { load_arena_objects, FIXTURE("arena_objects_negative_respawn.json"), "traps[1].respawn_ticks: must not be negative" },
+    };
+    load_real_data();
+    for (size_t i = 0; i < sizeof cases / sizeof cases[0]; i++)
+        check_error(cases[i].loader(&data, cases[i].fixture, err, ERR_SIZE), cases[i].expected);
+}
+
 static GameData snapshot;
 
 static void check_unchanged(bool loaded)
@@ -191,6 +217,7 @@ static void test_failed_load_keeps_previous_data(void)
     check_unchanged(load_arena_objects(&data, FIXTURE("arena_objects_unknown_element.json"), err, ERR_SIZE));
     check_unchanged(load_power(&data, FIXTURE("power_missing_weight.json"), err, ERR_SIZE));
     check_unchanged(load_pantheon(&data, FIXTURE("pantheon_unknown_part.json"), err, ERR_SIZE));
+    check_unchanged(load_pantheons(&data, FIXTURE("pantheons_second_file_bad"), err, ERR_SIZE));
     check_unchanged(load_game_data(&data, "tests/fixtures/no_such_dir", err, ERR_SIZE));
 }
 
@@ -210,4 +237,5 @@ void run_data_tests(void)
     test_number_and_range_errors();
     test_duplicate_and_empty_errors();
     test_heal_is_separate_from_damage();
+    test_negative_values_and_empty_parts();
 }

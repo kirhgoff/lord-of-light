@@ -129,6 +129,15 @@ static bool get_int(Context *ctx, const cJSON *obj, const char *parent, const ch
     return number_to_int(ctx, path, item, out);
 }
 
+static bool get_count(Context *ctx, const cJSON *obj, const char *parent, const char *key, int *out,
+                      bool required)
+{
+    if (!get_int(ctx, obj, parent, key, out, required)) return false;
+    char path[PATH_LEN];
+    join_key(path, parent, key);
+    return *out >= 0 || fail(ctx, path, "must not be negative");
+}
+
 static bool get_bool(Context *ctx, const cJSON *obj, const char *parent, const char *key, bool *out)
 {
     bool ok;
@@ -487,11 +496,11 @@ static bool read_ability(Context *ctx, const cJSON *obj, const char *path, Abili
     join_key(order_path, path, "order");
     return lookup_order_kind(ctx, order_path, order, &ability->order)
         && get_element(ctx, obj, path, "element", &ability->element, true)
-        && get_int(ctx, obj, path, "damage", &ability->damage, false)
-        && get_int(ctx, obj, path, "heal", &ability->heal, false)
-        && get_int(ctx, obj, path, "range", &ability->range, false)
-        && get_int(ctx, obj, path, "cooldown", &ability->cooldown_ticks, false)
-        && get_int(ctx, obj, path, "area", &ability->area, false)
+        && get_count(ctx, obj, path, "damage", &ability->damage, false)
+        && get_count(ctx, obj, path, "heal", &ability->heal, false)
+        && get_count(ctx, obj, path, "range", &ability->range, false)
+        && get_count(ctx, obj, path, "cooldown", &ability->cooldown_ticks, false)
+        && get_count(ctx, obj, path, "area", &ability->area, false)
         && check_non_negative(ctx, path, "damage", ability->damage)
         && check_non_negative(ctx, path, "heal", ability->heal);
 }
@@ -540,9 +549,9 @@ static bool read_vision(Context *ctx, const cJSON *obj, const char *path, Part *
     if (!vision) return true;
     char vision_path[PATH_LEN];
     join_key(vision_path, path, "vision");
-    if (!(get_int(ctx, vision, vision_path, "close", &part->vision_close, false)
-          && get_int(ctx, vision, vision_path, "medium", &part->vision_medium, false)
-          && get_int(ctx, vision, vision_path, "far", &part->vision_far, false)))
+    if (!(get_count(ctx, vision, vision_path, "close", &part->vision_close, false)
+          && get_count(ctx, vision, vision_path, "medium", &part->vision_medium, false)
+          && get_count(ctx, vision, vision_path, "far", &part->vision_far, false)))
         return false;
     if (part->vision_close > part->vision_medium || part->vision_medium > part->vision_far)
         return fail(ctx, vision_path, "bands must satisfy close <= medium <= far");
@@ -584,9 +593,9 @@ static bool read_part_stats(Context *ctx, const cJSON *obj, const char *path, Pa
     char integrity_path[PATH_LEN];
     join_key(integrity_path, path, "integrity");
     if (part->integrity <= 0) return fail(ctx, integrity_path, "must be positive");
-    return get_int(ctx, obj, path, "vitality", &part->vitality, false)
-        && get_int(ctx, obj, path, "initiative", &part->initiative, false)
-        && get_int(ctx, obj, path, "move_speed", &part->move_speed, false);
+    return get_count(ctx, obj, path, "vitality", &part->vitality, false)
+        && get_count(ctx, obj, path, "initiative", &part->initiative, false)
+        && get_count(ctx, obj, path, "move_speed", &part->move_speed, false);
 }
 
 static bool read_part(Context *ctx, const cJSON *obj, const char *path, const GameData *data, Part *part)
@@ -626,6 +635,7 @@ static bool parts_from_root(Context *ctx, const cJSON *root, GameData *data)
             }
         count++;
     }
+    if (count == 0) return fail(ctx, "parts", "no parts");
     memcpy(data->parts, parts, sizeof(Part) * (size_t)count);
     data->part_count = count;
     return true;
@@ -637,13 +647,13 @@ static bool read_arena_object(Context *ctx, const cJSON *obj, const char *path, 
         && get_string(ctx, obj, path, "name", def->name, sizeof def->name, true)
         && get_string(ctx, obj, path, "sprite", def->sprite, sizeof def->sprite, true)
         && get_element(ctx, obj, path, "element", &def->element, false)
-        && get_int(ctx, obj, path, "damage", &def->damage, false)
-        && get_int(ctx, obj, path, "heal", &def->heal, false)
-        && get_int(ctx, obj, path, "radius", &def->radius, false)
-        && get_int(ctx, obj, path, "slow_percent", &def->slow_percent, false)
-        && get_int(ctx, obj, path, "effect_ticks", &def->effect_ticks, false)
-        && get_int(ctx, obj, path, "damage_bonus_percent", &def->damage_bonus_percent, false)
-        && get_int(ctx, obj, path, "respawn_ticks", &def->respawn_ticks, true);
+        && get_count(ctx, obj, path, "damage", &def->damage, false)
+        && get_count(ctx, obj, path, "heal", &def->heal, false)
+        && get_count(ctx, obj, path, "radius", &def->radius, false)
+        && get_count(ctx, obj, path, "slow_percent", &def->slow_percent, false)
+        && get_count(ctx, obj, path, "effect_ticks", &def->effect_ticks, false)
+        && get_count(ctx, obj, path, "damage_bonus_percent", &def->damage_bonus_percent, false)
+        && get_count(ctx, obj, path, "respawn_ticks", &def->respawn_ticks, true);
 }
 
 static bool read_arena_object_list(Context *ctx, const cJSON *root, const char *key,
@@ -765,7 +775,7 @@ static int compare_names(const void *a, const void *b)
     return strcmp((const char *)a, (const char *)b);
 }
 
-bool load_pantheons(GameData *data, const char *folder, char *err, size_t err_size)
+static bool append_pantheons(GameData *data, const char *folder, char *err, size_t err_size)
 {
     DIR *handle = opendir(folder);
     if (!handle) {
@@ -799,6 +809,15 @@ bool load_pantheons(GameData *data, const char *folder, char *err, size_t err_si
     return true;
 }
 
+bool load_pantheons(GameData *data, const char *folder, char *err, size_t err_size)
+{
+    static GameData scratch;
+    scratch = *data;
+    bool ok = append_pantheons(&scratch, folder, err, err_size);
+    if (ok) *data = scratch;
+    return ok;
+}
+
 bool load_game_data(GameData *data, const char *dir, char *err, size_t err_size)
 {
     char path[PATH_LEN];
@@ -811,7 +830,7 @@ bool load_game_data(GameData *data, const char *dir, char *err, size_t err_size)
         && LOAD(load_parts, "parts.json")
         && LOAD(load_arena_objects, "arena_objects.json")
         && LOAD(load_power, "power.json")
-        && (snprintf(path, sizeof path, "%s/pantheons", dir), load_pantheons(&fresh, path, err, err_size));
+        && (snprintf(path, sizeof path, "%s/pantheons", dir), append_pantheons(&fresh, path, err, err_size));
 #undef LOAD
     if (ok) *data = fresh;
     return ok;
