@@ -18,7 +18,7 @@ Handover 2026-10-16: the user asked to stop starting new tasks. The agents below
 | Ticket | Branch / worktree | State |
 |---|---|---|
 | 04 Movement + vision | `04-movement-vision` / `~/Projects/lord-of-light-04-movement-vision` | review CHANGES — findings in the ticket's `## Comments`; next: send them to a sonnet executor on this branch, then re-review |
-| 17 Slot roles | `17-slot-roles` / `~/Projects/lord-of-light-17-slot-roles` | executor running |
+| 17 Slot roles | `17-slot-roles` / `~/Projects/lord-of-light-17-slot-roles` | executor done (363786d), not reviewed — see the ticket's `## Comments`; next: opus review + fable look at composed bodies |
 
 If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`, `git status`), then either spawn a new executor to finish from there or review what exists.
 

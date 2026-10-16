@@ -16,3 +16,12 @@ Extend the schema (loader + validation + tests + data):
 - Update `data/bodyplans.json` and `data/parts.json` accordingly; ticket 03's placeholder Horde uses roles.
 - Side-view anchors (from the ticket 09 design review): Body Plans were authored partly top-down. Re-author them for a side view where every sprite faces right: rear Parts (tails, stingers) at −x, paired Parts (spider mandibles, blob lashes, floater tentacles) at near/far depth (small x/y offset, far one drawn first) instead of mirrored ±x, and `compound_eyes`-sized heads not larger than the Core. Check by composing bodies with the reviewer's script (`tools/compose_body.py`, added by ticket 09).
 - Test: for 200 seeds, every generated placeholder monster has a Heart and can move.
+
+## Comments
+
+**Executor hand-back (363786d), not yet reviewed.** `make test` and `make asan` green. Slot `role` (any/heart/mover/attack/sense) + fixed `part` + Part `minion_only`; `part_fits_role` in data.c; Horde fill uses roles (slot-id rule removed); all Body Plans and 20 Deities re-anchored for side view (far Parts listed first; floater tentacles renamed `tentacle_far/mid/near`; Odin's Gungnir now in the near hand). Things the reviewer should check:
+- The 200-seed test was not shown to go red with roles reverted.
+- `random_part` has no guard for an empty eligible pool.
+- Role `any` still allows odd fills (e.g. `serpent_coil` in a legs slot).
+- Visual leftovers: imp/crow claws and wisp lantern oversized; `compound_eyes` head wider than a biped torso; serpent_coil sprite already has a head, so the separate head Part overlaps. Regenerate previews with `tools/compose_body.py` (a Fable reviewer should look at them).
+- Old saves with old slot ids no longer load (accepted).
