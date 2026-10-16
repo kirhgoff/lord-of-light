@@ -13,3 +13,4 @@ Blocked by: 05, 10, 19
 - Voices: load each WAV once, a few `LoadSoundAlias` voices per sound (raylib 5.5); a new play steals the oldest voice; skip sounds below volume 0.05; at most ~12 sounds started per frame.
 - Pause: no new sounds while paused. `M` mutes and unmutes; master volume constant in one place.
 - Headless runs and `make test` never open the audio device.
+- Loudness (from the ticket 19 review): every WAV peaks at −3 dBFS but RMS ranges −30 dB (`fire_hit`) to −10 dB (`lightning_cast`), and steps peak as loud as `cue_death`. Add per-category gain (steps quieter, cues louder), or switch the generator to loudness normalisation.
