@@ -1,8 +1,9 @@
 CC := clang
 BUILD := build
+SAN :=
 STD := -std=c11
-STRICT := $(STD) -Wall -Wextra -Werror -Ivendor/cjson
-VENDOR_FLAGS := $(STD) -w -O2
+STRICT := $(STD) -Wall -Wextra -Werror -Ivendor/cjson $(SAN)
+VENDOR_FLAGS := $(STD) -w -O2 $(SAN)
 
 RAYLIB_DIR := vendor/raylib/src
 RAYLIB_SOURCES := rcore rshapes rtextures rtext rmodels raudio utils
@@ -18,7 +19,7 @@ TEST_OBJECTS := $(patsubst %.c,$(BUILD)/obj/%.o,$(wildcard tests/*.c))
 GAME_OBJECTS := $(BUILD)/obj/src/main_game.o $(VIEW_OBJECTS) $(SIM_OBJECTS) $(CJSON_OBJECT)
 HEADLESS_OBJECTS := $(BUILD)/obj/src/main_headless.o $(SIM_OBJECTS) $(CJSON_OBJECT)
 
-.PHONY: game headless test run clean
+.PHONY: game headless test run clean asan
 
 game: $(BUILD)/game
 headless: $(BUILD)/headless
@@ -33,10 +34,10 @@ $(BUILD)/game: $(GAME_OBJECTS) $(RAYLIB_LIB)
 	$(CC) $^ $(FRAMEWORKS) -o $@
 
 $(BUILD)/headless: $(HEADLESS_OBJECTS)
-	$(CC) $^ -o $@
+	$(CC) $^ $(SAN) -o $@
 
 $(BUILD)/tests: $(TEST_OBJECTS) $(SIM_OBJECTS) $(CJSON_OBJECT)
-	$(CC) $^ -o $@
+	$(CC) $^ $(SAN) -o $@
 
 $(BUILD)/obj/%.o: %.c
 	@mkdir -p $(@D)
@@ -58,6 +59,16 @@ $(BUILD)/raylib/rglfw.o: $(RAYLIB_DIR)/rglfw.c
 $(BUILD)/raylib/%.o: $(RAYLIB_DIR)/%.c
 	@mkdir -p $(@D)
 	$(CC) $(VENDOR_FLAGS) $(RAYLIB_DEFINES) -I$(RAYLIB_DIR)/external/glfw/include -c $< -o $@
+
+ASAN_FLAGS := -fsanitize=address,undefined,float-cast-overflow -fno-sanitize-recover=all -g
+ASAN_SEEDS := 0 1 2 3 4 5 6 7 8 9 4294967295
+
+asan:
+	$(MAKE) BUILD=build/asan SAN="$(ASAN_FLAGS)" test headless
+	set -e; for seed in $(ASAN_SEEDS); do \
+		build/asan/headless --seed $$seed --ticks 300 --dump build/asan/mid.json > /dev/null; \
+		build/asan/headless --load build/asan/mid.json --ticks 300 > /dev/null; \
+	done
 
 clean:
 	rm -rf $(BUILD)

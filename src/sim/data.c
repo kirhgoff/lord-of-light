@@ -107,14 +107,19 @@ static bool get_string(Context *ctx, const cJSON *obj, const char *parent, const
     return true;
 }
 
+bool json_to_int(const cJSON *item, int *out)
+{
+    if (!cJSON_IsNumber(item)) return false;
+    double value = item->valuedouble;
+    if (!(value == floor(value) && value >= INT_MIN && value <= INT_MAX)) return false;
+    *out = (int)value;
+    return true;
+}
+
 static bool number_to_int(Context *ctx, const char *path, const cJSON *item, int *out)
 {
     if (!cJSON_IsNumber(item)) return fail(ctx, path, "expected a number");
-    double value = item->valuedouble;
-    if (value != floor(value) || value < INT_MIN || value > INT_MAX)
-        return fail(ctx, path, "expected an integer");
-    *out = (int)value;
-    return true;
+    return json_to_int(item, out) || fail(ctx, path, "expected an integer");
 }
 
 static bool get_int(Context *ctx, const cJSON *obj, const char *parent, const char *key, int *out,
@@ -595,7 +600,7 @@ static bool read_part_stats(Context *ctx, const cJSON *obj, const char *path, Pa
     if (part->integrity <= 0) return fail(ctx, integrity_path, "must be positive");
     return get_count(ctx, obj, path, "vitality", &part->vitality, false)
         && get_count(ctx, obj, path, "initiative", &part->initiative, false)
-        && get_count(ctx, obj, path, "move_speed", &part->move_speed, false);
+        && get_count(ctx, obj, path, "move_speed", &part->move_speed_px_per_second, false);
 }
 
 static bool read_part(Context *ctx, const cJSON *obj, const char *path, const GameData *data, Part *part)
@@ -789,8 +794,8 @@ static bool append_pantheons(GameData *data, const char *folder, char *err, size
         size_t length = strlen(entry->d_name);
         if (length < 6 || strcmp(entry->d_name + length - 5, ".json") != 0) continue;
         if (count == MAX_PANTHEONS || length >= NAME_LEN) {
-            closedir(handle);
             snprintf(err, err_size, "%s/%s: too many pantheon files or file name too long", folder, entry->d_name);
+            closedir(handle);
             return false;
         }
         strcpy(names[count++], entry->d_name);
