@@ -31,7 +31,7 @@ RETRY_STATUSES = (429, 529)
 QUESTION_IDS = ("hurt", "element", "stance")
 BACKEND_COLORS = {"jev": "var(--c1)", "laya-tomhat": "var(--c2)", "laya-local": "var(--c3)"}
 BACKEND_ORDER = ("jev", "laya-tomhat", "laya-local")
-ERROR_CLASSES = ("connect", "timeout", "http4xx", "http5xx", "malformed", "unknown choice")
+ERROR_CLASSES = ("connect", "timeout", "http3xx", "http4xx", "http5xx", "malformed", "unknown choice")
 
 
 def percentile(values, p):
@@ -85,8 +85,8 @@ def game_would_use_rate(rows, threshold):
     return used / len(rows)
 
 
-def timing_summary(rows):
-    walls = [r["wall_ms"] for r in rows if r["phase"] == "warm" and r["error"] is None]
+def timing_summary(rows, field="wall_ms"):
+    walls = [r[field] for r in rows if r["phase"] == "warm" and r["error"] is None]
     return {
         "p50": percentile(walls, 50), "p95": percentile(walls, 95),
         "max": max(walls) if walls else None, "mean": statistics.fmean(walls) if walls else None,
@@ -100,6 +100,8 @@ CURL_FAILURES = {6: "could not resolve host", 7: "connection failed", 28: "timed
 def classify_error(status, curl_exit):
     if curl_exit:
         return "timeout" if curl_exit == CURL_TIMEOUT_EXIT else "connect"
+    if status is not None and 300 <= status < 400:
+        return "http3xx"
     if status is not None and 400 <= status < 500:
         return "http4xx"
     if status is not None and status >= 500:
@@ -112,23 +114,27 @@ def quoted(text):
 
 
 def http_call(method, url, headers, body, timeout_s):
-    config = ["silent", "include", "url = " + quoted(url), "request = " + method,
-              "max-time = %s" % timeout_s, "write-out = " + quoted("\n%{http_code} %{time_total}")]
+    config = ["silent", "include", "url = " + quoted(url), "request = " + method, "max-time = %s" % timeout_s,
+              "write-out = " + quoted("\n%{http_code} %{time_total} %{time_connect} %{time_appconnect}")]
     config += ["header = " + quoted("%s: %s" % item) for item in headers.items()]
     if body is not None:
-        config.append("data-binary = " + quoted(json.dumps(body)))
+        config.append("data-binary = " + quoted(json.dumps(body, separators=(",", ":"), ensure_ascii=False)))
+    started = time.perf_counter()
     done = subprocess.run(["curl", "--config", "-"], input="\n".join(config).encode(), capture_output=True)
-    head, _, rest = done.stdout.decode("utf-8", "replace").partition("\r\n\r\n")
-    payload, _, trailer = rest.rpartition("\n")
-    status_text, _, total = trailer.partition(" ")
-    status = int(status_text) if status_text.isdigit() and int(status_text) else None
+    elapsed_ms = (time.perf_counter() - started) * 1000
+    reply, _, trailer = done.stdout.decode("utf-8", "replace").rpartition("\n")
+    head, _, payload = reply.partition("\r\n\r\n")
+    fields = trailer.split()
+    status = int(fields[0]) if fields and fields[0].isdigit() and int(fields[0]) else None
+    times = [float(f) * 1000 for f in fields[1:4]] if len(fields) == 4 else []
+    wall_ms = times[0] if times and times[0] > 0 else elapsed_ms
+    handshake_ms = max(times[1:], default=0.0)
     response_headers = {}
     for line in head.split("\r\n")[1:]:
         name, _, value = line.partition(":")
         response_headers[name.strip().lower()] = value.strip()
-    exit_code = done.returncode
-    return {"status": status, "payload": payload, "headers": response_headers, "curl_exit": exit_code,
-            "wall_ms": float(total) * 1000 if total else 0.0}
+    return {"status": status, "payload": payload, "headers": response_headers, "curl_exit": done.returncode,
+            "wall_ms": wall_ms, "handshake_ms": min(handshake_ms, wall_ms)}
 
 
 def read_key(path):
@@ -235,16 +241,17 @@ def send_one(name, url, key, model, timeout_s, index, record, phase):
             continue
         break
     row = {"backend": name, "index": index, "tick": record["tick"], "combatant": record["combatant"],
-           "name": record["name"], "phase": phase, "wall_ms": result["wall_ms"], "server_ms": None,
+           "name": record["name"], "phase": phase, "wall_ms": result["wall_ms"], "handshake_ms": result["handshake_ms"],
+           "reused_ms": result["wall_ms"] - result["handshake_ms"], "server_ms": None,
            "http_status": result["status"], "retries": retries, "error": None, "error_detail": None,
            "model": None, "input_tokens": None, "output_tokens": None, "truncated": None,
-           "answers": {}, "understood": False, "reflex": record["reflex"], "state_chars": len(request["state"]),
+           "answers": {}, "answer_fields": [], "usage_fields": [], "understood": False, "reflex": record["reflex"], "state_chars": len(request["state"]),
            "request": request}
     server = result["headers"].get("x-inference-time-ms")
     row["server_ms"] = float(server) if server else None
     failure = classify_error(result["status"], result["curl_exit"])
     if failure is None and result["status"] != 200:
-        failure = "http4xx"
+        failure = "malformed"
     if failure:
         row["error"] = failure
         row["error_detail"] = describe_failure(result) + " " + result["payload"][:200]
@@ -256,7 +263,9 @@ def send_one(name, url, key, model, timeout_s, index, record, phase):
         return row
     usage = reply.get("usage") or {}
     row.update(model=reply.get("model"), input_tokens=usage.get("input_tokens"), output_tokens=usage.get("output_tokens"),
-               truncated=usage.get("truncated"), answers=parse_answers(reply, request))
+               truncated=usage.get("truncated"), answers=parse_answers(reply, request),
+               answer_fields=sorted({k for a in (reply.get("answers") or {}).values() if isinstance(a, dict) for k in a}),
+               usage_fields=sorted(usage))
     row["understood"] = understood(row["answers"], request)
     if not row["understood"]:
         row["error"], row["error_detail"] = "unknown choice", result["payload"][:200]
@@ -388,6 +397,7 @@ def build_report(meta, results, config):
     live = [n for n in names if meta[n]["reachable"]]
     ok = {n: [r for r in results.get(n, []) if r["error"] is None] for n in names}
     stats = {n: timing_summary(results[n]) for n in live}
+    reused = {n: timing_summary(results[n], "reused_ms") for n in live}
     sections = []
 
     summary_rows = []
@@ -396,12 +406,12 @@ def build_report(meta, results, config):
         cold = next((r["wall_ms"] for r in results.get(n, []) if r["phase"] == "cold" and r["error"] is None), None)
         models = sorted({r["model"] for r in ok.get(n, []) if r["model"]})
         summary_rows.append([n, m["url"], "yes" if m["reachable"] else "no: " + str(m["reason"]), len(results.get(n, [])),
-                             ", ".join(models) or m.get("revision") or "-", fmt(cold, 0, " ms")])
+                             ", ".join(models) or "-", m.get("revision") or "-", fmt(cold, 0, " ms")])
     sections.append("<h2>1. Summary</h2><p>%s &middot; git %s &middot; corpus %s &middot; %d requests per backend &middot; "
                     "stance clear threshold %.3f</p>%s" % (
                         meta["_run"]["date"], html.escape(meta["_run"]["sha"]), html.escape(", ".join(meta["_run"]["corpus"])),
                         meta["_run"]["size"], threshold,
-                        table(["backend", "url", "reachable", "records", "model / revision", "cold"], summary_rows)))
+                        table(["backend", "url", "reachable", "records", "model (response)", "revision (/health)", "cold"], summary_rows)))
 
     speed_rows = []
     for n in live:
@@ -412,18 +422,26 @@ def build_report(meta, results, config):
         mean_tokens = statistics.fmean(tokens) if tokens else None
         per_k = stats[n]["mean"] / mean_tokens * 1000 if mean_tokens and stats[n]["mean"] else None
         cold = next((r["wall_ms"] for r in rs if r["phase"] == "cold" and r["error"] is None), None)
+        handshakes = [r["handshake_ms"] for r in ok[n]]
         speed_rows.append([n, len(rs), len(ok[n]), len(rs) - len(ok[n]), fmt(cold), fmt(stats[n]["p50"]), fmt(stats[n]["p95"]),
                            fmt(stats[n]["max"]), fmt(stats[n]["mean"]),
+                           fmt(statistics.fmean(handshakes) if handshakes else None), fmt(reused[n]["p50"]), fmt(reused[n]["p95"]),
+                           fmt(reused[n]["max"]),
                            fmt(statistics.fmean(servers) if servers else None), fmt(mean_tokens), fmt(per_k)])
     charts = ""
     if live:
-        charts = (legend(live) + "<h3>Latency p50 / p95 / max (warm, ms)</h3>" + svg_grouped_bars(stats, live) +
-                  "<h3>Latency distribution (warm, cumulative share of requests)</h3>" +
-                  svg_ecdf({n: [r["wall_ms"] for r in ok[n] if r["phase"] == "warm"] for n in live}, live))
+        charts = (legend(live) + "<h3>Wall time p50 / p95 / max (warm, ms, new connection per call)</h3>" + svg_grouped_bars(stats, live) +
+                  "<h3>Estimated reused-connection time p50 / p95 / max (wall minus handshake, ms)</h3>" + svg_grouped_bars(reused, live) +
+                  "<h3>Wall time distribution (warm, cumulative share of requests)</h3>" +
+                  svg_ecdf({n: [r["wall_ms"] for r in ok[n] if r["phase"] == "warm"] for n in live}, live) +
+                  "<h3>Estimated reused-connection time distribution</h3>" +
+                  svg_ecdf({n: [r["reused_ms"] for r in ok[n] if r["phase"] == "warm"] for n in live}, live))
     sections.append("<h2>2. Speed</h2>" + table(
-        ["backend", "n", "ok", "failed", "cold ms", "p50", "p95", "max", "mean", "server ms", "input tokens", "ms per 1k tokens"],
-        speed_rows) + "<p class=muted>p50/p95/max/mean are warm, successful calls only. Server ms is the X-Inference-Time-Ms "
-        "header (Laya only).</p>" + charts)
+        ["backend", "n", "ok", "failed", "cold ms", "wall p50", "wall p95", "wall max", "wall mean", "handshake mean",
+         "reused p50", "reused p95", "reused max", "server ms", "input tokens", "wall ms per 1k tokens"],
+        speed_rows) + "<p class=muted>Warm, successful calls only. Wall is curl time_total with a fresh connection per call; handshake is "
+        "time_appconnect (TCP + TLS) or time_connect for plain HTTP; reused = wall minus handshake, an estimate of what the game's "
+        "kept-alive curl handle would see. Server ms is the X-Inference-Time-Ms header (Laya only).</p>" + charts)
 
     failure_rows = []
     for n in live:
@@ -494,19 +512,33 @@ def build_report(meta, results, config):
             table(["source", "stance", "probabilities"], rows))
     sections.append("<h2>5. Disagreements</h2>" + (blocks or "<p>No stance disagreements between reachable backends.</p>"))
 
-    sections.append("""<h2>6. Protocol differences</h2>""" + table(
-        ["", "laya-serve 0.4.7", "TypeSafe Jev"], [
-            ["Endpoint", "POST {host}/v1/systemone (+ /batch)", "POST https://api.typesafe.ai/v1/systemone (no batch)"],
-            ["Auth", "none", "Authorization: Bearer key"],
-            ["model", "optional (english)", "required: jev-latest, jev-preview or versioned; response model is versioned"],
-            ["Extra body fields", "max_len, head_max_len, task, lang, min_confidence", "none sent"],
-            ["Choice answer", "choice, probabilities, confidence (1-H/log k), answer_confidence, x_jev_confidence",
-             "choice, probabilities, confidence ((k*max-1)/(k-1))"],
-            ["usage", "input/output/state tokens, truncated", "input/output tokens; over-length is 400"],
-            ["Limits", "512 tokens per row, state cut from the right", "64k tokens per request"],
-            ["Errors", "422; 503 over 16 in flight", "400/401/413/415/422/429/529; retry 429/529"],
-            ["Concurrency", "one inference lock", "parallel, per-org rate limits"],
-            ["Price", "free", "$0.042 per Mtok input"]]) +
+    def observed(describe):
+        return "; ".join("%s: %s" % (n, describe(results[n])) for n in live) or "-"
+
+    def union(rows, field):
+        return ", ".join(sorted({f for r in rows for f in r[field]})) or "none"
+
+    protocol_rows = [
+        ["Endpoint", "POST {host}/v1/systemone (+ /batch)", "POST https://api.typesafe.ai/v1/systemone (no batch)",
+         observed(lambda rows: ", ".join("%s x%d" % (k, v) for k, v in sorted(Counter(str(r["http_status"]) for r in rows).items())))],
+        ["Auth", "none", "Authorization: Bearer key", "-"],
+        ["model", "optional (english)", "required: jev-latest, jev-preview or versioned; response model is versioned",
+         observed(lambda rows: ", ".join(sorted({r["model"] or "none" for r in rows})))],
+        ["Extra body fields", "max_len, head_max_len, task, lang, min_confidence", "none sent", "-"],
+        ["Choice answer", "choice, probabilities, confidence (1-H/log k), answer_confidence, x_jev_confidence",
+         "choice, probabilities, confidence ((k*max-1)/(k-1))", observed(lambda rows: union(rows, "answer_fields"))],
+        ["usage", "input/output/state tokens, truncated", "input/output tokens; over-length is 400",
+         observed(lambda rows: union(rows, "usage_fields"))],
+        ["Server timing header", "X-Inference-Time-Ms, Server-Timing", "retry-after on 429",
+         observed(lambda rows: "X-Inference-Time-Ms on %d/%d" % (sum(r["server_ms"] is not None for r in rows), len(rows)))],
+        ["Limits", "512 tokens per row, state cut from the right", "64k tokens per request",
+         observed(lambda rows: "truncated %d" % sum(bool(r["truncated"]) for r in rows))],
+        ["Errors", "422; 503 over 16 in flight", "400/401/413/415/422/429/529; retry 429/529",
+         observed(lambda rows: ", ".join(sorted({r["error"] for r in rows if r["error"]})) or "none")],
+        ["Concurrency", "one inference lock", "parallel, per-org rate limits", "-"],
+        ["Price", "free", "$0.042 per Mtok input", "-"]]
+    sections.append("<h2>6. Protocol differences</h2>" + table(
+        ["", "laya-serve 0.4.7", "TypeSafe Jev", "Observed in this run"], protocol_rows) +
         "<p><b>Game-side implication (not fixed here):</b> <code>laya_decision</code> reads <code>x_jev_confidence</code>, which Jev "
         "never sends, so every Jev Stance would fall back as low confidence. Follow-up: read <code>confidence</code> when "
         "<code>x_jev_confidence</code> is absent, send <code>model</code> and a Bearer header from laya_curl.c.</p>")
@@ -518,8 +550,9 @@ uv run --python 3.12 python tools/bench_jev_vs_laya.py --corpus build/requests-s
 <ul><li>Bodies are the exact JSON the game's Laya decider sends (Reflex path, no network), evenly subsampled; Jev gets the same body plus <code>model</code>.</li>
 <li>Requests run sequentially (Laya serialises; the game's transport is single-worker). The first call per backend is cold and excluded from percentiles. Timeout %d ms from data/laya.json.</li>
 <li>Batch was not measured: questions embed the Combatant name, Jev has no batch and the Laya research shows no gain.</li>
+<li>Every request is a separate curl process, so every call pays a fresh TCP connect (and TLS for Jev). The game keeps one curl handle per worker and reuses the connection. The reused columns subtract curl's time_appconnect (time_connect for plain HTTP) from the wall time; it is an estimate, since DNS and slow-start effects are not modelled.</li>
 <li>Margin is (k*max_p - 1)/(k - 1), recomputed from probabilities for every answer and compared with the reported value.</li>
-<li>laya-tomhat is on the LAN, Jev is over the WAN (no server-time header); laya-local cold start is about 6 s.</li>
+<li>laya-tomhat is on the LAN, Jev is over the WAN (no server-time header). Cold is the first call per backend, shown in the summary.</li>
 <li>docs.typesafe.ai migrating-to-v1.md returns 404; api.md is the v1 reference used.</li></ul>""" % config["timeout_ms"])
 
     return ("<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'>"
@@ -550,6 +583,10 @@ def self_test():
     assert timing["p50"] == 20 and timing["max"] == 30
     assert classify_error(None, 28) == "timeout" and classify_error(None, 7) == "connect"
     assert classify_error(422, None) == "http4xx" and classify_error(503, None) == "http5xx" and classify_error(200, None) is None
+    assert classify_error(302, None) == "http3xx"
+    assert quoted('a"b\\c\n') == '"a\\"b\\\\c\\n"'
+    raw = '{"state":"caf\u00e9 \\"x\\"","questions":{}}'
+    assert json.dumps(json.loads(raw), separators=(",", ":"), ensure_ascii=False) == raw
     request = {"questions": {"stance": {"criteria": {"x": "", "y": ""}}}}
     parsed = parse_answers({"answers": {"stance": {"choice": "x", "probabilities": {"x": 0.7, "y": 0.3}, "confidence": 0.4}}}, request)
     assert parsed["stance"]["margin_reported"] == 0.4 and abs(parsed["stance"]["margin_recomputed"] - 0.4) < 1e-9
@@ -603,7 +640,9 @@ def main():
 
     jsonl = "".join(json.dumps({k: v for k, v in r.items() if k != "request"}) + "\n" for rows in results.values() for r in rows)
     report = build_report(meta, results, config)
-    assert not key or (key not in jsonl and key not in report), "API key leaked into output"
+    if key and (key in jsonl or key in report):
+        print("API key leaked into output; nothing written", file=sys.stderr)
+        return 1
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     os.makedirs(os.path.dirname(report_path), exist_ok=True)
     with open(out_path, "w") as f:
