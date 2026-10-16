@@ -65,6 +65,8 @@ static bool open_recording(DeciderSetup *setup, char *err, size_t err_size)
 
 bool decider_setup_open(DeciderSetup *setup, const GameData *data, Battle *battle, char *err, size_t err_size)
 {
+    if (setup->dump_requests_path && (setup->replay_path || setup->laya))
+        return snprintf(err, err_size, "--dump-requests cannot combine with --replay or --decider laya"), false;
     if (setup->replay_path) return open_replay(setup, data, battle, err, err_size);
     if (setup->laya) {
         LayaTransport *transport = laya_curl_transport(data->laya.timeout_ms);
