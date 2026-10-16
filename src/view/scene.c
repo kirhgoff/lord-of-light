@@ -110,6 +110,7 @@ void scene_position(const Scene *s, const Battle *b, int c, float *x_px, float *
 
 static void push_effect(Scene *s, float x, float y, int element, int tick)
 {
+    if (element < 0 || element >= ELEMENT_COUNT) return;
     s->effects[s->effect_next++ % MAX_EFFECTS] = (Effect){x, y, element, tick};
 }
 

@@ -225,6 +225,20 @@ static void test_effect_ring_overwrites_the_oldest(void)
     CHECK(scene.effects[0].since_tick == MAX_EFFECTS && scene.effects[3].since_tick == 3);
 }
 
+static void test_effects_with_unknown_elements_are_dropped(void)
+{
+    setup_battle();
+    Scene scene = {0};
+    scene_reset(&scene, &battle);
+    Event hit = hit_event(1, 0, 0, TARGET, 0);
+    hit.element = -1;
+    scene_apply_event(&scene, &battle, &hit);
+    hit.element = ELEMENT_COUNT;
+    scene_apply_event(&scene, &battle, &hit);
+    CHECK(live_effects(&scene) == 0);
+    CHECK(scene.hit_since[TARGET][0] == 1);
+}
+
 static Atlas test_atlas(void)
 {
     return (Atlas){.first = {[FRAMES_IDLE] = 0, [FRAMES_ACT] = 2, [FRAMES_HURT] = 5, [FRAMES_BROKEN] = 6},
@@ -361,6 +375,7 @@ void run_view_tests(void)
     test_decision_and_death_events_change_nothing();
     test_after_step_consumes_only_new_events();
     test_effect_ring_overwrites_the_oldest();
+    test_effects_with_unknown_elements_are_dropped();
     test_part_frame_priorities();
     test_effect_frame_expires();
     test_position_interpolates_between_ticks();
