@@ -297,6 +297,6 @@ void draw_frame_contents(const Battle *b, const GameData *data, const Scene *sce
     EndMode2D();
     draw_hud(b, hud, view);
     draw_toast(hud, view);
-    ui_draw(ui);
+    ui_draw(ui, b, data, scene, view);
     if (hud->confirm_quit) draw_confirm_dialog(view->width, view->height);
 }

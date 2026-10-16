@@ -22,6 +22,7 @@
 #define WINDOW_HEIGHT 720
 #define ERR_SIZE 256
 #define MAX_FRAME_SECONDS 0.25f
+#define SCREENSHOT_UI_PASSES 2
 
 static bool parse_seed(const char *text, uint32_t *seed)
 {
@@ -72,12 +73,15 @@ static bool parse_args(int argc, char **argv, Args *args, DeciderSetup *setup)
 }
 
 static void render_to_png(const char *path, const Battle *b, const GameData *data, const Scene *scene,
-                          const Atlases *atlases, const Sheets *sheets, const Viewport *view, const Hud *hud, const Ui *ui)
+                          const Atlases *atlases, const Sheets *sheets, const Viewport *view, const Hud *hud, Ui *ui)
 {
     RenderTexture2D target = LoadRenderTexture(view->width, view->height);
-    BeginTextureMode(target);
-    draw_frame_contents(b, data, scene, atlases, sheets, view, hud, ui);
-    EndTextureMode();
+    for (int pass = 0; pass < SCREENSHOT_UI_PASSES; pass++) {
+        ui_update(ui, view);
+        BeginTextureMode(target);
+        draw_frame_contents(b, data, scene, atlases, sheets, view, hud, ui);
+        EndTextureMode();
+    }
     Image image = LoadImageFromTexture(target.texture);
     ImageFlipVertical(&image);
     ExportImage(image, path);
@@ -144,7 +148,7 @@ static void run_window(Battle *battle, const GameData *data, Decider *decider, S
         if (battle->tick >= stop_tick) hud->paused = true;
         sound_update(battle, data, view, hud->paused || hud->confirm_quit);
         scene->alpha = accumulated / TICK_SECONDS;
-        ui_update(ui, view->width, view->height);
+        ui_update(ui, view);
         BeginDrawing();
         draw_frame_contents(battle, data, scene, atlases, sheets, view, hud, ui);
         EndDrawing();
@@ -203,7 +207,6 @@ int main(int argc, char **argv)
             battle_step(&battle, &data, setup.decider);
             scene_after_step(&scene, &battle);
         }
-        ui_update(&ui, view.width, view.height);
         render_to_png(args.screenshot, &battle, &data, &scene, &atlases, &sheets, &view, &hud, &ui);
     } else if (sound_init(&data, &battle, err, ERR_SIZE)) {
         run_window(&battle, &data, setup.decider, &scene, &atlases, &sheets, &view, &hud, &ui, setup.replay_path ? setup.source.tick : INT_MAX);
