@@ -15,6 +15,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
+| 19 Sound assets | `19-sound-assets` / `~/Projects/lord-of-light-19-sound-assets` | sonnet executor running |
 | 05 Combat | `05-combat-elements` / `~/Projects/lord-of-light-05-combat-elements` | plan `docs/plan/plan-05-combat.md` accepted; sonnet executor running |
 
 ## Done

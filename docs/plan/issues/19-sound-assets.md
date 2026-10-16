@@ -1,7 +1,7 @@
 # Generated sounds as action attributes
 
 Type: task
-Status: open
+Status: claimed
 Blocked by:
 
 ## Question
