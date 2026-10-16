@@ -104,19 +104,29 @@ static bool decision_text(const Battle *b, const Event *e, char *out, size_t siz
     return true;
 }
 
-static bool event_text(const Battle *b, const GameData *data, const Event *e, char *out, size_t size)
+static bool simple_text(const Battle *b, const GameData *data, const Event *e, char *out, size_t size)
 {
     char actor[LABEL_SIZE], target[LABEL_SIZE];
     combatant_label(b, e->actor, actor, sizeof actor);
     combatant_label(b, e->target, target, sizeof target);
     switch (e->kind) {
+    case EVENT_PICKUP: snprintf(out, size, "%s takes %s", actor, pickup_name(b, data, e->detail)); return true;
+    case EVENT_TRAP: snprintf(out, size, "%s triggers %s", target, trap_name(b, data, e->detail)); return true;
+    case EVENT_SPAWN: snprintf(out, size, "%s spawns %s", actor, target); return true;
+    default: return false;
+    }
+}
+
+static bool event_text(const Battle *b, const GameData *data, const Event *e, char *out, size_t size)
+{
+    switch (e->kind) {
     case EVENT_HIT: return hit_text(b, data, e, out, size);
     case EVENT_EFFECT: return effect_text(b, e, out, size);
     case EVENT_DEATH: return death_text(b, data, e, out, size);
     case EVENT_DECISION: return decision_text(b, e, out, size);
-    case EVENT_PICKUP: snprintf(out, size, "%s takes %s", actor, pickup_name(b, data, e->detail)); return true;
-    case EVENT_TRAP: snprintf(out, size, "%s triggers %s", target, trap_name(b, data, e->detail)); return true;
-    case EVENT_SPAWN: snprintf(out, size, "%s spawns %s", actor, target); return true;
+    case EVENT_PICKUP:
+    case EVENT_TRAP:
+    case EVENT_SPAWN: return simple_text(b, data, e, out, size);
     case EVENT_KIND_COUNT: break;
     }
     return false;
