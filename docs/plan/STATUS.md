@@ -33,6 +33,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 ## Next up (once unblocked)
 
 - After 05: 06 Reflex + scheduling, 08 Pickups + traps.
+- 19 Sound assets: unblocked. 20 Sound playback after 05, 10, 19.
 - Later: 16 Save/load keys (after 10).
 
 ## Open questions for the user

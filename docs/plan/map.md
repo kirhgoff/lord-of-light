@@ -27,6 +27,10 @@ A playable raylib arena: a random Pantheon (from JSON) fights a Power-matched Ho
 - [Data schema](issues/02-data-schema.md): all-or-nothing validating loaders in `src/sim/data.c`; shapes listed in the ticket's Answer.
 - [Skeleton](issues/01-skeleton.md): Makefile + vendored raylib 5.5 / Clay v0.14 / cJSON v1.7.19, header-tracked builds, tiny test runner.
 
+## Sound
+
+User request 2026-10-16: generated sounds for every action, stored as data attributes (ticket 19), played relative to the viewport (ticket 20).
+
 ## Not yet specified
 
 - Power weight values and Horde size limits: tuned once `make balance` exists and real Battles can be watched.
@@ -35,6 +39,6 @@ A playable raylib arena: a random Pantheon (from JSON) fights a Power-matched Ho
 
 ## Out of scope
 
-- Sound and music.
+- Music.
 - Player control of Combatants; multiplayer.
 - Linear tracking for this project.
