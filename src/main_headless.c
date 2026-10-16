@@ -9,7 +9,7 @@
 #include "version.h"
 
 #define ERR_SIZE 256
-#define DEFAULT_TICKS 2000
+#define DEFAULT_TICKS 4000
 
 static char *read_text_file(const char *path)
 {

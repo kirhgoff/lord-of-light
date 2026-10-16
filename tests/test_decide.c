@@ -459,6 +459,63 @@ static void test_tactics_are_deterministic(void)
     free(first[1]);
 }
 
+#define BATTLE_TICK_BOUND 4000
+
+static int run_to_winner(uint32_t seed)
+{
+    battle_setup(&battle, &data, seed);
+    while (battle_winner(&battle) < 0 && battle.tick < BATTLE_TICK_BOUND) battle_step(&battle, &data, &reflex);
+    return battle_winner(&battle);
+}
+
+static void test_seed_one_runs_to_a_deterministic_winner(void)
+{
+    load_data();
+    fresh();
+    CHECK(run_to_winner(1) >= 0);
+    CHECK(battle.tick < BATTLE_TICK_BOUND);
+    char *first = battle_save_json(&battle, &data);
+    fresh();
+    run_to_winner(1);
+    char *second = battle_save_json(&battle, &data);
+    CHECK(strcmp(first, second) == 0);
+    free(first);
+    free(second);
+}
+
+static void test_seed_sweep_ends_within_bound(void)
+{
+    load_data();
+    for (uint32_t seed = 0; seed < 10; seed++) {
+        fresh();
+        bool ended = run_to_winner(seed) >= 0;
+        if (!ended) printf("  seed %u has no winner at tick %d\n", seed, battle.tick);
+        CHECK(ended);
+    }
+}
+
+static void test_resume_mid_battle_matches_straight_run_with_reflex(void)
+{
+    load_data();
+    fresh();
+    battle_setup(&battle, &data, 5);
+    run(300, &reflex);
+    char *saved = battle_save_json(&battle, &data);
+    run(300, &reflex);
+    char *straight = battle_save_json(&battle, &data);
+    Battle resumed;
+    memset(&resumed, 0, sizeof resumed);
+    char err[ERR_SIZE];
+    CHECK(battle_load_json(&resumed, &data, saved, err, ERR_SIZE));
+    for (int t = 0; t < 300; t++) battle_step(&resumed, &data, &reflex);
+    char *after = battle_save_json(&resumed, &data);
+    CHECK(strcmp(straight, after) == 0);
+    free(saved);
+    free(straight);
+    free(after);
+    battle_free(&resumed);
+}
+
 void run_decide_tests(void)
 {
     test_initiative_sums_working_parts_floor_one();
@@ -480,5 +537,8 @@ void run_decide_tests(void)
     test_seek_when_nothing_is_perceived();
     test_seen_trap_is_walked_around();
     test_tactics_are_deterministic();
+    test_seed_one_runs_to_a_deterministic_winner();
+    test_seed_sweep_ends_within_bound();
+    test_resume_mid_battle_matches_straight_run_with_reflex();
     battle_free(&battle);
 }
