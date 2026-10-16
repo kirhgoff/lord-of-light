@@ -1,7 +1,7 @@
 # raylib view
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 06, 09
 
 ## Question

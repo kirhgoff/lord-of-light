@@ -1,7 +1,7 @@
 # Power score, Horde generator, balance run
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 06, 15, 17
 
 ## Question

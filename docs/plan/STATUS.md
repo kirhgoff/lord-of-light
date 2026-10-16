@@ -13,7 +13,11 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 ## In flight
 
-None.
+| Ticket | Branch / worktree | State |
+|---|---|---|
+| 07 Power + Horde | `07-power-and-horde` / `~/Projects/lord-of-light-07-power-and-horde` | sonnet executor running |
+| 10 raylib view | `10-raylib-view` | fable plan in progress |
+| 11 Laya decider | `11-laya-decider` | fable plan in progress |
 
 ## Done
 
@@ -34,7 +38,7 @@ None.
 
 ## Next up (once unblocked)
 
-- Frontier: 07 Power + Horde, 10 raylib view, 11 Laya decider. Then 12 Clay UI, 16 save/load keys, 20 sound playback.
+- Next: 12 Clay UI, 16 save/load keys, 20 sound playback.
 - 20 Sound playback after 05, 10.
 - Later: 16 Save/load keys (after 10).
 

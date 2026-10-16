@@ -1,7 +1,7 @@
 # Laya Decider
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 06, 13
 
 ## Question
