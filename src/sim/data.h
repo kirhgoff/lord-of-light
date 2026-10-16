@@ -33,7 +33,6 @@ typedef enum {
     ORDER_CAST,
     ORDER_BLOCK,
     ORDER_MOVE_TO,
-    ORDER_PICK_UP,
     ORDER_SUPPORT,
     ORDER_SPAWN,
     ORDER_IDLE,
@@ -148,10 +147,13 @@ typedef struct {
     Element element;
     int damage;
     int heal;
+    int mend;
     int radius;
-    int slow_percent;
     int effect_ticks;
     int damage_bonus_percent;
+    int speed_bonus_percent;
+    int vision_bonus_percent;
+    int ward_percent;
     int respawn_ticks;
     char sprite[ID_LEN];
     char sound[ID_LEN];
@@ -191,6 +193,8 @@ bool json_to_int(const cJSON *item, int *out);
 const char *element_id(Element element);
 const char *order_kind_id(OrderKind kind);
 int find_part(const GameData *data, const char *id);
+int find_pickup(const GameData *data, const char *id);
+int find_trap(const GameData *data, const char *id);
 int find_body_plan(const GameData *data, const char *id);
 int find_body_slot(const Body *body, const char *id);
 bool part_fits_role(const Part *part, SlotRole role);

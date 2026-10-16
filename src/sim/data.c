@@ -18,7 +18,7 @@ static const char *const ELEMENT_IDS[ELEMENT_COUNT] = {
 };
 
 static const char *const ORDER_KIND_IDS[ORDER_KIND_COUNT] = {
-    "strike", "cast", "block", "move_to", "pick_up", "support", "spawn", "idle"
+    "strike", "cast", "block", "move_to", "support", "spawn", "idle"
 };
 
 static const char *const SLOT_ROLE_IDS[SLOT_ROLE_COUNT] = {
@@ -45,6 +45,20 @@ int find_part(const GameData *data, const char *id)
 {
     for (int i = 0; i < data->part_count; i++)
         if (strcmp(data->parts[i].id, id) == 0) return i;
+    return -1;
+}
+
+int find_pickup(const GameData *data, const char *id)
+{
+    for (int i = 0; i < data->pickup_count; i++)
+        if (strcmp(data->pickups[i].id, id) == 0) return i;
+    return -1;
+}
+
+int find_trap(const GameData *data, const char *id)
+{
+    for (int i = 0; i < data->trap_count; i++)
+        if (strcmp(data->traps[i].id, id) == 0) return i;
     return -1;
 }
 
@@ -846,6 +860,20 @@ static bool parts_from_root(Context *ctx, const cJSON *root, GameData *data)
     return resolve_body_plans(ctx, data);
 }
 
+static bool check_arena_object_ranges(Context *ctx, const char *path, const ArenaObjectDef *def)
+{
+    return check_range(ctx, path, "damage", def->damage, 0, ABILITY_AMOUNT_LIMIT)
+        && check_range(ctx, path, "heal", def->heal, 0, ABILITY_AMOUNT_LIMIT)
+        && check_range(ctx, path, "mend", def->mend, 0, ABILITY_AMOUNT_LIMIT)
+        && check_range(ctx, path, "radius", def->radius, 0, ABILITY_AMOUNT_LIMIT)
+        && check_range(ctx, path, "effect_ticks", def->effect_ticks, 0, ABILITY_AMOUNT_LIMIT)
+        && check_range(ctx, path, "respawn_ticks", def->respawn_ticks, 0, ABILITY_AMOUNT_LIMIT)
+        && check_range(ctx, path, "damage_bonus_percent", def->damage_bonus_percent, 0, 1000)
+        && check_range(ctx, path, "speed_bonus_percent", def->speed_bonus_percent, 0, 1000)
+        && check_range(ctx, path, "vision_bonus_percent", def->vision_bonus_percent, 0, 1000)
+        && check_range(ctx, path, "ward_percent", def->ward_percent, 0, 1000);
+}
+
 static bool read_arena_object(Context *ctx, const cJSON *obj, const char *path, ArenaObjectDef *def)
 {
     return get_string(ctx, obj, path, "id", def->id, sizeof def->id, true)
@@ -856,10 +884,14 @@ static bool read_arena_object(Context *ctx, const cJSON *obj, const char *path, 
         && get_count(ctx, obj, path, "damage", &def->damage, false)
         && get_count(ctx, obj, path, "heal", &def->heal, false)
         && get_count(ctx, obj, path, "radius", &def->radius, false)
-        && get_count(ctx, obj, path, "slow_percent", &def->slow_percent, false)
+        && get_count(ctx, obj, path, "mend", &def->mend, false)
         && get_count(ctx, obj, path, "effect_ticks", &def->effect_ticks, false)
         && get_count(ctx, obj, path, "damage_bonus_percent", &def->damage_bonus_percent, false)
-        && get_count(ctx, obj, path, "respawn_ticks", &def->respawn_ticks, true);
+        && get_count(ctx, obj, path, "speed_bonus_percent", &def->speed_bonus_percent, false)
+        && get_count(ctx, obj, path, "vision_bonus_percent", &def->vision_bonus_percent, false)
+        && get_count(ctx, obj, path, "ward_percent", &def->ward_percent, false)
+        && get_count(ctx, obj, path, "respawn_ticks", &def->respawn_ticks, true)
+        && check_arena_object_ranges(ctx, path, def);
 }
 
 static bool read_arena_object_list(Context *ctx, const cJSON *root, const char *key,

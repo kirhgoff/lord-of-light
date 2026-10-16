@@ -31,6 +31,7 @@ typedef enum {
     EVENT_DEATH,
     EVENT_EFFECT,
     EVENT_SPAWN,
+    EVENT_TRAP,
     EVENT_KIND_COUNT
 } EventKind;
 
@@ -76,6 +77,12 @@ typedef struct {
     int spawner;
     int damage_bonus_percent;
     int damage_bonus_ticks;
+    int haste_percent;
+    int haste_ticks;
+    int vision_percent;
+    int vision_ticks;
+    int ward_percent;
+    int ward_ticks;
     Decision decision;
 } Combatant;
 

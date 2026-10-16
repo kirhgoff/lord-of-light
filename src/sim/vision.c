@@ -60,6 +60,8 @@ void combatant_vision_ranges(const Combatant *combatant, const GameData *data, i
         for (int b = 0; b < 3; b++)
             if (ranges[b] * MILLIPX_PER_PX > range_millipx[b]) range_millipx[b] = ranges[b] * MILLIPX_PER_PX;
     }
+    if (combatant->vision_ticks > 0)
+        for (int b = 0; b < 3; b++) range_millipx[b] = (int)((int64_t)range_millipx[b] * (100 + combatant->vision_percent) / 100);
 }
 
 static int band_at(const int range_millipx[3], int64_t distance_squared)

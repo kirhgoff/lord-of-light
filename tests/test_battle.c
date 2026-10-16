@@ -218,7 +218,7 @@ static void test_load_rejects_bad_input(void)
     check_rejected(json, "\"log\":[{", "\"log\":[5,{");
     check_rejected(json, "\"decision\":{\"stance\"", "\"decisionx\":{\"stance\"");
     check_rejected(json, "\"slots\":[{", "\"slots\":[5,{");
-    check_rejected(json, "\"def\":\"health_vial\"", "\"def\":\"no_such_pickup\"");
+    check_rejected(json, "\"def\":\"soma\"", "\"def\":\"no_such_pickup\"");
     check_rejected(json, "\"seed\":3", "\"seed\":4294967296");
     check_rejected(json, "\"rng\":", "\"rng\":0,\"old\":");
     check_rejected(json, "\"tick\":0", "\"tick\":1e19");
@@ -235,6 +235,7 @@ static void test_load_rejects_bad_input(void)
     check_rejected(json, "\"dot_element\":-1", "\"dot_element\":8");
     check_rejected(json, "\"spawner\":-1", "\"spawner\":99");
     check_rejected(json, "\"slow_percent\":0", "\"slow_percent\":101");
+    check_rejected(json, "\"haste_percent\":0", "\"haste_percent\":1001");
     test_silent_failure_gets_generic_message(json);
     CHECK(!battle_load_json(&loaded, &data, "{", err, ERR_SIZE));
     CHECK(!battle_load_json(&loaded, &data, "{}", err, ERR_SIZE) && err[0] != '\0');
@@ -252,8 +253,8 @@ static void test_remains_and_floor_objects_are_saved_by_id(void)
     battle.remains_count = 1;
     char *json = battle_save_json(&battle, &data);
     CHECK(strstr(json, "\"parts\":[\"heart\"]") != NULL);
-    CHECK(strstr(json, "\"def\":\"health_vial\"") != NULL);
-    CHECK(strstr(json, "\"def\":\"fire_vent\"") != NULL);
+    CHECK(strstr(json, "\"def\":\"soma\"") != NULL);
+    CHECK(strstr(json, "\"def\":\"spike_pit\"") != NULL);
     free(json);
     battle_free(&battle);
 }
