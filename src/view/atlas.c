@@ -111,3 +111,11 @@ int atlas_frame(const Atlas *atlas, FramesKind kind, int n)
     if (atlas->count[kind] == 0) return 0;
     return atlas->first[kind] + n % atlas->count[kind];
 }
+
+int atlas_min_sheet_width(const Atlas *atlas)
+{
+    int frames = 0;
+    for (int k = 0; k < FRAMES_KIND_COUNT; k++)
+        if (atlas->count[k] > 0 && atlas->first[k] + atlas->count[k] > frames) frames = atlas->first[k] + atlas->count[k];
+    return frames * atlas->frame_w;
+}

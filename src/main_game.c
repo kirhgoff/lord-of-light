@@ -27,6 +27,16 @@ static bool parse_seed(const char *text, uint32_t *seed)
     return true;
 }
 
+static bool parse_ticks(const char *text, long *ticks)
+{
+    char *end;
+    errno = 0;
+    long value = strtol(text, &end, 10);
+    if (errno || end == text || *end || value < 0) return false;
+    *ticks = value;
+    return true;
+}
+
 static int usage(void)
 {
     fprintf(stderr, "usage: game [--seed N] [--ticks N --screenshot out.png] [--xray]\n");
@@ -37,6 +47,7 @@ typedef struct {
     uint32_t seed;
     long ticks;
     const char *screenshot;
+    bool ticks_given;
     bool xray;
 } Args;
 
@@ -47,11 +58,11 @@ static bool parse_args(int argc, char **argv, Args *args)
         bool has_value = i + 1 < argc;
         if (strcmp(argv[i], "--xray") == 0) args->xray = true;
         else if (has_value && strcmp(argv[i], "--seed") == 0 && parse_seed(argv[i + 1], &args->seed)) i++;
-        else if (has_value && strcmp(argv[i], "--ticks") == 0 && (args->ticks = atol(argv[i + 1])) >= 0) i++;
+        else if (has_value && strcmp(argv[i], "--ticks") == 0 && parse_ticks(argv[i + 1], &args->ticks)) i++, args->ticks_given = true;
         else if (has_value && strcmp(argv[i], "--screenshot") == 0) args->screenshot = argv[++i];
         else return false;
     }
-    return true;
+    return args->screenshot || !args->ticks_given;
 }
 
 static void render_to_png(const char *path, const Battle *b, const GameData *data, const Scene *scene,
@@ -128,7 +139,12 @@ int main(int argc, char **argv)
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Lord of Light " GAME_VERSION);
     SetExitKey(KEY_NULL);
     SetTargetFPS(60);
-    sheets_load(&sheets, &data);
+    if (!sheets_load(&sheets, &data, &atlases, err, ERR_SIZE)) {
+        fprintf(stderr, "%s\n", err);
+        sheets_unload(&sheets);
+        CloseWindow();
+        return 1;
+    }
     battle_setup(&battle, &data, args.seed);
     Decider reflex = reflex_decider();
     Viewport view;

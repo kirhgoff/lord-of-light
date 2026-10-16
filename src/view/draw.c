@@ -12,22 +12,29 @@
 #define DIALOG_HEIGHT 120
 #define FLOOR_COLOUR ((Color){20, 18, 16, 255})
 
-static Texture2D load_sheet(const char *folder, const char *id)
+static bool load_sheet(Texture2D *out, const char *folder, const char *id, const Atlas *atlas, char *err, size_t err_size)
 {
     char path[PATH_SIZE];
     snprintf(path, sizeof path, "assets/%s/%s.png", folder, id);
-    return LoadTexture(path);
+    *out = LoadTexture(path);
+    bool fits = out->id != 0 && out->width >= atlas_min_sheet_width(atlas) && out->height >= atlas->frame_h;
+    if (!fits) snprintf(err, err_size, "%s: missing or too small for its sprite sidecar", path);
+    return fits;
 }
 
-void sheets_load(Sheets *sheets, const GameData *data)
+bool sheets_load(Sheets *sheets, const GameData *data, const Atlases *atlases, char *err, size_t err_size)
 {
-    for (int p = 0; p < data->part_count; p++) sheets->parts[p] = load_sheet("parts", data->parts[p].sprite);
-    for (int i = 0; i < data->pickup_count; i++) sheets->pickups[i] = load_sheet("pickups", data->pickups[i].sprite);
-    for (int i = 0; i < data->trap_count; i++) sheets->traps[i] = load_sheet("traps", data->traps[i].sprite);
-    for (int e = 0; e < ELEMENT_COUNT; e++) sheets->effects[e] = load_sheet("effects", element_id((Element)e));
-    sheets->floor = load_sheet("tiles", "floor");
-    sheets->rock = load_sheet("tiles", "rock");
-    sheets->pillar = load_sheet("tiles", "pillar");
+    for (int p = 0; p < data->part_count; p++)
+        if (!load_sheet(&sheets->parts[p], "parts", data->parts[p].sprite, &atlases->parts[p], err, err_size)) return false;
+    for (int i = 0; i < data->pickup_count; i++)
+        if (!load_sheet(&sheets->pickups[i], "pickups", data->pickups[i].sprite, &atlases->pickups[i], err, err_size)) return false;
+    for (int i = 0; i < data->trap_count; i++)
+        if (!load_sheet(&sheets->traps[i], "traps", data->traps[i].sprite, &atlases->traps[i], err, err_size)) return false;
+    for (int e = 0; e < ELEMENT_COUNT; e++)
+        if (!load_sheet(&sheets->effects[e], "effects", element_id((Element)e), &atlases->effects[e], err, err_size)) return false;
+    return load_sheet(&sheets->floor, "tiles", "floor", &atlases->floor, err, err_size)
+        && load_sheet(&sheets->rock, "tiles", "rock", &atlases->rock, err, err_size)
+        && load_sheet(&sheets->pillar, "tiles", "pillar", &atlases->pillar, err, err_size);
 }
 
 static void unload_all(Texture2D *textures, int count)

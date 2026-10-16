@@ -68,6 +68,14 @@ static void test_atlas_rejects_hostile_sidecars(void)
     CHECK(!parses("32", "8", "\"idle\":[]"));
 }
 
+static void test_sheet_width_covers_the_last_frame(void)
+{
+    Atlas atlas;
+    CHECK(atlas_parse(&atlas, "{\"frame_w\":32,\"frame_h\":32,\"pivot\":{\"x\":5,\"y\":24},"
+                              "\"frames\":{\"idle\":[0,1],\"act\":[2,3,4],\"broken\":[6]}}"));
+    CHECK(atlas_min_sheet_width(&atlas) == 7 * 32);
+}
+
 static void test_atlas_frame_wraps_within_the_kind(void)
 {
     Atlas atlas = {.first = {[FRAMES_ACT] = 2}, .count = {[FRAMES_ACT] = 3}};
@@ -454,6 +462,7 @@ void run_view_tests(void)
     test_atlas_reads_sidecar();
     test_atlas_missing_names_the_path();
     test_atlas_rejects_hostile_sidecars();
+    test_sheet_width_covers_the_last_frame();
     test_atlas_frame_wraps_within_the_kind();
     test_all_atlases_load_for_the_real_data();
 }

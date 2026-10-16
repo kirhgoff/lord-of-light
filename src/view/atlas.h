@@ -38,6 +38,7 @@ typedef struct {
 bool atlas_parse(Atlas *atlas, const char *text);
 bool atlas_load(Atlas *atlas, const char *folder, const char *id, char *err, size_t err_size);
 bool atlases_load(Atlases *atlases, const GameData *data, char *err, size_t err_size);
+int atlas_min_sheet_width(const Atlas *atlas);
 int atlas_frame(const Atlas *atlas, FramesKind kind, int n);
 
 #endif

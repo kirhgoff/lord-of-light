@@ -22,7 +22,7 @@ typedef struct {
     bool confirm_quit;
 } Hud;
 
-void sheets_load(Sheets *sheets, const GameData *data);
+bool sheets_load(Sheets *sheets, const GameData *data, const Atlases *atlases, char *err, size_t err_size);
 void sheets_unload(Sheets *sheets);
 void draw_frame_contents(const Battle *b, const GameData *data, const Scene *scene, const Atlases *atlases,
                          const Sheets *sheets, const Viewport *view, const Hud *hud);
