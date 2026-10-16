@@ -60,9 +60,9 @@ static void destroy_slot(int c, const char *slot_id)
 
 static Decision decision(int c)
 {
-    Decision d = {0};
-    CHECK(reflex_decide(&reflex, &battle, &data, c, &d));
-    return d;
+    Event event;
+    CHECK(reflex_decide(&reflex, &battle, &data, c, &event));
+    return event_decision(&event);
 }
 
 static void run(int ticks, Decider *decider)
@@ -242,16 +242,16 @@ static void test_cadence_follows_initiative(void)
     CHECK(decision_events(dagda) == 2);
 }
 
-static bool pending_decide(Decider *self, const Battle *b, const GameData *d, int c, Decision *out)
+static bool pending_decide(Decider *self, const Battle *b, const GameData *d, int c, Event *out)
 {
     (void)self, (void)b, (void)d, (void)c, (void)out;
     return false;
 }
 
-static bool retreat_decide(Decider *self, const Battle *b, const GameData *d, int c, Decision *out)
+static bool retreat_decide(Decider *self, const Battle *b, const GameData *d, int c, Event *out)
 {
-    (void)self, (void)b, (void)d, (void)c;
-    *out = (Decision){STANCE_RETREAT, HURT_UNHURT, -1};
+    (void)self, (void)b, (void)d;
+    *out = decision_event(c, STANCE_RETREAT, HURT_UNHURT, -1, DECIDER_LAYA);
     return true;
 }
 
@@ -261,7 +261,7 @@ static void test_pending_decider_keeps_combatant_due_and_uses_reflex_once(void)
     fresh();
     battle_setup(&battle, &data, 3);
     int count = battle.combatant_count;
-    Decider pending = {pending_decide, DECIDER_LAYA};
+    Decider pending = {pending_decide};
     run(2, &pending);
     CHECK(decisions_logged(count) == count);
     for (int c = 0; c < count; c++) {
@@ -269,7 +269,7 @@ static void test_pending_decider_keeps_combatant_due_and_uses_reflex_once(void)
         CHECK(battle.combatants[c].next_decision_tick == 0);
     }
     for (int e = 0; e < battle.log_count; e++) CHECK(battle.log[e].kind != EVENT_DECISION || battle.log[e].decider == DECIDER_REFLEX);
-    Decider answers = {retreat_decide, DECIDER_LAYA};
+    Decider answers = {retreat_decide};
     run(1, &answers);
     CHECK(decisions_logged(count) == 2 * count);
     for (int c = 0; c < count; c++) {
@@ -279,6 +279,22 @@ static void test_pending_decider_keeps_combatant_due_and_uses_reflex_once(void)
     int laya = 0;
     for (int e = 0; e < battle.log_count; e++) laya += battle.log[e].kind == EVENT_DECISION && battle.log[e].actor < count && battle.log[e].decider == DECIDER_LAYA;
     CHECK(laya == count);
+}
+
+static void test_waiting_reflex_is_marked(void)
+{
+    load_data();
+    fresh();
+    battle_setup(&battle, &data, 3);
+    Decider pending = {pending_decide};
+    run(2, &pending);
+    CHECK(decisions_logged(battle.combatant_count) > 0);
+    for (int e = 0; e < battle.log_count; e++) CHECK(battle.log[e].kind != EVENT_DECISION || battle.log[e].fallback == FALLBACK_WAITING);
+    fresh();
+    battle_setup(&battle, &data, 3);
+    run(2, &reflex);
+    CHECK(decisions_logged(battle.combatant_count) > 0);
+    for (int e = 0; e < battle.log_count; e++) CHECK(battle.log[e].kind != EVENT_DECISION || battle.log[e].fallback == FALLBACK_NONE);
 }
 
 static void test_null_decider_changes_nothing(void)
@@ -550,6 +566,7 @@ void run_decide_tests(void)
     test_decisions_are_scheduled_by_initiative();
     test_cadence_follows_initiative();
     test_pending_decider_keeps_combatant_due_and_uses_reflex_once();
+    test_waiting_reflex_is_marked();
     test_null_decider_changes_nothing();
     test_fight_closes_to_the_preferred_range_and_attacks();
     test_support_block_and_spawn_orders();

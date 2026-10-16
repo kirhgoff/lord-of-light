@@ -105,6 +105,16 @@ typedef struct {
     int parts[MAX_SLOTS];
 } Remains;
 
+typedef enum {
+    FALLBACK_NONE,
+    FALLBACK_WAITING,
+    FALLBACK_UNREACHABLE,
+    FALLBACK_TIMEOUT,
+    FALLBACK_MALFORMED,
+    FALLBACK_LOW_CONFIDENCE,
+    FALLBACK_COUNT
+} Fallback;
+
 typedef struct {
     int tick;
     EventKind kind;
@@ -116,6 +126,10 @@ typedef struct {
     int amount;
     int detail;
     DeciderKind decider;
+    int confidence_permille;
+    int latency_ms;
+    Fallback fallback;
+    int stance_permille[STANCE_COUNT];
 } Event;
 
 typedef struct Decider Decider;
