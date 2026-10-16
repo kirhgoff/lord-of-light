@@ -84,14 +84,25 @@ static void test_setup_places_both_sides(void)
     CHECK(battle_winner(&battle) == -1);
 }
 
-static void test_step_advances_tick_and_moves(void)
+static void send_everyone_to_the_middle(Battle *b)
+{
+    for (int c = 0; c < b->combatant_count; c++) {
+        Combatant *who = &b->combatants[c];
+        who->parts[who->body.core].order = (Order){ORDER_MOVE_TO, -1, ARENA_WIDTH_MILLIPX / 2, ARENA_HEIGHT_MILLIPX / 2};
+    }
+}
+
+static void test_step_advances_tick_and_moves_only_with_orders(void)
 {
     load_data();
     battle_setup(&battle, &data, 3);
     int x = battle.combatants[0].x_millipx;
     run(&battle, 10);
     CHECK(battle.tick == 10);
-    CHECK(battle.combatants[0].x_millipx == x + 10 * MILLIPX_PER_PX);
+    CHECK(battle.combatants[0].x_millipx == x);
+    send_everyone_to_the_middle(&battle);
+    run(&battle, 10);
+    CHECK(battle.combatants[0].x_millipx > x);
 }
 
 static void test_round_trip_is_identical(void)
@@ -123,6 +134,7 @@ static void test_resume_matches_uninterrupted_run(void)
     load_data();
     static Battle straight, resumed;
     battle_setup(&straight, &data, 21);
+    send_everyone_to_the_middle(&straight);
     run(&straight, 50);
     char *midway = battle_save_json(&straight, &data);
     run(&straight, 120);
@@ -297,7 +309,7 @@ void run_battle_tests(void)
     test_setup_is_seeded();
     test_placeholder_horde_is_viable();
     test_setup_places_both_sides();
-    test_step_advances_tick_and_moves();
+    test_step_advances_tick_and_moves_only_with_orders();
     test_round_trip_is_identical();
     test_resume_matches_uninterrupted_run();
     test_rng_is_deterministic_and_never_zero();
