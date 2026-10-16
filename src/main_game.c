@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "raylib.h"
 #include "sim/battle.h"
@@ -10,6 +11,7 @@
 #include "version.h"
 #include "view/atlas.h"
 #include "view/draw.h"
+#include "view/saves.h"
 #include "view/scene.h"
 
 #define WINDOW_WIDTH 1280
@@ -101,6 +103,22 @@ static void advance_ticks(Battle *battle, const GameData *data, Decider *decider
     }
 }
 
+static void handle_save_keys(Battle *battle, const GameData *data, Scene *scene, Hud *hud)
+{
+    char path[SAVES_PATH_SIZE], err[ERR_SIZE], message[TOAST_SIZE];
+    if (IsKeyPressed(KEY_F5)) {
+        bool ok = saves_write(SAVES_DIR, time(NULL), battle, data, path, sizeof path, err, sizeof err);
+        snprintf(message, sizeof message, ok ? "Saved %s" : "Save failed: %s", ok ? path : err);
+        hud_show_toast(hud, message);
+    }
+    if (IsKeyPressed(KEY_F9)) {
+        bool ok = saves_load_newest(SAVES_DIR, battle, data, path, sizeof path, err, sizeof err);
+        if (ok) scene_reset(scene, battle);
+        snprintf(message, sizeof message, ok ? "Loaded %s" : "Load failed: %s", ok ? path : err);
+        hud_show_toast(hud, message);
+    }
+}
+
 static void run_window(Battle *battle, const GameData *data, Decider *decider, Scene *scene, const Atlases *atlases,
                        const Sheets *sheets, Viewport *view, Hud *hud)
 {
@@ -110,6 +128,7 @@ static void run_window(Battle *battle, const GameData *data, Decider *decider, S
         if (hud->confirm_quit && (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_Y))) break;
         if (hud->confirm_quit && IsKeyPressed(KEY_N)) hud->confirm_quit = false;
         handle_camera_input(view);
+        if (!hud->confirm_quit) handle_save_keys(battle, data, scene, hud);
         if (IsKeyPressed(KEY_SPACE)) hud->paused = !hud->paused;
         if (IsKeyPressed(KEY_T)) scene->xray = !scene->xray;
         if (!hud->paused && !hud->confirm_quit && battle_winner(battle) < 0) advance_ticks(battle, data, decider, scene, &accumulated);
