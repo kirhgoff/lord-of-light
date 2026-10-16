@@ -3,7 +3,7 @@
  "frame_h": 32,
  "pivot": {
   "x": 16,
-  "y": 10
+  "y": 9
  },
  "frames": {
   "idle": [

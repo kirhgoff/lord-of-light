@@ -1,7 +1,7 @@
 """Generate placeholder pixel art and atlases from data/*.json.
 
 Usage (run from the repo root):
-    uv run --with pillow python tools/gen_sprites.py
+    uv run --with pillow==12.3.0 python tools/gen_sprites.py
 
 Writes assets/{parts,pickups,traps,effects,tiles}/ and assets/contact_sheet.png.
 """
@@ -11,12 +11,18 @@ import os
 import random
 import sys
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS = os.path.join(ROOT, "assets")
 FRAME = 32
+INTERNAL_FRAME = 16
 OBJ = 16
+WORLD = 24
+ROCK = 32
+PILLAR_W = 32
+PILLAR_H = 64
+BOB = 1
 OUTLINE = (30, 25, 32, 255)
 SKIN = (176, 138, 110)
 WOOD = (122, 92, 62)
@@ -27,12 +33,21 @@ ELEMENT_BASE = {
     "kinetic": (150, 132, 112),
     "fire": (190, 98, 52),
     "frost": (128, 170, 192),
-    "lightning": (204, 184, 84),
-    "radiance": (222, 206, 140),
+    "lightning": (226, 198, 52),
+    "radiance": (238, 226, 206),
     "venom": (112, 152, 82),
     "mind": (152, 112, 164),
-    "void": (84, 72, 116),
+    "void": (62, 56, 98),
 }
+
+BASE_OVERRIDE = {
+    "crow_body": (50, 46, 58),
+    "imp_body": (168, 68, 58),
+    "carapace": (104, 86, 48),
+    "gas_bladder": (212, 206, 190),
+}
+
+REAR_PARTS = {"serpent_tail", "venom_stinger"}
 
 FRAME_LAYOUT = [
     ("idle", 0, 0.0, 0), ("idle", 1, 0.0, 1),
@@ -50,8 +65,9 @@ def mix(a, b, t):
 
 
 class Palette:
-    def __init__(self, element):
-        self.base = ELEMENT_BASE[element]
+    def __init__(self, element, base=None):
+        self.element = element
+        self.base = base or ELEMENT_BASE[element]
         self.dark = mul(self.base, 0.62)
         self.deep = mul(self.base, 0.4)
         self.light = mix(self.base, (240, 235, 220), 0.38)
@@ -83,7 +99,7 @@ def shaded_poly(g, p, pts, fill=None):
     g.polygon(pts, fill=fill or p.base)
 
 
-def arm(g, origin, deg, length=8, colour=SKIN):
+def arm(g, origin, deg, length=6, colour=SKIN):
     tip = local([(length, 0)], origin, deg)[0]
     g.line([origin, tip], fill=mul(colour, 0.7), width=4)
     g.line([origin, tip], fill=colour, width=2)
@@ -92,15 +108,15 @@ def arm(g, origin, deg, length=8, colour=SKIN):
 
 
 def swing(a):
-    return -55 + a * 65
+    return -60 + a * 60
 
 
-def draw_item(g, p, items, origin, deg):
+def draw_item(g, p, items, origin, deg, scale=0.8):
     for pts, fill in items:
-        g.polygon(local(pts, origin, deg), fill=fill)
+        g.polygon(local([(x * scale, y * scale) for x, y in pts], origin, deg), fill=fill)
 
 
-def hand_with(g, p, a, b, items, shoulder=(5, 21)):
+def hand_with(g, p, a, b, items, shoulder=(5, 24)):
     deg = swing(a)
     tip = arm(g, shoulder, deg)
     draw_item(g, p, items(p), tip, deg)
@@ -116,6 +132,12 @@ def sword_items(p):
 def spear_items(p):
     return [([(-3, -1), (14, -1), (14, 1), (-3, 1)], WOOD),
             ([(14, -3), (21, 0), (14, 3)], STEEL), ([(14, -1), (19, 0), (14, 0)], p.light)]
+
+
+def lugh_items(p):
+    return [([(-3, -1), (12, -1), (12, 1), (-3, 1)], WOOD),
+            ([(11, -5), (24, 0), (11, 5)], p.base), ([(12, -3), (21, 0), (12, 3)], (255, 252, 226)),
+            ([(8, -3), (11, -3), (11, 3), (8, 3)], p.glow)]
 
 
 def gungnir_items(p):
@@ -150,6 +172,10 @@ def spear_hand(g, p, a, b):
     return hand_with(g, p, a, b, spear_items)
 
 
+def lugh_spear(g, p, a, b):
+    return hand_with(g, p, a, b, lugh_items)
+
+
 def gungnir(g, p, a, b):
     return hand_with(g, p, a, b, gungnir_items)
 
@@ -165,19 +191,19 @@ def frost_trident(g, p, a, b):
 def lightning_hammer(g, p, a, b):
     hand_with(g, p, a, b, hammer_items)
     if a > 0.5:
-        for i in range(4):
-            g.line([(22 + i * 2, 4 + i * 5), (25 + i * 2, 7 + i * 5), (23 + i * 2, 9 + i * 5)], fill=p.glow)
-    return (5, 21)
+        for i in range(3):
+            g.line([(20 + i * 3, 3 + i * 5), (23 + i * 3, 6 + i * 5), (21 + i * 3, 8 + i * 5)], fill=p.glow)
+    return (5, 24)
 
 
 def open_hand(g, p, a, b, charge):
     deg = swing(a) * 0.5 - 10
-    tip = arm(g, (5, 21), deg)
+    tip = arm(g, (5, 24), deg)
     for i in range(4):
         fx, fy = local([(3 + (i % 2), -3 + i * 2)], tip, deg)[0]
         ell(g, fx, fy, 1.2, 1.2, SKIN)
     charge(g, p, tip, a)
-    return (5, 21)
+    return (5, 24)
 
 
 def flame(g, p, x, y, size):
@@ -187,24 +213,32 @@ def flame(g, p, x, y, size):
 
 
 def charge_flame(g, p, tip, a):
-    flame(g, p, tip[0] + 5, tip[1] - 1, 3 + int(a * 3))
+    flame(g, p, tip[0] + 4, tip[1] - 1, 4 + int(a * 2))
 
 
 def charge_bolt(g, p, tip, a):
     x, y = tip[0] + 3, tip[1]
-    g.line([(x, y - 7), (x + 3, y - 3), (x, y - 1), (x + 4, y + 5)], fill=p.glow, width=2)
+    zigzag = [(x + 1, y - 9), (x - 2, y - 4), (x + 3, y - 3), (x - 1, y + 3), (x + 2, y + 8)]
+    g.line(zigzag, fill=(255, 236, 90), width=3)
+    g.line(zigzag, fill=(255, 255, 230), width=1)
 
 
 def charge_glow(g, p, tip, a):
-    r = 3 + int(a * 3)
-    ell(g, tip[0] + 5, tip[1] - 2, r, r, p.base)
-    ell(g, tip[0] + 5, tip[1] - 2, r - 2, r - 2, p.glow)
+    r = 4 + int(a * 2)
+    x, y = tip[0] + 5, tip[1] - 2
+    ell(g, x, y, r + 1, r + 1, (86, 140, 96))
+    ell(g, x, y, r, r, (132, 204, 138))
+    ell(g, x, y, r - 2, r - 2, (214, 246, 208))
+    g.line([(x - 1, y), (x + 1, y)], fill=(70, 140, 80))
+    g.line([(x, y - 1), (x, y + 1)], fill=(70, 140, 80))
 
 
 def charge_hearth(g, p, tip, a):
-    ell(g, tip[0] + 5, tip[1] - 3, 4, 3, p.dark)
-    ell(g, tip[0] + 5, tip[1] - 4, 3, 2, p.base)
-    flame(g, p, tip[0] + 5, tip[1] - 6, 2 + int(a * 2))
+    x, y = tip[0] + 5, tip[1] - 3
+    g.chord([x - 5, y - 4, x + 5, y + 5], 0, 180, fill=(70, 56, 50))
+    g.line([(x - 5, y), (x + 5, y)], fill=(130, 110, 96))
+    for i in range(3):
+        g.point((x - 3 + i * 3, y - 1 - (i + int(a * 3)) % 2), fill=(255, 168, 70))
 
 
 def charge_serpent(g, p, tip, a):
@@ -250,12 +284,12 @@ def shield_hand(g, p, a, b):
 
 def bow(g, p, a, b, wood):
     pull = a * 5
-    bx = 18
+    bx = 16
     g.arc([bx - 8, 4, bx + 6, 28], 270, 90, fill=wood, width=2)
     g.line([(bx - 1, 4), (bx - 4 - pull, 16), (bx - 1, 28)], fill=BONE)
     if a > 0.1:
         g.line([(bx - 4 - pull, 16), (bx + 8, 16)], fill=p.light, width=1)
-        g.polygon([(bx + 8, 14), (bx + 12, 16), (bx + 8, 18)], fill=STEEL)
+        g.polygon([(bx + 8, 14), (bx + 11, 16), (bx + 8, 18)], fill=STEEL)
     arm(g, (4, 20), -5, 8)
     return (4, 20)
 
@@ -266,7 +300,7 @@ def bow_hand(g, p, a, b):
 
 def sun_bow(g, p, a, b):
     bow(g, p, a, b, p.base)
-    ell(g, 21, 16, 2, 2, p.glow)
+    ell(g, 19, 16, 2, 2, p.glow)
     return (4, 20)
 
 
@@ -306,17 +340,19 @@ def frost_fang(g, p, a, b):
 
 
 def ember_maw(g, p, a, b):
-    gap = 2 + int(a * 5)
-    shaded_ell(g, p, 14, 8 - gap // 2, 11, 6)
-    shaded_ell(g, p, 14, 24 + gap // 2, 10, 5)
+    gap = 2 + int(a * 4)
+    top = 11 - gap // 2
+    bottom = 21 + gap // 2
+    shaded_ell(g, p, 14, top, 11, 6)
+    shaded_ell(g, p, 14, bottom, 10, 5)
     ell(g, 14, 16, 8, max(gap, 2), (60, 20, 14))
-    flame(g, p, 14, 16 + gap // 2, 3 + int(a * 3))
-    fang_row(g, p, 8, 11 - gap // 2, 3, 4, BONE)
+    flame(g, p, 14, 16 + gap // 2, 3 + int(a * 2))
+    fang_row(g, p, 8, top + 3, 3, 4, BONE)
     return (4, 16)
 
 
 def void_maw(g, p, a, b):
-    r = 8 + int(a * 3)
+    r = 8 + int(a * 2)
     ell(g, 16, 16, r + 3, r + 1, p.dark)
     ell(g, 16, 16, r, r - 2, (14, 10, 22))
     ell(g, 16, 16, r - 3, max(r - 5, 1), p.deep)
@@ -331,7 +367,7 @@ def tentacle(g, p, a, b, tip_draw):
     pts = []
     for i in range(9):
         t = i / 8
-        pts.append((5 + t * 21, 22 - t * 6 + math.sin(t * 7 + a * 4) * (2 + 2 * a)))
+        pts.append((5 + t * 17, 22 - t * 6 + math.sin(t * 7 + a * 4) * (2 + 2 * a)))
     for i in range(len(pts) - 1):
         w = max(6 - i * 0.6, 1.5)
         g.line([pts[i], pts[i + 1]], fill=p.dark, width=int(w + 2))
@@ -419,11 +455,13 @@ def eyeball(g, p, cx, cy, r, iris, look=0):
 
 
 def head(g, p, a, b, fangs=False, keen=False):
+    if keen:
+        g.polygon([(3, 16), (-0 + 5, 13), (7, 19)], fill=SKIN)
     ell(g, 15, 16, 10, 11, SKIN if not fangs else p.dark)
     ell(g, 14, 15, 9, 10, SKIN if not fangs else p.base)
     g.rectangle([22, 15, 26, 17], fill=mul(SKIN, 0.8) if not fangs else p.dark)
     r = 3 if not keen else 4
-    eyeball(g, p, 19, 12, r, p.dark, 1)
+    eyeball(g, p, 19, 12, r, (70, 160, 196) if keen else p.dark, 1)
     g.line([(15, 8), (22, 9 - (1 if keen else 0))], fill=mul(SKIN, 0.55), width=1)
     gap = int(a * 5)
     if fangs:
@@ -433,6 +471,8 @@ def head(g, p, a, b, fangs=False, keen=False):
     else:
         g.line([(17, 21), (24, 21)], fill=mul(SKIN, 0.5), width=1)
     g.polygon([(5, 10), (14, 3), (21, 8), (14, 7)], fill=mul(WOOD, 0.7))
+    if keen:
+        g.rectangle([5, 8, 23, 10], fill=(168, 62, 58))
     return (13, 28)
 
 
@@ -515,28 +555,45 @@ def heart(g, p, a, b, scale):
 
 
 def small_heart(g, p, a, b):
-    return heart(g, p, a, b, 0.65)
+    return heart(g, p, a, b, 0.55)
 
 
 def plain_heart(g, p, a, b):
-    return heart(g, p, a, b, 0.85)
+    return heart(g, p, a, b, 0.7)
 
 
 def large_heart(g, p, a, b):
-    return heart(g, p, a, b, 1.0)
+    return heart(g, p, a, b, 0.8)
 
 
 def great_heart(g, p, a, b):
-    heart(g, p, a, b, 1.1)
-    g.arc([1, 1, 31, 31], 200, 340, fill=p.glow)
+    heart(g, p, a, b, 0.88)
+    g.arc([5, 5, 27, 27], 200, 340, fill=p.glow)
     return (16, 16)
+
+
+def gland_mark(g, p):
+    if p.element == "void":
+        ell(g, 17, 18, 4, 4, p.light)
+        ell(g, 17, 18, 3, 3, (10, 6, 18))
+    elif p.element == "mind":
+        g.line([(14, 18), (17, 14), (20, 18), (17, 21), (15, 19)], fill=p.deep, width=1)
+        ell(g, 17, 18, 1, 1, p.glow)
+    elif p.element == "lightning":
+        g.line([(18, 13), (15, 18), (19, 18), (16, 23)], fill=(255, 250, 200), width=2)
+    elif p.element == "radiance":
+        g.line([(17, 13), (17, 23)], fill=(255, 255, 255))
+        g.line([(12, 18), (22, 18)], fill=(255, 255, 255))
+        ell(g, 17, 18, 2, 2, (255, 255, 255))
+    else:
+        ell(g, 17, 18, 3, 3, p.glow)
 
 
 def gland(g, p, a, b):
     shaded_ell(g, p, 16, 17, 9, 8)
     shaded_ell(g, p, 10, 11, 4, 4)
     shaded_ell(g, p, 22, 12, 3, 3)
-    ell(g, 17, 18, 3, 3, p.glow)
+    gland_mark(g, p)
     drop = int(a * 3)
     g.polygon([(25, 20 + drop), (27, 24 + drop), (23, 24 + drop)], fill=p.base)
     g.arc([4, 5, 28, 29], 20, 70, fill=STEEL)
@@ -544,17 +601,17 @@ def gland(g, p, a, b):
 
 
 def sac(g, p, a, b, eggs, plume=False):
-    r = 8 + int(a * 2)
+    r = 6 + int(a * 2)
     shaded_ell(g, p, 16, 17, r + 2, r)
     for i in range(eggs):
         ang = i * 2.4
         x, y = 16 + math.cos(ang) * 4, 17 + math.sin(ang) * 3
         ell(g, x, y, 2, 2, BONE)
         g.point((x - 1, y - 1), fill=(255, 250, 235))
-    g.polygon([(14, 8), (18, 8), (16, 3)], fill=p.dark)
+    g.polygon([(14, 17 - r), (18, 17 - r), (16, 12 - r)], fill=p.dark)
     if plume:
         for i in range(3):
-            g.line([(10 + i * 6, 11), (7 + i * 7, 4)], fill=(36, 34, 44), width=2)
+            g.line([(11 + i * 5, 17 - r + 1), (9 + i * 7, 6)], fill=(36, 34, 44), width=2)
     return (16, 16)
 
 
@@ -563,7 +620,13 @@ def spawning_sac(g, p, a, b):
 
 
 def brood_sac(g, p, a, b):
-    return sac(g, p, a, b, 6)
+    lift = int(a * 2)
+    shaded_ell(g, p, 11, 19, 6, 6)
+    shaded_ell(g, p, 21, 17, 6, 6)
+    shaded_ell(g, p, 16, 12 - lift, 5, 5)
+    for x, y in [(10, 19), (13, 21), (21, 17), (19, 15), (16, 12 - lift), (23, 20)]:
+        ell(g, x, y, 1.5, 1.5, BONE)
+    return (16, 16)
 
 
 def raven_sac(g, p, a, b):
@@ -571,12 +634,12 @@ def raven_sac(g, p, a, b):
 
 
 def ganglion(g, p, a, b):
-    nodes = [(16, 16), (8, 9), (24, 9), (8, 23), (24, 23)]
+    nodes = [(16, 16), (9, 9), (23, 9), (9, 23), (23, 23)]
     for x, y in nodes[1:]:
         g.line([(16, 16), (x, y)], fill=p.dark, width=2)
     for i, (x, y) in enumerate(nodes):
         glow = (i + int(a * 4)) % 2 == 0
-        ell(g, x, y, 4 if i == 0 else 3, 4 if i == 0 else 3, p.glow if glow else p.base)
+        ell(g, x, y, 3, 3, p.glow if glow else p.base)
     return (16, 16)
 
 
@@ -591,22 +654,22 @@ def torso(g, p, a, b):
 
 
 def carapace(g, p, a, b):
-    g.chord([2, 6, 30, 34], 180, 360, fill=p.dark)
-    g.chord([3, 7, 28, 32], 180, 360, fill=p.base)
+    g.chord([3, 6, 28, 34], 180, 360, fill=p.dark)
+    g.chord([4, 7, 27, 32], 180, 360, fill=p.base)
     for x in (9, 15, 21):
         g.line([(x, 8), (x + (x - 15) // 3, 26)], fill=p.deep)
     g.arc([4, 8, 26, 30], 200, 260, fill=p.light, width=2)
-    g.rectangle([2, 26, 29, 28], fill=p.deep)
+    g.rectangle([4, 26, 27, 28], fill=p.deep)
     return (16, 18)
 
 
 def blob(g, p, a, b, feet):
     squash = int(a * 2) + b
-    shaded_ell(g, p, 16, 18 + squash // 2, 12 + squash, 9 - squash)
+    shaded_ell(g, p, 16, 18 + squash // 2, 10 + squash, 9 - squash)
     for x, y in [(11, 14), (19, 17), (15, 21)]:
         ell(g, x, y, 2, 2, mix(p.light, p.base, 0.3))
     if feet:
-        for x in (7, 15, 23):
+        for x in (8, 16, 24):
             ell(g, x, 27, 3, 3, p.dark)
             ell(g, x, 26, 2, 2, p.base)
     return (16, 14 if feet else 18)
@@ -621,21 +684,21 @@ def pseudopods(g, p, a, b):
 
 
 def coil(g, p, a, b, upright):
-    for i, (x, y, rx) in enumerate([(15, 26, 12), (16, 21, 10), (15, 16, 8)]):
+    for i, (x, y, rx) in enumerate([(15, 25, 11), (16, 20, 9), (15, 15, 7)]):
         ell(g, x, y, rx, 4, p.dark)
         ell(g, x, y - 1, rx - 1, 3, p.base)
         for k in range(-rx + 3, rx - 2, 4):
             g.point((x + k, y - 2), fill=p.light)
-    sway = int(a * 3) + b
-    neck = [(16, 14), (17, 9), (19 + sway, 5)]
+    sway = int(a * 2) + b
+    neck = [(15, 13), (16, 9), (18 + sway, 6)]
     g.line(neck, fill=p.dark, width=6)
     g.line(neck, fill=p.base, width=4)
     if upright:
-        hx = 21 + sway
-        g.polygon([(hx - 3, 2), (hx + 6, 4), (hx + 2, 8), (hx - 3, 7)], fill=p.base)
-        g.point((hx + 1, 4), fill=p.glow)
-        g.line([(hx + 6, 5), (hx + 9, 5)], fill=(180, 60, 60))
-    return (16, 28)
+        hx = 18 + sway
+        g.polygon([(hx - 3, 3), (hx + 6, 5), (hx + 2, 9), (hx - 3, 8)], fill=p.base)
+        g.point((hx + 1, 5), fill=p.glow)
+        g.line([(hx + 6, 6), (hx + 8, 6)], fill=(180, 60, 60))
+    return (16, 27)
 
 
 def serpent_coil(g, p, a, b):
@@ -655,12 +718,12 @@ def serpent_tail(g, p, a, b):
 
 def gas_bladder(g, p, a, b):
     s = int(a * 2)
-    shaded_ell(g, p, 16, 12, 9 + s, 10 + s)
-    g.polygon([(14, 22), (18, 22), (16, 25)], fill=p.dark)
-    g.line([(16, 25), (14, 29)], fill=p.deep)
-    g.line([(16, 25), (19, 29)], fill=p.deep)
-    ell(g, 22, 8, 1.5, 1.5, p.glow)
-    return (16, 22)
+    shaded_ell(g, p, 16, 12, 8 + s, 8 + s)
+    g.polygon([(14, 20), (18, 20), (16, 24)], fill=p.dark)
+    g.line([(16, 24), (14, 28)], fill=p.deep)
+    g.line([(16, 24), (19, 28)], fill=p.deep)
+    ell(g, 21, 8, 1.5, 1.5, p.glow)
+    return (16, 20)
 
 
 def levitator(g, p, a, b):
@@ -675,40 +738,40 @@ def levitator(g, p, a, b):
 
 
 def imp_body(g, p, a, b):
-    shaded_ell(g, p, 15, 19, 8, 8)
-    shaded_ell(g, p, 17, 9, 5, 5)
-    g.polygon([(13, 6), (11, 0), (16, 4)], fill=BONE)
-    g.polygon([(19, 5), (22, 0), (22, 6)], fill=BONE)
+    shaded_ell(g, p, 15, 17, 7, 7)
+    shaded_ell(g, p, 17, 9, 4, 4)
+    g.polygon([(13, 6), (12, 2), (16, 5)], fill=BONE)
+    g.polygon([(19, 5), (21, 2), (21, 6)], fill=BONE)
     g.point((19, 9), fill=(255, 190, 80))
     flap = int(a * 3)
-    g.polygon([(7, 16), (1, 10 - flap), (5, 20)], fill=p.dark)
-    g.line([(13, 27), (11, 30)], fill=p.deep, width=2)
-    g.line([(18, 27), (20, 30)], fill=p.deep, width=2)
-    g.line([(7, 22), (2, 24 + b)], fill=p.dark, width=2)
-    return (15, 18)
+    g.polygon([(9, 15), (3, 10 - flap), (6, 19)], fill=p.dark)
+    g.line([(13, 24), (12, 28)], fill=p.deep, width=2)
+    g.line([(18, 24), (19, 28)], fill=p.deep, width=2)
+    g.line([(8, 20), (4, 22 + b)], fill=p.dark, width=2)
+    return (15, 17)
 
 
 def crow_body(g, p, a, b):
-    shaded_ell(g, p, 14, 17, 10, 7)
-    g.polygon([(3, 16), (-2, 20), (6, 22)], fill=p.deep)
-    ell(g, 23, 11, 5, 5, p.dark)
-    g.polygon([(27, 10), (32, 12), (27, 14)], fill=(190, 150, 70))
-    g.point((24, 10), fill=(250, 240, 200))
-    g.arc([6, 4 - int(a * 3), 22, 20], 200, 330, fill=p.light, width=2)
-    g.line([(12, 24), (12, 29)], fill=p.deep)
-    g.line([(17, 24), (17, 29)], fill=p.deep)
-    return (14, 18)
+    shaded_ell(g, p, 14, 17, 9, 7)
+    g.polygon([(5, 15), (2, 20), (6, 22)], fill=p.deep)
+    ell(g, 21, 11, 4, 4, p.dark)
+    g.polygon([(24, 10), (28, 12), (24, 13)], fill=(190, 150, 70))
+    g.point((22, 10), fill=(250, 240, 200))
+    g.arc([7, 5 - int(a * 2), 21, 21], 200, 330, fill=p.light, width=2)
+    g.line([(12, 24), (12, 28)], fill=p.deep)
+    g.line([(17, 24), (17, 28)], fill=p.deep)
+    return (14, 17)
 
 
 def wisp_core(g, p, a, b):
-    ell(g, 16, 18, 8, 9, mix(p.base, (255, 255, 255), 0.1))
-    g.polygon([(10, 16), (16, 1 - b), (22, 16)], fill=p.base)
-    ell(g, 16, 18, 5, 6, p.glow)
-    ell(g, 16, 19, 2, 3, (255, 255, 255))
+    ell(g, 16, 17, 8, 8, p.base)
+    g.polygon([(10, 15), (16, 3 - b), (22, 15)], fill=p.base)
+    ell(g, 16, 17, 5, 5, p.glow)
+    ell(g, 16, 18, 2, 3, (255, 255, 255))
     for i in range(3):
         x = 10 + i * 6
-        g.polygon([(x - 2, 24), (x + 2, 24), (x, 30 + int(a * 2))], fill=p.dark)
-    return (16, 18)
+        g.polygon([(x - 2, 23), (x + 2, 23), (x, 27 + int(a * 2))], fill=p.dark)
+    return (16, 17)
 
 
 def legs(g, p, a, b, thick, hoof):
@@ -732,7 +795,7 @@ def beast_legs(g, p, a, b):
 
 def spider_legs(g, p, a, b):
     lift = int(a * 3)
-    for i, dx in enumerate((-11, -7, 7, 11)):
+    for i, dx in enumerate((-10, -6, 6, 10)):
         pts = [(16, 8), (16 + dx // 2, 3 + (lift if i % 2 else 0)), (16 + dx, 12), (16 + dx + (2 if dx > 0 else -2), 28)]
         g.line(pts, fill=p.dark, width=3)
         g.line(pts, fill=p.base, width=1)
@@ -752,12 +815,12 @@ def bat_wings(g, p, a, b):
 def wings_of_light(g, p, a, b):
     up = int(a * 6) + b
     for i in range(5):
-        ang = -70 + i * 22 - up * 2
-        tip = rot([(4 + 24 - i * 2, 16)], (4, 16), ang)[0]
-        g.polygon([(4, 14), tip, (4, 18)], fill=p.light if i % 2 else p.base)
-        g.line([(4, 16), tip], fill=p.glow)
-    ell(g, 5, 16, 3, 3, p.glow)
-    return (4, 16)
+        ang = -55 + i * 20 - up * 2
+        tip = rot([(4 + 19 - i * 2, 18)], (4, 18), ang)[0]
+        g.polygon([(4, 16), tip, (4, 20)], fill=p.light if i % 2 else p.base)
+        g.line([(4, 18), tip], fill=p.glow)
+    ell(g, 5, 18, 3, 3, p.glow)
+    return (4, 18)
 
 
 def armour_plate(g, p, a, b):
@@ -780,7 +843,7 @@ KIND_DRAWERS = {
     "heart": plain_heart, "small_heart": small_heart, "large_heart": large_heart, "great_heart": great_heart,
     "legs": plain_legs, "beast_legs": beast_legs, "spider_legs": spider_legs,
     "bat_wings": bat_wings, "wings_of_light": wings_of_light,
-    "sword_hand": sword_hand, "spear_hand": spear_hand, "lugh_spear": spear_hand, "gungnir": gungnir,
+    "sword_hand": sword_hand, "spear_hand": spear_hand, "lugh_spear": lugh_spear, "gungnir": gungnir,
     "war_club": war_club, "frost_trident": frost_trident, "lightning_hammer": lightning_hammer,
     "shield_hand": shield_hand, "bow_hand": bow_hand, "sun_bow": sun_bow,
     "claw": claw, "mandibles": mandibles, "frost_fang": frost_fang, "ember_maw": ember_maw, "void_maw": void_maw,
@@ -843,9 +906,9 @@ def add_outline(img):
     return out
 
 
-def break_up(img, rng):
+def break_up(img, rng, margin):
     tint(img, (96, 92, 90), 0.65)
-    img = shift(img, 0, 3)
+    img = shift_in_bounds(img, 0, 3, margin)
     px = img.load()
     solid = [(x, y) for y in range(img.height) for x in range(img.width) if px[x, y][3]]
     for x, y in rng.sample(solid, len(solid) // 7):
@@ -853,21 +916,66 @@ def break_up(img, rng):
     for _ in range(3):
         x, y = rng.choice(solid)
         for k in range(4):
-            if 0 <= x + k < img.width and 0 <= y + k < img.height:
+            if x + k < img.width and y + k < img.height and px[x + k, y + k][3]:
                 px[x + k, y + k] = (24, 20, 22, 255)
     return img
 
 
-def render_state(drawer, palette, state, a, b, rng):
+def shift_in_bounds(layer, dx, dy, margin):
+    box = layer.getbbox()
+    dx = max(margin - box[0], min(dx, layer.width - margin - box[2]))
+    dy = max(margin - box[1], min(dy, layer.height - margin - box[3]))
+    return shift(layer, dx, dy)
+
+
+def bob_shift(layer, dy, margin):
+    room_below = layer.height - margin - layer.getbbox()[3]
+    return shift_in_bounds(layer, 0, dy if room_below >= dy else -dy, margin)
+
+
+def downscale(layer):
+    small = layer.resize((INTERNAL_FRAME, INTERNAL_FRAME), Image.BOX)
+    px = small.load()
+    for y in range(small.height):
+        for x in range(small.width):
+            r, g, b, a = px[x, y]
+            px[x, y] = (r, g, b, 255) if a >= 100 else (0, 0, 0, 0)
+    return small
+
+
+def draw_raw(drawer, palette, a, part):
     layer = Image.new("RGBA", (FRAME, FRAME), (0, 0, 0, 0))
-    pivot = drawer(ImageDraw.Draw(layer), palette, a, b)
+    pivot = drawer(ImageDraw.Draw(layer), palette, a, 0)
+    if part["id"] in REAR_PARTS:
+        layer = ImageOps.mirror(layer)
+        pivot = (FRAME - 1 - pivot[0], pivot[1])
+    return layer, pivot
+
+
+def fit_offset(layers, margin, label):
+    boxes = [layer.getbbox() for layer in layers]
+    left, top = min(b[0] for b in boxes), min(b[1] for b in boxes)
+    right, bottom = max(b[2] for b in boxes), max(b[3] for b in boxes)
+    if right - left > FRAME - 2 * margin or bottom - top > FRAME - 2 * margin:
+        EDGE_FAILURES.append(f"{label}: art {right - left}x{bottom - top} is larger than the frame allows")
+        return 0, 0
+    dx = max(margin - left, min(0, FRAME - margin - right))
+    dy = max(margin - top, min(0, FRAME - margin - bottom))
+    return dx, dy
+
+
+def finish_frame(layer, state, b, rng, internal):
+    margin = 4 if internal else 2
+    if b:
+        layer = bob_shift(layer, BOB * (2 if internal else 1), margin)
     if state == "hurt":
         tint(layer, (230, 70, 60), 0.5)
-        layer = shift(layer, -1, 0)
+        layer = shift_in_bounds(layer, -2 if internal else -1, 0, margin)
     if state == "broken":
-        layer = break_up(layer, rng)
-        pivot = (pivot[0], pivot[1] + 3)
-    return add_outline(layer), pivot
+        layer = break_up(layer, rng, margin)
+    if internal:
+        layer = downscale(layer)
+    return add_outline(layer)
 
 
 def write_atlas(path, sheet, atlas):
@@ -877,20 +985,37 @@ def write_atlas(path, sheet, atlas):
         f.write("\n")
 
 
+EDGE_FAILURES = []
+
+
+def check_clear_of_edges(label, img):
+    box = img.getbbox()
+    if box is None or box[0] == 0 or box[1] == 0 or box[2] == img.width or box[3] == img.height:
+        EDGE_FAILURES.append(f"{label}: opaque pixels touch the frame edge, bbox {box}")
+
+
+def split_frames(sheet, size_w, size_h):
+    return [sheet.crop((x, 0, x + size_w, size_h)) for x in range(0, sheet.width, size_w)]
+
+
 def make_part(part, element_ids, directory):
-    palette = Palette(element_of(part, element_ids))
+    palette = Palette(element_of(part, element_ids), BASE_OVERRIDE.get(part["id"]))
     drawer = drawer_for(part)
     rng = random.Random(part["id"])
-    sheet = Image.new("RGBA", (FRAME * len(FRAME_LAYOUT), FRAME), (0, 0, 0, 0))
+    internal = part["kind"] == "internal"
+    size = INTERNAL_FRAME if internal else FRAME
+    raws = [draw_raw(drawer, palette, a, part) for _, _, a, _ in FRAME_LAYOUT]
+    dx, dy = fit_offset([layer for layer, _ in raws], 4 if internal else 2, part["id"])
+    sheet = Image.new("RGBA", (size * len(FRAME_LAYOUT), size), (0, 0, 0, 0))
     frames = {"idle": [], "act": [], "hurt": [], "broken": []}
-    pivot = None
-    for index, (state, _, a, b) in enumerate(FRAME_LAYOUT):
-        img, state_pivot = render_state(drawer, palette, state, a, b, rng)
-        if state == "idle" and not frames["idle"]:
-            pivot = state_pivot
-        sheet.paste(img, (index * FRAME, 0))
+    for index, ((state, number, _, b), (layer, _)) in enumerate(zip(FRAME_LAYOUT, raws)):
+        img = finish_frame(shift(layer, dx, dy), state, b, rng, internal)
+        check_clear_of_edges(f"{part['id']} {state} {number}", img)
+        sheet.paste(img, (index * size, 0))
         frames[state].append(index)
-    atlas = {"frame_w": FRAME, "frame_h": FRAME, "pivot": {"x": int(pivot[0]), "y": int(pivot[1])}, "frames": frames}
+    scale = FRAME // size
+    pivot = ((raws[0][1][0] + dx) // scale, (raws[0][1][1] + dy) // scale)
+    atlas = {"frame_w": size, "frame_h": size, "pivot": {"x": int(pivot[0]), "y": int(pivot[1])}, "frames": frames}
     write_atlas(os.path.join(directory, part["sprite"]), sheet, atlas)
     return sheet
 
@@ -919,87 +1044,103 @@ def floor_variant(index):
 
 
 def rock():
-    img = Image.new("RGBA", (OBJ, OBJ), (0, 0, 0, 0))
+    img = Image.new("RGBA", (ROCK, ROCK), (0, 0, 0, 0))
     g = ImageDraw.Draw(img)
-    g.polygon([(1, 14), (2, 7), (6, 3), (11, 2), (14, 7), (15, 14)], fill=(110, 106, 104, 255))
-    g.polygon([(3, 13), (4, 8), (7, 5), (10, 5), (10, 13)], fill=(138, 134, 130, 255))
-    g.polygon([(10, 5), (13, 8), (14, 13), (10, 13)], fill=(80, 77, 78, 255))
-    g.line([(6, 9), (8, 12)], fill=(70, 68, 68, 255))
+    g.polygon([(3, 28), (4, 15), (10, 7), (19, 4), (27, 11), (29, 28)], fill=(106, 102, 100, 255))
+    g.polygon([(6, 27), (7, 16), (12, 10), (19, 8), (19, 27)], fill=(138, 134, 130, 255))
+    g.polygon([(19, 8), (26, 13), (28, 27), (19, 27)], fill=(80, 77, 78, 255))
+    g.polygon([(9, 17), (13, 13), (16, 15), (12, 20)], fill=(156, 152, 146, 255))
+    g.line([(14, 18), (17, 24), (15, 27)], fill=(66, 64, 64, 255))
+    g.line([(22, 14), (24, 20)], fill=(62, 60, 62, 255))
+    g.line([(5, 28), (28, 28)], fill=(70, 66, 62, 255))
     return add_outline(img)
 
 
 def pillar():
-    img = Image.new("RGBA", (OBJ, OBJ), (0, 0, 0, 0))
+    img = Image.new("RGBA", (PILLAR_W, PILLAR_H), (0, 0, 0, 0))
     g = ImageDraw.Draw(img)
-    px_rect(g, 3, 1, 10, 3, (140, 134, 124, 255))
-    px_rect(g, 4, 4, 8, 9, (122, 116, 108, 255))
-    px_rect(g, 4, 4, 3, 9, (146, 140, 130, 255))
-    px_rect(g, 10, 4, 2, 9, (92, 88, 84, 255))
-    px_rect(g, 2, 13, 12, 2, (140, 134, 124, 255))
-    g.line([(8, 6), (9, 10)], fill=(80, 76, 72, 255))
+    stone, light, dark = (124, 118, 110, 255), (150, 144, 134, 255), (88, 84, 80, 255)
+    px_rect(g, 6, 3, 20, 6, light)
+    px_rect(g, 4, 9, 24, 3, stone)
+    px_rect(g, 8, 12, 16, 42, stone)
+    px_rect(g, 8, 12, 5, 42, light)
+    px_rect(g, 20, 12, 4, 42, dark)
+    for x in (14, 17):
+        g.line([(x, 13), (x, 53)], fill=dark)
+    px_rect(g, 4, 54, 24, 3, stone)
+    px_rect(g, 3, 57, 26, 4, light)
+    px_rect(g, 3, 60, 26, 1, dark)
+    g.line([(11, 26), (13, 31), (12, 37)], fill=(66, 62, 60, 255))
+    g.line([(21, 40), (19, 46)], fill=(66, 62, 60, 255))
     return add_outline(img)
 
 
-def obj_atlas(frames):
-    return {"frame_w": OBJ, "frame_h": OBJ, "pivot": {"x": OBJ // 2, "y": OBJ // 2}, "frames": frames}
+def obj_atlas(frames, w=OBJ, h=OBJ, pivot=None):
+    return {"frame_w": w, "frame_h": h, "pivot": pivot or {"x": w // 2, "y": h // 2}, "frames": frames}
 
 
-def sheet_of(images, size=OBJ):
-    sheet = Image.new("RGBA", (size * len(images), size), (0, 0, 0, 0))
+def sheet_of(images):
+    w, h = images[0].size
+    sheet = Image.new("RGBA", (w * len(images), h), (0, 0, 0, 0))
     for i, img in enumerate(images):
-        sheet.paste(img, (i * size, 0))
+        sheet.paste(img, (i * w, 0))
     return sheet
 
 
 def vial(colour, bob, rage=False):
-    img = Image.new("RGBA", (OBJ, OBJ), (0, 0, 0, 0))
+    img = Image.new("RGBA", (WORLD, WORLD), (0, 0, 0, 0))
     g = ImageDraw.Draw(img)
     y = 2 + bob
-    px_rect(g, 6, y, 4, 2, WOOD)
-    px_rect(g, 7, y + 2, 2, 2, (200, 210, 214, 255))
-    g.ellipse([3, y + 4, 12, y + 12], fill=(200, 210, 214, 255))
-    g.ellipse([4, y + 6, 11, y + 12], fill=colour + (255,))
-    g.point((5, y + 7), fill=(255, 255, 255, 255))
+    px_rect(g, 9, y, 6, 3, WOOD)
+    px_rect(g, 10, y + 3, 4, 3, (200, 210, 214, 255))
+    g.ellipse([5, y + 6, 18, y + 17], fill=(200, 210, 214, 255))
+    g.ellipse([7, y + 8, 16, y + 16], fill=colour + (255,))
+    g.rectangle([8, y + 9, 9, y + 10], fill=(255, 255, 255, 255))
     if rage:
-        g.polygon([(7, y + 7), (9, y + 7), (8, y + 11)], fill=(250, 220, 160, 255))
+        g.polygon([(10, y + 10), (14, y + 10), (12, y + 15)], fill=(250, 220, 160, 255))
     else:
-        px_rect(g, 7, y + 7, 3, 1, (240, 230, 230, 255))
-        px_rect(g, 8, y + 6, 1, 3, (240, 230, 230, 255))
+        px_rect(g, 10, y + 11, 5, 2, (240, 230, 230, 255))
+        px_rect(g, 11, y + 9, 3, 6, (240, 230, 230, 255))
     return add_outline(img)
+
+
+def trap_base(g, p):
+    g.ellipse([2, 10, 21, 20], fill=(74, 68, 64, 255))
+    g.ellipse([4, 12, 19, 19], fill=p.deep)
 
 
 def vent(element, armed):
     p = Palette(element)
-    img = Image.new("RGBA", (OBJ, OBJ), (0, 0, 0, 0))
+    img = Image.new("RGBA", (WORLD, WORLD), (0, 0, 0, 0))
     g = ImageDraw.Draw(img)
-    g.ellipse([1, 8, 14, 14], fill=(70, 64, 60, 255))
-    g.ellipse([3, 9, 12, 13], fill=(30, 24, 24, 255))
+    trap_base(g, p)
     if not armed:
-        flame(g, p, 8, 9, 3)
-        flame(g, p, 5, 9, 2)
+        flame(g, p, 12, 14, 5)
+        flame(g, p, 7, 14, 3)
+        flame(g, p, 17, 14, 3)
     return add_outline(img)
 
 
 def snare(element, armed):
     p = Palette(element)
-    img = Image.new("RGBA", (OBJ, OBJ), (0, 0, 0, 0))
+    img = Image.new("RGBA", (WORLD, WORLD), (0, 0, 0, 0))
     g = ImageDraw.Draw(img)
-    g.ellipse([1, 8, 14, 14], fill=p.dark)
-    g.ellipse([3, 9, 12, 13], fill=p.base)
-    spikes = [(4, 8), (8, 6), (12, 8)] if armed else [(3, 4), (8, 1), (13, 4)]
+    g.ellipse([2, 10, 21, 20], fill=p.dark)
+    g.ellipse([4, 12, 19, 19], fill=p.base)
+    spikes = [(6, 10), (12, 7), (18, 10)] if armed else [(5, 4), (12, 3), (19, 4)]
     for x, y in spikes:
-        g.polygon([(x - 1, 11), (x + 1, 11), (x, y)], fill=p.glow)
+        g.polygon([(x - 2, 15), (x + 2, 15), (x, y)], fill=p.glow)
     return add_outline(img)
 
 
 def generic_trap(element, armed):
     p = Palette(element)
-    img = Image.new("RGBA", (OBJ, OBJ), (0, 0, 0, 0))
+    img = Image.new("RGBA", (WORLD, WORLD), (0, 0, 0, 0))
     g = ImageDraw.Draw(img)
-    g.ellipse([1, 8, 14, 14], fill=p.dark)
-    g.ellipse([3, 9, 12, 13], fill=p.deep)
+    g.ellipse([2, 10, 21, 20], fill=p.dark)
+    g.ellipse([4, 12, 19, 19], fill=p.deep)
     if not armed:
-        ell(g, 8, 6, 3, 3, p.glow)
+        ell(g, 12, 7, 4, 4, p.glow)
     return add_outline(img)
 
 
@@ -1007,21 +1148,22 @@ TRAP_DRAWERS = {"fire": vent, "frost": snare}
 PICKUP_COLOURS = {"health": (170, 70, 76), "rage": (190, 120, 60)}
 
 
-def make_object(obj, directory, images):
-    write_atlas(os.path.join(directory, obj["sprite"]), sheet_of(images), obj_atlas({"idle": [0, 1] if len(images) == 2 and directory.endswith("pickups") else [0], "act": [1] if directory.endswith("traps") else []}))
-
-
 def make_pickup(obj, directory):
     colour = PICKUP_COLOURS.get(obj["id"].split("_")[0], (120, 140, 160))
-    images = [vial(colour, 0, obj.get("damage_bonus_percent", 0) > 0), vial(colour, 1, obj.get("damage_bonus_percent", 0) > 0)]
-    make_object(obj, directory, images)
+    rage = obj.get("damage_bonus_percent", 0) > 0
+    images = [vial(colour, 0, rage), vial(colour, 1, rage)]
+    for i, img in enumerate(images):
+        check_clear_of_edges(f"{obj['id']} {i}", img)
+    write_atlas(os.path.join(directory, obj["sprite"]), sheet_of(images), obj_atlas({"idle": [0, 1]}, WORLD, WORLD))
     return sheet_of(images)
 
 
 def make_trap(obj, directory):
     drawer = TRAP_DRAWERS.get(obj["element"], generic_trap)
     images = [drawer(obj["element"], True), drawer(obj["element"], False)]
-    make_object(obj, directory, images)
+    for i, img in enumerate(images):
+        check_clear_of_edges(f"{obj['id']} {i}", img)
+    write_atlas(os.path.join(directory, obj["sprite"]), sheet_of(images), obj_atlas({"idle": [0], "act": [1]}, WORLD, WORLD))
     return sheet_of(images)
 
 
@@ -1033,8 +1175,8 @@ def effect_frame(element, i, count):
     g = ImageDraw.Draw(img)
     c = FRAME // 2
     if element == "fire":
-        for k, dx in enumerate((-7, 0, 7)):
-            flame(g, p, c + dx + rng.randint(-1, 1), 26 - int(t * 4), 5 + rng.randint(0, 3) - (k == 1) * -2)
+        for k, dx in enumerate((-6, 0, 6)):
+            flame(g, p, c + dx + rng.randint(-1, 1), 26 - int(t * 3), 4 + rng.randint(0, 2) + (k == 1) * 2)
     elif element == "frost":
         for k in range(6):
             ang = k * 60 + 15
@@ -1048,22 +1190,22 @@ def effect_frame(element, i, count):
             x, y = c - 12 + k * 4, c - 10 + k * 20
             pts = [(x, y)]
             for _ in range(5):
-                x += rng.randint(3, 6)
+                x += rng.randint(2, 4)
                 y += rng.randint(-5, 5) + (c - y) // 3
                 pts.append((x, y))
             g.line(pts, fill=p.base, width=3)
             g.line(pts, fill=(255, 250, 220), width=1)
     elif element == "radiance":
-        r = 4 + t * 10
-        ell(g, c, c, r, r, mix(p.base, (0, 0, 0), 0.0))
+        r = 3 + t * 6
+        ell(g, c, c, r, r, p.base)
         ell(g, c, c, r * 0.6, r * 0.6, p.glow)
         for k in range(8):
             ang = math.radians(k * 45 + i * 8)
-            g.line([(c + math.cos(ang) * (r + 1), c + math.sin(ang) * (r + 1)), (c + math.cos(ang) * (r + 5), c + math.sin(ang) * (r + 5))], fill=p.light)
+            g.line([(c + math.cos(ang) * (r + 1), c + math.sin(ang) * (r + 1)), (c + math.cos(ang) * (r + 4), c + math.sin(ang) * (r + 4))], fill=p.light)
     elif element == "venom":
         for _ in range(7):
-            x = c + rng.randint(-9, 9) * (0.5 + t)
-            y = c + rng.randint(-8, 8) * (0.5 + t) - t * 4
+            x = c + rng.randint(-7, 7) * (0.4 + 0.6 * t)
+            y = c + rng.randint(-6, 6) * (0.4 + 0.6 * t) - t * 2
             r = 3 + rng.randint(0, 3)
             ell(g, x, y, r, r, p.dark)
             ell(g, x - 1, y - 1, max(r - 1, 1), max(r - 1, 1), p.base)
@@ -1073,7 +1215,7 @@ def effect_frame(element, i, count):
         pts = []
         for k in range(30):
             ang = k * 0.45 + i * 0.9
-            r = 1 + k * 0.45
+            r = 1 + k * 0.38
             pts.append((c + math.cos(ang) * r, c + math.sin(ang) * r))
         g.line(pts, fill=p.base, width=2)
         g.line(pts[8:], fill=p.glow, width=1)
@@ -1085,14 +1227,16 @@ def effect_frame(element, i, count):
     else:
         for k in range(10):
             ang = math.radians(k * 36 + rng.randint(-8, 8))
-            r0, r1 = 3 + t * 6, 6 + t * 10
+            r0, r1 = 3 + t * 5, 6 + t * 7
             g.line([(c + math.cos(ang) * r0, c + math.sin(ang) * r0), (c + math.cos(ang) * r1, c + math.sin(ang) * r1)], fill=p.glow if k % 2 else p.base, width=2)
     return img
 
 
 def make_effect(element, directory, count=5):
     frames = [effect_frame(element, i, count) for i in range(count)]
-    sheet = sheet_of(frames, FRAME)
+    for i, img in enumerate(frames):
+        check_clear_of_edges(f"effect {element} {i}", img)
+    sheet = sheet_of(frames)
     atlas = {"frame_w": FRAME, "frame_h": FRAME, "pivot": {"x": FRAME // 2, "y": FRAME // 2}, "frames": {"play": list(range(count))}}
     write_atlas(os.path.join(directory, element), sheet, atlas)
     return sheet
@@ -1101,9 +1245,13 @@ def make_effect(element, directory, count=5):
 def make_tiles(directory):
     floors = [floor_variant(i) for i in range(4)]
     write_atlas(os.path.join(directory, "floor"), sheet_of(floors), obj_atlas({"variants": [0, 1, 2, 3]}))
-    rocks = [rock(), pillar()]
-    write_atlas(os.path.join(directory, "obstacle"), sheet_of(rocks), obj_atlas({"variants": [0, 1]}))
-    return sheet_of(floors), sheet_of(rocks)
+    stone = rock()
+    column = pillar()
+    for label, img in (("rock", stone), ("pillar", column)):
+        check_clear_of_edges(label, img)
+    write_atlas(os.path.join(directory, "rock"), stone, obj_atlas({"idle": [0]}, ROCK, ROCK, {"x": ROCK // 2, "y": ROCK - 4}))
+    write_atlas(os.path.join(directory, "pillar"), column, obj_atlas({"idle": [0]}, PILLAR_W, PILLAR_H, {"x": PILLAR_W // 2, "y": PILLAR_H - 4}))
+    return sheet_of(floors), sheet_of([stone]), column
 
 
 def contact_sheet(entries, path, columns=2, scale=4):
@@ -1144,9 +1292,11 @@ def main():
         entries.append(("trap " + obj["id"], make_trap(obj, dirs["traps"])))
     for element in element_ids:
         entries.append(("effect " + element, make_effect(element, dirs["effects"])))
-    floors, rocks = make_tiles(dirs["tiles"])
-    entries += [("floor tiles", floors), ("obstacles", rocks)]
+    floors, rocks, column = make_tiles(dirs["tiles"])
+    entries += [("floor tiles", floors), ("rock", rocks), ("pillar", column)]
     contact_sheet(entries, os.path.join(ASSETS, "contact_sheet.png"))
+    if EDGE_FAILURES:
+        sys.exit("\n".join(EDGE_FAILURES))
     print(f"wrote {len(entries)} sprite sheets")
 
 

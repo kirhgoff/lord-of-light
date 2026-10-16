@@ -1,15 +1,14 @@
 {
- "frame_w": 16,
- "frame_h": 16,
+ "frame_w": 24,
+ "frame_h": 24,
  "pivot": {
-  "x": 8,
-  "y": 8
+  "x": 12,
+  "y": 12
  },
  "frames": {
   "idle": [
    0,
    1
-  ],
-  "act": []
+  ]
  }
 }
