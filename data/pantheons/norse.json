@@ -209,7 +209,7 @@
           },
           {
             "id": "gland",
-            "part": "frost_gland",
+            "part": "radiance_gland",
             "x": 0,
             "y": 4
           }

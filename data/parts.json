@@ -52,7 +52,13 @@
       "name": "Imp Body",
       "kind": "external",
       "integrity": 14,
-      "sprite": "imp_body"
+      "sprite": "imp_body",
+      "vision": {
+        "close": 48,
+        "medium": 96,
+        "far": 160
+      },
+      "move_speed": 50
     },
     {
       "id": "crow_body",
@@ -816,6 +822,24 @@
           "damage": 16,
           "range": 28,
           "cooldown": 18,
+          "area": 0
+        }
+      ]
+    },
+    {
+      "id": "lugh_spear",
+      "name": "Lugh's Spear",
+      "kind": "external",
+      "integrity": 28,
+      "sprite": "lugh_spear",
+      "deity_only": true,
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "radiance",
+          "damage": 12,
+          "range": 56,
+          "cooldown": 14,
           "area": 0
         }
       ]
