@@ -1,7 +1,7 @@
 # Slot roles and fixed minion bodies
 
 Type: task
-Status: claimed
+Status: resolved
 Blocked by: 15, 03, 09
 
 ## Question
@@ -16,6 +16,10 @@ Extend the schema (loader + validation + tests + data):
 - Update `data/bodyplans.json` and `data/parts.json` accordingly; ticket 03's placeholder Horde uses roles.
 - Side-view anchors (from the ticket 09 design review): Body Plans were authored partly top-down. Re-author them for a side view where every sprite faces right: rear Parts (tails, stingers) at −x, paired Parts (spider mandibles, blob lashes, floater tentacles) at near/far depth (small x/y offset, far one drawn first) instead of mirrored ±x, and `compound_eyes`-sized heads not larger than the Core. Check by composing bodies with the reviewer's script (`tools/compose_body.py`, added by ticket 09).
 - Test: for 200 seeds, every generated placeholder monster has a Heart and can move.
+
+## Answer
+
+Merged `17-slot-roles` after 2 code and 2 design review rounds. Slot `role` (heart/mover/attack/sense/any; attack excludes Parts with Vision), fixed slot `part`, Part `minion_only`. Horde filling skips Core Parts, `deity_only` and `minion_only`. The loader rejects unfillable Horde slots, flagged fixed Parts, spawn plans with non-fixed slots and data without a Horde plan. Body Plans and Deities re-anchored for a right-facing side view: far Parts listed first, far hands at (6, 4), signature weapons in the near hand. Saves embed whole Bodies, so old saves still load.
 
 ## Comments
 
@@ -38,3 +42,5 @@ Extend the schema (loader + validation + tests + data):
 7. Anubis `mind_lobe`: list first, (−6, −14). Shiva: `mind_lobe` to far (−6, −14) listed first, healing_hand near (3, −5).
 8. Blob `lash_far` → (−2, −6), `lash_near` → (4, 4). Floater `tentacle_far` → (−3, 2), `tentacle_near` → (3, 13). Spider `mandible_far` → (10, −4), `mandible_near` → (11, 3). minion_crow `wing` → (−6, −14).
 Sprite redraws split to ticket 18. Previews: scratchpad `bodies/` (volatile).
+
+**Review 2 (opus code): CHANGES (minor)** — fanged_head in arm slots, spawn plans not checked fixed, no-Horde-plan div by zero; fixed in 3a3d14e. **Design re-check (fable): APPROVE** — 19/20 signature weapons 100 % visible, Dagda 66 %.

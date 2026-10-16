@@ -1,7 +1,7 @@
 # Movement, collision, line of sight, Vision bands
 
 Type: task
-Status: claimed
+Status: resolved
 Blocked by: 03
 
 ## Question
@@ -12,6 +12,10 @@ In `src/sim/`:
 - Line of sight over tiles (obstacles block).
 - Vision: for a Combatant, list what it perceives in each Band (Close/Medium/Far) by range from its Parts and LOS, with the detail level per Band as in the glossary.
 - Tests: wall blocks, obstacle blocks LOS, band assignment, crippled legs stop movement.
+
+## Answer
+
+Merged `04-movement-vision` after 2 review rounds. `src/sim/movement.{h,c}`: Combatants have an 11 px feet footprint; A* runs over 2x2-tile footprint anchors (tile corners), so only gaps ≥2 tiles pass; a reachability flood fill sends unreachable/solid targets to the closest reachable tile; a blocked start anchor falls back to the nearest free neighbour; overlapping Combatants are pushed apart, never into terrain; wall sliding. `src/sim/vision.{h,c}`: Amanatides–Woo grid LOS, a corner crossing blocks if either neighbour is solid; `perceive` lists Perceived {name at Close/Medium, position, side} per Band; enemy/ally uses `charm_side` in both views (`battle_winner` still counts real `side`). Build is -O2.
 
 ## Comments
 
@@ -28,3 +32,5 @@ Reviewer probes (volatile): scratchpad `perf/`.
 **User decisions 2026-10-16 (added as findings 6–7):**
 6. Collision radius becomes an ~11 px feet footprint; A* is clearance-aware (no paths through gaps narrower than the footprint).
 7. Charm flips both views: a monster charmed to the Pantheon also stops counting as an enemy to the Pantheon's Combatants.
+
+**Review 2 (opus): CHANGES (minor)** — start anchor overlapping a solid tile froze the Combatant; push-apart terrain guard untested. Fixed in 2b1b41e.

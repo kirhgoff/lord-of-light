@@ -16,6 +16,8 @@ A playable raylib arena: a random Pantheon (from JSON) fights a Power-matched Ho
 
 ## Decisions so far
 
+- [Movement + vision](issues/04-movement-vision.md): 11 px feet footprint, A* on 2x2 footprint anchors (gaps ≥2 tiles), grid LOS blocks diagonal corner crossings, charm flips enemy/ally in both views.
+- [Slot roles](issues/17-slot-roles.md): slots carry roles and optional fixed Parts; Cores and minion/Deity Parts never fill Horde slots; side-view anchors with far Parts drawn first.
 - [Clay with raylib](issues/14-clay-raylib.md): pin v0.14, custom text measure, scroll/overlay pitfalls in `docs/research/clay-raylib.md`.
 - [How Laya behaves](issues/13-laya-behaviour.md): great at Appraisals, weak at picking Orders, ~230 ms per question → ADR 0003 hybrid (Stance + Appraisals, game Tactics).
 - [Placeholder sprites](issues/09-placeholder-sprites.md): generated pixel art; 32-px Parts, scaled-up world objects, internal Parts hidden except on hit / T view.
