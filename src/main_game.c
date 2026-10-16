@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "decider_setup.h"
 #include "raylib.h"
 #include "sim/battle.h"
 #include "sim/decide.h"
@@ -39,7 +40,7 @@ static bool parse_ticks(const char *text, long *ticks)
 
 static int usage(void)
 {
-    fprintf(stderr, "usage: game [--seed N] [--ticks N --screenshot out.png] [--xray]\n");
+    fprintf(stderr, "usage: game [--seed N] [--ticks N --screenshot out.png] [--xray] [--decider laya|reflex] [--replay dump.json]\n");
     return 2;
 }
 
@@ -51,7 +52,7 @@ typedef struct {
     bool xray;
 } Args;
 
-static bool parse_args(int argc, char **argv, Args *args)
+static bool parse_args(int argc, char **argv, Args *args, DeciderSetup *setup)
 {
     *args = (Args){.seed = 1};
     for (int i = 1; i < argc; i++) {
@@ -60,7 +61,7 @@ static bool parse_args(int argc, char **argv, Args *args)
         else if (has_value && strcmp(argv[i], "--seed") == 0 && parse_seed(argv[i + 1], &args->seed)) i++;
         else if (has_value && strcmp(argv[i], "--ticks") == 0 && parse_ticks(argv[i + 1], &args->ticks)) i++, args->ticks_given = true;
         else if (has_value && strcmp(argv[i], "--screenshot") == 0) args->screenshot = argv[++i];
-        else return false;
+        else if (!decider_setup_parse(setup, argc, argv, &i)) return false;
     }
     return args->screenshot || !args->ticks_given;
 }
@@ -123,7 +124,8 @@ static void run_window(Battle *battle, const GameData *data, Decider *decider, S
 int main(int argc, char **argv)
 {
     Args args;
-    if (!parse_args(argc, argv, &args)) return usage();
+    static DeciderSetup setup;
+    if (!parse_args(argc, argv, &args, &setup)) return usage();
 
     static GameData data;
     static Atlases atlases;
@@ -145,8 +147,13 @@ int main(int argc, char **argv)
         CloseWindow();
         return 1;
     }
-    battle_setup(&battle, &data, args.seed);
-    Decider reflex = reflex_decider();
+    if (!decider_setup_open(&setup, &data, &battle, err, ERR_SIZE)) {
+        fprintf(stderr, "decider: %s\n", err);
+        sheets_unload(&sheets);
+        CloseWindow();
+        return 1;
+    }
+    if (!setup.replay_path) battle_setup(&battle, &data, args.seed);
     Viewport view;
     viewport_init(&view, WINDOW_WIDTH, WINDOW_HEIGHT);
     Scene scene = {.xray = args.xray};
@@ -156,13 +163,14 @@ int main(int argc, char **argv)
     if (args.screenshot) {
         for (long t = 0; t < args.ticks && battle_winner(&battle) < 0; t++) {
             scene_before_step(&scene, &battle);
-            battle_step(&battle, &data, &reflex);
+            battle_step(&battle, &data, setup.decider);
             scene_after_step(&scene, &battle);
         }
         render_to_png(args.screenshot, &battle, &data, &scene, &atlases, &sheets, &view, &hud);
     } else {
-        run_window(&battle, &data, &reflex, &scene, &atlases, &sheets, &view, &hud);
+        run_window(&battle, &data, setup.decider, &scene, &atlases, &sheets, &view, &hud);
     }
+    decider_setup_close(&setup);
     sheets_unload(&sheets);
     battle_free(&battle);
     CloseWindow();
