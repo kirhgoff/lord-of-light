@@ -15,8 +15,9 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 23 Quality gates + Linux CI | `23-quality-gates` at `~/Projects/lord-of-light-23-quality-gates` | executor running |
-| 24 Resizable window + overlay tech panel | `24-resizable-arena` at `~/Projects/lord-of-light-24-resizable-arena` | executor running |
+| 23 Quality gates + Linux CI | `23-quality-gates`, PR #2 | review passed, CI green, awaiting merge |
+| 24 Resizable window + overlay tech panel | `24-resizable-arena`, PR #1 | review passed, awaiting merge |
+| 25 Jev vs Laya benchmark | `25-jev-vs-laya-bench`, PR #3 | review passed, awaiting merge |
 
 ## Done
 

@@ -85,10 +85,9 @@ static bool parse_args(int argc, char **argv, Args *args, DeciderSetup *setup)
     for (int i = 1; i < argc; i++) {
         bool has_value = i + 1 < argc;
         if (strcmp(argv[i], "--xray") == 0) args->xray = true;
-        else if (has_value && strcmp(argv[i], "--seed") == 0 && parse_seed(argv[i + 1], &args->seed)) i++;
+        else if (has_value && ((strcmp(argv[i], "--seed") == 0 && parse_seed(argv[i + 1], &args->seed)) || (strcmp(argv[i], "--size") == 0 && parse_size(argv[i + 1], &args->width, &args->height)))) i++;
         else if (has_value && strcmp(argv[i], "--ticks") == 0 && parse_ticks(argv[i + 1], &args->ticks)) i++, args->ticks_given = true;
         else if (has_value && strcmp(argv[i], "--select") == 0 && parse_ticks(argv[i + 1], &selected)) i++, args->select = (int)selected;
-        else if (has_value && strcmp(argv[i], "--size") == 0 && parse_size(argv[i + 1], &args->width, &args->height)) i++;
         else if (has_value && strcmp(argv[i], "--screenshot") == 0) args->screenshot = argv[++i];
         else if (!decider_setup_parse(setup, argc, argv, &i)) return false;
     }

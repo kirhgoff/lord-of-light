@@ -31,7 +31,7 @@ static int add_deity(const char *pantheon, const char *deity, Side side, int x_p
             if (strcmp(data.pantheons[p].deities[d].name, deity) == 0)
                 return battle_add_combatant(&battle, &data, deity, side, &data.pantheons[p].deities[d].body, x_px * PX, y_px * PX);
     }
-    CHECK(!"deity not found");
+    CHECK(0 && "deity not found");
     return -1;
 }
 

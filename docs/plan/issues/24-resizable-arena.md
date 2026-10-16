@@ -15,5 +15,5 @@ Blocked by: none
 
 - Unit tests in `tests/test_view.c` for the pure Viewport maths: cover zoom at a few window sizes (wider and taller than the Arena's aspect), zoom stepping (cover 1.67 → `=` 2 → 3 → 4; `-` from 2 → 1.67), clamping keeps the Arena covering the window, resize keeps the centre world point, world↔screen round trip with fractional zoom.
 - `make test`, `make asan`, `make game` green, zero warnings.
-- `make screenshots` still produces its shots; also take screenshots at 1280×720, 1920×1080 and 900×900 (a `--size WxH` flag on `build/game` is fine if needed) with the tech view on and off, and list their paths in the hand-back.
+- `make screenshots` still produces its shots; also take screenshots at 1280×720, 1920×1080 and 1024×1024 (the minimum window is 1024×640) (a `--size WxH` flag on `build/game` is fine if needed) with the tech view on and off, and list their paths in the hand-back.
 - Saves/loads still work (check whether the save stores the zoom; if it does, keep loading old saves working).

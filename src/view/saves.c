@@ -75,12 +75,10 @@ static char *read_file(const char *path)
 {
     FILE *file = fopen(path, "rb");
     if (!file) return NULL;
-    char *text = NULL;
     long length = fseek(file, 0, SEEK_END) == 0 ? ftell(file) : -1;
-    if (length >= 0 && fseek(file, 0, SEEK_SET) == 0 && (text = malloc((size_t)length + 1))) {
-        if (fread(text, 1, (size_t)length, file) == (size_t)length) text[length] = '\0';
-        else free(text), text = NULL;
-    }
+    char *text = length >= 0 && fseek(file, 0, SEEK_SET) == 0 ? malloc((size_t)length + 1) : NULL;
+    if (text && fread(text, 1, (size_t)length, file) == (size_t)length) text[length] = '\0';
+    else free(text), text = NULL;
     fclose(file);
     return text;
 }

@@ -70,7 +70,7 @@ static Clay_Dimensions measure_text_utf8(Clay_StringSlice text, Clay_TextElement
         i += size;
         glyphs++;
     }
-    float spacing = (float)glyphs * config->letterSpacing;
+    float spacing = (float)glyphs * (float)config->letterSpacing;
     return (Clay_Dimensions){width * scale + spacing, (float)config->fontSize};
 }
 
@@ -92,7 +92,7 @@ static Clay_String frame_string(const char *format, ...)
 
 static void sized_text(Clay_String string, Clay_Color colour, int size)
 {
-    CLAY_TEXT(string, CLAY_TEXT_CONFIG({.fontId = FONT_BODY, .fontSize = size, .letterSpacing = 1, .textColor = colour}));
+    CLAY_TEXT(string, CLAY_TEXT_CONFIG({.fontId = FONT_BODY, .fontSize = (uint16_t)size, .letterSpacing = 1, .textColor = colour}));
 }
 
 static void text(Clay_String string, Clay_Color colour)
@@ -430,7 +430,8 @@ static void lineup_entry(const Battle *b, const GameData *data, int c)
     combatant_label(b, c, label, sizeof label);
     const char *epithet = deity_epithet(b, data, c);
     CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .childGap = 12, .childAlignment = {.y = CLAY_ALIGN_Y_CENTER}}}) {
-        CLAY({.id = CLAY_IDI("LineupSprite", c), .layout = {.sizing = {CLAY_SIZING_FIXED(LINEUP_SPRITE_WIDTH), CLAY_SIZING_GROW(0)}}}) {}
+        CLAY({.id = CLAY_IDI("LineupSprite", c), .layout = {.sizing = {CLAY_SIZING_FIXED(LINEUP_SPRITE_WIDTH), CLAY_SIZING_GROW(0)}}}) {
+        }
         CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIT(0)}, .childGap = 2, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
             text(frame_string("%s   Vitality %d   Power %ld", label, who->vitality_max, body_power(data, &who->body)), YELLOW_COLOUR);
             if (epithet) text(frame_string("%s", epithet), TEXT_COLOUR);

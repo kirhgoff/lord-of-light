@@ -54,7 +54,10 @@ static size_t append_download(char *chunk, size_t size, size_t count, void *user
 
 static int abort_when_closing(void *user, curl_off_t total_down, curl_off_t down, curl_off_t total_up, curl_off_t up)
 {
-    (void)total_down, (void)down, (void)total_up, (void)up;
+    (void)total_down;
+    (void)down;
+    (void)total_up;
+    (void)up;
     return atomic_load(&((CurlTransport *)user)->abort_transfer);
 }
 

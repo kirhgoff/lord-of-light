@@ -31,7 +31,7 @@ static int find_object_def(const ArenaObjectDef *defs, int count, const char *id
 {
     for (int d = 0; d < count; d++)
         if (strcmp(defs[d].id, id) == 0) return d;
-    CHECK(!"object def not found");
+    CHECK(0 && "object def not found");
     return 0;
 }
 
@@ -48,7 +48,7 @@ static int add_deity(const char *pantheon, const char *deity, Side side, int x_p
             if (strcmp(data.pantheons[p].deities[d].name, deity) == 0)
                 return battle_add_combatant(&battle, &data, deity, side, &data.pantheons[p].deities[d].body, x_px * PX, y_px * PX);
     }
-    CHECK(!"deity not found");
+    CHECK(0 && "deity not found");
     return -1;
 }
 

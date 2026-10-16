@@ -10,7 +10,7 @@ char *read_text_file(const char *path)
     if (!file) return NULL;
     fseek(file, 0, SEEK_END);
     long size = ftell(file);
-    rewind(file);
+    fseek(file, 0, SEEK_SET);
     char *text = size < 0 ? NULL : malloc((size_t)size + 1);
     if (text && fread(text, 1, (size_t)size, file) == (size_t)size) text[size] = '\0';
     else free(text), text = NULL;
