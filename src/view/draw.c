@@ -9,7 +9,9 @@
 #define HUD_SEGMENT_MAX_WIDTH 120
 #define HUD_SEGMENT_GAP 4
 #define HUD_BAR_HEIGHT 8
-#define HUD_TEXT_SIZE 10
+#define HUD_TEXT_SIZE 16
+#define LINEUP_ZOOMED_ROW_HEIGHT 140
+#define LINEUP_FEET_INSET 8
 #define DIALOG_WIDTH 320
 #define DIALOG_HEIGHT 120
 #define FLOOR_COLOUR ((Color){20, 18, 16, 255})
@@ -213,12 +215,17 @@ static Color vitality_colour(const Combatant *who)
     return percent > 50 ? GREEN : percent > 25 ? YELLOW : RED;
 }
 
+static void draw_text(const char *text, int x, int y, int size, Color colour)
+{
+    DrawTextEx(ui_font(), text, (Vector2){(float)x, (float)y}, (float)size, 1, colour);
+}
+
 static void draw_segment(const Battle *b, int c, int x, int y, int width)
 {
     const Combatant *who = &b->combatants[c];
     char label[LABEL_SIZE];
     combatant_label(b, c, label, sizeof label);
-    DrawText(label, x, y, HUD_TEXT_SIZE, who->alive ? RAYWHITE : GRAY);
+    draw_text(label, x, y, HUD_TEXT_SIZE, who->alive ? RAYWHITE : GRAY);
     int bar_y = y + HUD_TEXT_SIZE + 2;
     DrawRectangleLines(x, bar_y, width, HUD_BAR_HEIGHT, who->alive ? RAYWHITE : GRAY);
     if (!who->alive || who->vitality_max <= 0) return;
@@ -244,12 +251,13 @@ static void draw_team_bar(const Battle *b, Side side, int left, int right)
 
 static void draw_centred_text(const char *text, int y, int size, Color colour, int screen_width)
 {
-    DrawText(text, (screen_width - MeasureText(text, size)) / 2, y, size, colour);
+    int width = (int)MeasureTextEx(ui_font(), text, (float)size, 1).x;
+    draw_text(text, (screen_width - width) / 2, y, size, colour);
 }
 
 static void draw_status_label(const Hud *hud, int screen_width)
 {
-    if (hud->paused) draw_centred_text("PAUSED", HUD_HEIGHT + 8, 20, RAYWHITE, screen_width);
+    if (hud->paused) draw_centred_text("PAUSED", HUD_HEIGHT + 8, 24, RAYWHITE, screen_width);
 }
 
 static void draw_confirm_dialog(int screen_width, int screen_height)
@@ -270,7 +278,7 @@ void hud_show_toast(Hud *hud, const char *text)
 
 static void draw_toast(const Hud *hud, const Viewport *view)
 {
-    if (GetTime() < hud->toast_until) draw_centred_text(hud->toast, view->height - 48, 20, RAYWHITE, view->width);
+    if (GetTime() < hud->toast_until) draw_centred_text(hud->toast, view->height - 56, 24, RAYWHITE, view->width);
 }
 
 static void draw_hud(const Battle *b, const Hud *hud, const Viewport *view)
@@ -279,15 +287,33 @@ static void draw_hud(const Battle *b, const Hud *hud, const Viewport *view)
     draw_team_bar(b, SIDE_PANTHEON, 0, view->width / 2);
     draw_team_bar(b, SIDE_HORDE, view->width / 2, view->width);
     draw_status_label(hud, view->width);
-    DrawText("Space pause  Arrows pan  -/= zoom  T tech view  F5 save  F9 load  Esc quit", 8, view->height - 18, 12, LIGHTGRAY);
+    draw_text("Space pause  Arrows pan  -/= zoom  T tech view  F5 save  F9 load  Esc quit", 8, view->height - 24, 16, LIGHTGRAY);
 }
 
-void draw_frame_contents(const Battle *b, const GameData *data, const Scene *scene, const Atlases *atlases,
-                         const Sheets *sheets, const Viewport *view, const Hud *hud, const Ui *ui,
-                         const char (*laya_briefings)[BRIEFING_MAX + 1])
+static void draw_lineup(const Battle *b, const GameData *data, const Scene *scene, const Atlases *atlases, const Sheets *sheets)
+{
+    int tick = (int)(GetTime() * TICKS_PER_SECOND);
+    Rectangle boxes[MAX_COMBATANTS];
+    bool shown[MAX_COMBATANTS];
+    float zoom = 2;
+    for (int c = 0; c < b->combatant_count; c++) {
+        shown[c] = ui_lineup_box(c, &boxes[c]);
+        if (shown[c] && boxes[c].height < LINEUP_ZOOMED_ROW_HEIGHT) zoom = 1;
+    }
+    for (int c = 0; c < b->combatant_count; c++) {
+        if (!shown[c]) continue;
+        Vector2 feet = {boxes[c].x + boxes[c].width / 2, boxes[c].y + boxes[c].height - LINEUP_FEET_INSET};
+        BeginMode2D((Camera2D){feet, {0, 0}, 0, zoom});
+        draw_combatant(&(Drawable){DRAW_COMBATANT, c, 0, 0}, b, data, scene, atlases, sheets, tick);
+        EndMode2D();
+    }
+}
+
+static void draw_battle(const Battle *b, const GameData *data, const Scene *scene, const Atlases *atlases,
+                        const Sheets *sheets, const Viewport *view, const Hud *hud, const Ui *ui,
+                        const char (*laya_briefings)[BRIEFING_MAX + 1])
 {
     int tick = (int)scene_time(scene, b);
-    ClearBackground(FLOOR_COLOUR);
     Camera2D camera = {{(float)(view->width - view->inset_right) / 2, (float)(HUD_HEIGHT + (view->height - HUD_HEIGHT) / 2)}, {view->centre_x, view->centre_y}, 0, (float)view->zoom};
     BeginMode2D(camera);
     draw_floor(atlases, sheets);
@@ -297,5 +323,18 @@ void draw_frame_contents(const Battle *b, const GameData *data, const Scene *sce
     draw_hud(b, hud, view);
     draw_toast(hud, view);
     ui_draw(ui, b, data, scene, view, laya_briefings);
+}
+
+void draw_frame_contents(const Battle *b, const GameData *data, const Scene *scene, const Atlases *atlases,
+                         const Sheets *sheets, const Viewport *view, const Hud *hud, const Ui *ui,
+                         const char (*laya_briefings)[BRIEFING_MAX + 1])
+{
+    ClearBackground(FLOOR_COLOUR);
+    if (ui->intro) {
+        ui_draw(ui, b, data, scene, view, laya_briefings);
+        draw_lineup(b, data, scene, atlases, sheets);
+    } else {
+        draw_battle(b, data, scene, atlases, sheets, view, hud, ui, laya_briefings);
+    }
     if (hud->confirm_quit) draw_confirm_dialog(view->width, view->height);
 }

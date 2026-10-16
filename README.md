@@ -30,6 +30,7 @@ If Laya is unreachable or slow, the Reflex takes over.
 
 | Key | Action |
 |---|---|
+| Enter / Space | Lineup screen: begin the Battle |
 | Space | Pause / resume |
 | Arrows | Pan |
 | `-` / `=` | Zoom out / in |

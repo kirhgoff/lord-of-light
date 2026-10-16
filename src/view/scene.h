@@ -8,7 +8,7 @@
 #include "atlas.h"
 
 #define HUD_HEIGHT 48
-#define PANEL_WIDTH 360
+#define PANEL_WIDTH 440
 #define ZOOM_MIN 1
 #define ZOOM_MAX 4
 #define ZOOM_DEFAULT 1
