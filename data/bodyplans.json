@@ -101,7 +101,7 @@
         {
           "id": "tail",
           "kind": "external",
-          "role": "mover",
+          "role": "attack",
           "x": -9,
           "y": -3
         },

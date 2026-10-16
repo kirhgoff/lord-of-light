@@ -498,7 +498,30 @@ static bool read_body(Context *ctx, const cJSON *obj, const char *path, const ch
         && check_reachable_from_core(ctx, path, slots_key, body);
 }
 
-static bool resolve_fixed_part(Context *ctx, const GameData *data, const char *path, BodySlot *slot)
+bool is_spawn_plan(const GameData *data, int plan)
+{
+    for (int p = 0; p < data->part_count; p++)
+        if (data->parts[p].spawn_plan == plan) return true;
+    return false;
+}
+
+static bool is_core_part(const GameData *data, int part)
+{
+    for (int p = 0; p < data->body_plan_count; p++) {
+        const Body *body = &data->body_plans[p].body;
+        if (body->slots[body->core].part == part) return true;
+    }
+    return false;
+}
+
+bool fills_horde_slot(const GameData *data, int part, const BodySlot *slot)
+{
+    const Part *candidate = &data->parts[part];
+    return !candidate->deity_only && !candidate->minion_only && !is_core_part(data, part)
+        && candidate->internal == slot->internal && part_fits_role(candidate, slot->role);
+}
+
+static bool resolve_fixed_part(Context *ctx, const GameData *data, bool spawn_plan, const char *path, BodySlot *slot)
 {
     char part_path[PATH_LEN];
     join_key(part_path, path, "part");
@@ -509,6 +532,30 @@ static bool resolve_fixed_part(Context *ctx, const GameData *data, const char *p
         return fail(ctx, part_path, "part \"%s\" is %s", part->id, part->internal ? "internal" : "external");
     if (!part_fits_role(part, slot->role))
         return fail(ctx, part_path, "part \"%s\" does not fit role \"%s\"", part->id, SLOT_ROLE_IDS[slot->role]);
+    if (part->deity_only) return fail(ctx, part_path, "part \"%s\" is deity only", part->id);
+    if (part->minion_only && !spawn_plan) return fail(ctx, part_path, "part \"%s\" is minion only", part->id);
+    return true;
+}
+
+static bool has_eligible_part(const GameData *data, const BodySlot *slot)
+{
+    for (int p = 0; p < data->part_count; p++)
+        if (fills_horde_slot(data, p, slot)) return true;
+    return false;
+}
+
+static bool check_horde_slots_fillable(Context *ctx, const GameData *data, int index)
+{
+    const Body *body = &data->body_plans[index].body;
+    if (is_spawn_plan(data, index)) return true;
+    for (int s = 0; s < body->slot_count; s++) {
+        if (body->slots[s].part >= 0 || has_eligible_part(data, &body->slots[s])) continue;
+        char path[PATH_LEN];
+        join_index(path, "bodyplans", index);
+        join_key(path, path, "slots");
+        join_index(path, path, s);
+        return fail(ctx, path, "no part fills slot \"%s\"", body->slots[s].id);
+    }
     return true;
 }
 
@@ -526,7 +573,7 @@ static bool resolve_body_plan(Context *ctx, GameData *data, int index)
         join_index(list_path, "bodyplans", index);
         join_key(list_path, list_path, "slots");
         join_index(path, list_path, s);
-        if (body->slots[s].fixed_part_id[0] && !resolve_fixed_part(ctx, data, path, &body->slots[s])) return false;
+        if (body->slots[s].fixed_part_id[0] && !resolve_fixed_part(ctx, data, is_spawn_plan(data, index), path, &body->slots[s])) return false;
         has_heart |= body->slots[s].role == SLOT_ROLE_HEART;
         can_move |= slot_can_move(data, &body->slots[s]);
     }
@@ -542,6 +589,8 @@ static bool resolve_body_plans(Context *ctx, GameData *data)
     if (data->part_count == 0 || data->body_plan_count == 0) return true;
     for (int p = 0; p < data->body_plan_count; p++)
         if (!resolve_body_plan(ctx, data, p)) return false;
+    for (int p = 0; p < data->body_plan_count; p++)
+        if (!check_horde_slots_fillable(ctx, data, p)) return false;
     return true;
 }
 

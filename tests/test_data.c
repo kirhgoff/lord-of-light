@@ -156,10 +156,24 @@ static void test_slot_role_errors(void)
         { load_body_plans, FIXTURE("bodyplans_fixed_part_misses_role.json"), "bodyplans[0].slots[3].part: part \"torso\" does not fit role \"sense\"" },
         { load_body_plans, FIXTURE("bodyplans_no_heart_slot.json"), "bodyplans[0]: body plan \"biped\" has no heart slot" },
         { load_body_plans, FIXTURE("bodyplans_no_mover_slot.json"), "bodyplans[0]: body plan \"biped\" has no mover slot" },
+        { load_body_plans, FIXTURE("bodyplans_fixed_part_minion_only.json"), "bodyplans[0].slots[2].part: part \"imp_body\" is minion only" },
+        { load_body_plans, FIXTURE("bodyplans_fixed_part_deity_only.json"), "bodyplans[0].slots[2].part: part \"fire_hand\" is deity only" },
+        { load_parts, FIXTURE("parts_horde_heart_unfillable.json"), "bodyplans[0].slots[5]: no part fills slot \"heart\"" },
     };
     load_real_data();
     for (size_t i = 0; i < sizeof cases / sizeof cases[0]; i++)
         check_error(cases[i].loader(&data, cases[i].fixture, err, ERR_SIZE), cases[i].expected);
+}
+
+static void test_core_parts_stay_out_of_horde_slots(void)
+{
+    load_real_data();
+    const BodyPlan *quadruped = &data.body_plans[find_body_plan(&data, "quadruped")];
+    CHECK(quadruped->body.slots[find_body_slot(&quadruped->body, "tail")].role == SLOT_ROLE_ATTACK);
+    const BodyPlan *serpent = &data.body_plans[find_body_plan(&data, "serpent")];
+    const BodySlot *tail = &serpent->body.slots[find_body_slot(&serpent->body, "tail")];
+    CHECK(!fills_horde_slot(&data, find_part(&data, "serpent_coil"), tail));
+    CHECK(fills_horde_slot(&data, find_part(&data, "serpent_tail"), tail));
 }
 
 static void test_minion_plans_are_fixed(void)
@@ -301,6 +315,7 @@ void run_data_tests(void)
     test_pantheon_errors();
     test_body_plan_errors();
     test_slot_role_errors();
+    test_core_parts_stay_out_of_horde_slots();
     test_minion_plans_are_fixed();
     test_part_errors();
     test_other_file_errors();

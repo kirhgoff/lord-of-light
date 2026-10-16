@@ -88,24 +88,12 @@ static void init_combatant(Combatant *c, const GameData *data, const char *name,
     c->vitality = c->vitality_max;
 }
 
-static bool is_spawn_plan(const GameData *data, int plan)
-{
-    for (int p = 0; p < data->part_count; p++)
-        if (data->parts[p].spawn_plan == plan) return true;
-    return false;
-}
-
-static bool fills_horde_slot(const Part *part, const BodySlot *slot)
-{
-    return !part->deity_only && !part->minion_only && part->internal == slot->internal && part_fits_role(part, slot->role);
-}
-
 static int random_part(Battle *battle, const GameData *data, const BodySlot *slot)
 {
     if (slot->part >= 0) return slot->part;
     int eligible[MAX_PARTS], count = 0;
     for (int p = 0; p < data->part_count; p++)
-        if (fills_horde_slot(&data->parts[p], slot)) eligible[count++] = p;
+        if (fills_horde_slot(data, p, slot)) eligible[count++] = p;
     return eligible[rng_below(&battle->rng, count)];
 }
 

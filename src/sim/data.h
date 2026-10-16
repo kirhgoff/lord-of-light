@@ -181,6 +181,8 @@ int find_part(const GameData *data, const char *id);
 int find_body_plan(const GameData *data, const char *id);
 int find_body_slot(const Body *body, const char *id);
 bool part_fits_role(const Part *part, SlotRole role);
+bool is_spawn_plan(const GameData *data, int plan);
+bool fills_horde_slot(const GameData *data, int part, const BodySlot *slot);
 
 bool load_elements(GameData *data, const char *path, char *err, size_t err_size);
 bool load_body_plans(GameData *data, const char *path, char *err, size_t err_size);
