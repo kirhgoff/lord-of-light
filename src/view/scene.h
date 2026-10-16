@@ -24,7 +24,7 @@
 #define MAX_EFFECTS 64
 #define NEVER (-1000000)
 #define REMAINS_SPREAD_PX 12
-#define EFFECT_LIFT_PX 16
+#define EFFECT_LIFT_PX 32
 
 typedef struct {
     float centre_x;

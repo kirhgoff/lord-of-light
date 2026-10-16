@@ -208,7 +208,7 @@ static void draw_segment(const Combatant *who, int x, int y, int width)
 {
     DrawText(who->name, x, y, HUD_TEXT_SIZE, who->alive ? RAYWHITE : GRAY);
     int bar_y = y + HUD_TEXT_SIZE + 2;
-    DrawRectangleLines(x, bar_y, width, HUD_BAR_HEIGHT, who->alive ? RAYWHITE : DARKGRAY);
+    DrawRectangleLines(x, bar_y, width, HUD_BAR_HEIGHT, who->alive ? RAYWHITE : GRAY);
     if (!who->alive || who->vitality_max <= 0) return;
     int filled = (width - 2) * who->vitality / who->vitality_max;
     DrawRectangle(x + 1, bar_y + 1, filled > 0 ? filled : 0, HUD_BAR_HEIGHT - 2, vitality_colour(who));
