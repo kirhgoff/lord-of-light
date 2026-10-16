@@ -14,7 +14,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 02 Data schema | `02-data-schema` / `~/Projects/lord-of-light-02-data-schema` | executor done (15f591f); opus review running. Known fix: commit trailer must be the Opus line from the brief |
+| 02 Data schema | `02-data-schema` / `~/Projects/lord-of-light-02-data-schema` | review CHANGES (failed loads mutate GameData, long pantheon names skipped, no range checks, trailer); executor fixing |
 
 If a session died mid-ticket: inspect the worktree (`git -C <wt> log main..HEAD`, `git status`), then either spawn a new executor to finish from there or review what exists.
 
