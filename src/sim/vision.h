@@ -6,8 +6,12 @@
 #define MAX_PERCEIVED (MAX_COMBATANTS + 2 * MAX_ARENA_OBJECTS)
 #define UNKNOWN (-1)
 
-typedef enum { BAND_CLOSE, BAND_MEDIUM, BAND_FAR } Band;
-typedef enum { PERCEIVED_COMBATANT, PERCEIVED_PICKUP, PERCEIVED_TRAP } PerceivedKind;
+typedef enum { BAND_CLOSE,
+               BAND_MEDIUM,
+               BAND_FAR } Band;
+typedef enum { PERCEIVED_COMBATANT,
+               PERCEIVED_PICKUP,
+               PERCEIVED_TRAP } PerceivedKind;
 
 typedef struct {
     PerceivedKind kind;

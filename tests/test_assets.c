@@ -56,10 +56,7 @@ static bool sound_has_expected_format(const char *id)
     size_t read = fread(header, 1, sizeof header, file);
     fclose(file);
     int data_bytes = le32(header + 40);
-    bool ok = read == sizeof header && memcmp(header, "RIFF", 4) == 0 && memcmp(header + 8, "WAVEfmt ", 8) == 0
-        && le16(header + 20) == 1 && le16(header + 22) == 1 && le32(header + 24) == 22050
-        && le16(header + 34) == 16 && memcmp(header + 36, "data", 4) == 0
-        && data_bytes > 0 && data_bytes <= 22050 * 2 * 6 / 10;
+    bool ok = read == sizeof header && memcmp(header, "RIFF", 4) == 0 && memcmp(header + 8, "WAVEfmt ", 8) == 0 && le16(header + 20) == 1 && le16(header + 22) == 1 && le32(header + 24) == 22050 && le16(header + 34) == 16 && memcmp(header + 36, "data", 4) == 0 && data_bytes > 0 && data_bytes <= 22050 * 2 * 6 / 10;
     return ok;
 }
 

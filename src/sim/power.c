@@ -12,9 +12,7 @@ static long ability_power(const PowerWeights *w, const Ability *ability)
 static long part_power(const GameData *data, const Part *part)
 {
     const PowerWeights *w = &data->power;
-    long power = (long)w->integrity * part->integrity + (long)w->vitality * part->vitality
-        + (long)w->initiative * part->initiative + (long)w->vision * part->vision_far
-        + (long)w->move_speed * part->move_speed_px_per_second;
+    long power = (long)w->integrity * part->integrity + (long)w->vitality * part->vitality + (long)w->initiative * part->initiative + (long)w->vision * part->vision_far + (long)w->move_speed * part->move_speed_px_per_second;
     for (int a = 0; a < part->ability_count; a++) power += ability_power(w, &part->abilities[a]);
     for (int e = 0; e < ELEMENT_COUNT; e++) power += (long)w->resistance * part->resistance_percent[e];
     if (part->spawn_plan >= 0) power += part->spawn_cap * body_power(data, &data->body_plans[part->spawn_plan].body) * w->spawning / PERCENT;

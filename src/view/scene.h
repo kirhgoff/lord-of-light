@@ -47,7 +47,11 @@ float viewport_screen_y(const Viewport *v, float world_y);
 float viewport_world_x(const Viewport *v, float screen_x);
 float viewport_world_y(const Viewport *v, float screen_y);
 
-typedef enum { DRAW_OBSTACLE, DRAW_PICKUP, DRAW_TRAP, DRAW_REMAINS, DRAW_COMBATANT } DrawableKind;
+typedef enum { DRAW_OBSTACLE,
+               DRAW_PICKUP,
+               DRAW_TRAP,
+               DRAW_REMAINS,
+               DRAW_COMBATANT } DrawableKind;
 
 typedef struct {
     DrawableKind kind;

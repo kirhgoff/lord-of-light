@@ -58,7 +58,9 @@ Decision event_decision(const Event *event)
 
 HurtLevel hurt_level_from_quarters(int quarters)
 {
-    return quarters >= 4 ? HURT_UNHURT : quarters == 3 ? HURT_WOUNDED : quarters == 2 ? HURT_BADLY_WOUNDED : HURT_NEAR_DEATH;
+    return quarters >= 4 ? HURT_UNHURT : quarters == 3 ? HURT_WOUNDED
+                                     : quarters == 2   ? HURT_BADLY_WOUNDED
+                                                       : HURT_NEAR_DEATH;
 }
 
 bool perceived_is_enemy(const Combatant *me, const Perceived *seen)
@@ -289,7 +291,8 @@ static Movement fight_movement(const Situation *situation)
 
 static int clamp_to_arena(int millipx, int limit)
 {
-    return millipx < 0 ? 0 : millipx >= limit ? limit - 1 : millipx;
+    return millipx < 0 ? 0 : millipx >= limit ? limit - 1
+                                              : millipx;
 }
 
 static Movement flee_movement(const Situation *situation)
@@ -388,9 +391,18 @@ static bool part_has(const Part *part, bool (*matches)(const Ability *))
     return false;
 }
 
-static bool is_support(const Ability *ability) { return ability->order == ORDER_SUPPORT; }
-static bool is_block(const Ability *ability) { return ability->order == ORDER_BLOCK; }
-static bool is_spawn(const Ability *ability) { return ability->order == ORDER_SPAWN; }
+static bool is_support(const Ability *ability)
+{
+    return ability->order == ORDER_SUPPORT;
+}
+static bool is_block(const Ability *ability)
+{
+    return ability->order == ORDER_BLOCK;
+}
+static bool is_spawn(const Ability *ability)
+{
+    return ability->order == ORDER_SPAWN;
+}
 
 static Order order_for_part(const Situation *situation, const Part *part, const Movement *movement)
 {

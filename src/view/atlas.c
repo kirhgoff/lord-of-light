@@ -63,12 +63,7 @@ static bool read_atlas(Atlas *atlas, const cJSON *root)
 {
     const cJSON *pivot = cJSON_GetObjectItemCaseSensitive(root, "pivot");
     const cJSON *frames = cJSON_GetObjectItemCaseSensitive(root, "frames");
-    return cJSON_IsObject(pivot) && cJSON_IsObject(frames)
-        && read_int(root, "frame_w", &atlas->frame_w) && read_int(root, "frame_h", &atlas->frame_h)
-        && read_int(pivot, "x", &atlas->pivot_x) && read_int(pivot, "y", &atlas->pivot_y)
-        && in_range(atlas->frame_w, 1, MAX_FRAME_SIZE + 1) && in_range(atlas->frame_h, 1, MAX_FRAME_SIZE + 1)
-        && in_range(atlas->pivot_x, 0, atlas->frame_w) && in_range(atlas->pivot_y, 0, atlas->frame_h)
-        && read_frames(atlas, frames);
+    return cJSON_IsObject(pivot) && cJSON_IsObject(frames) && read_int(root, "frame_w", &atlas->frame_w) && read_int(root, "frame_h", &atlas->frame_h) && read_int(pivot, "x", &atlas->pivot_x) && read_int(pivot, "y", &atlas->pivot_y) && in_range(atlas->frame_w, 1, MAX_FRAME_SIZE + 1) && in_range(atlas->frame_h, 1, MAX_FRAME_SIZE + 1) && in_range(atlas->pivot_x, 0, atlas->frame_w) && in_range(atlas->pivot_y, 0, atlas->frame_h) && read_frames(atlas, frames);
 }
 
 bool atlas_parse(Atlas *atlas, const char *text)
@@ -101,9 +96,7 @@ bool atlases_load(Atlases *atlases, const GameData *data, char *err, size_t err_
         if (!atlas_load(&atlases->traps[i], "traps", data->traps[i].sprite, err, err_size)) return false;
     for (int e = 0; e < ELEMENT_COUNT; e++)
         if (!atlas_load(&atlases->effects[e], "effects", element_id((Element)e), err, err_size)) return false;
-    return atlas_load(&atlases->floor, "tiles", "floor", err, err_size)
-        && atlas_load(&atlases->rock, "tiles", "rock", err, err_size)
-        && atlas_load(&atlases->pillar, "tiles", "pillar", err, err_size);
+    return atlas_load(&atlases->floor, "tiles", "floor", err, err_size) && atlas_load(&atlases->rock, "tiles", "rock", err, err_size) && atlas_load(&atlases->pillar, "tiles", "pillar", err, err_size);
 }
 
 int atlas_frame(const Atlas *atlas, FramesKind kind, int n)
