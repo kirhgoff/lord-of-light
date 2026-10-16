@@ -221,12 +221,29 @@ static int anchor_of(int millipx, int last)
     return clamp((millipx + TILE_MILLIPX / 2) / TILE_MILLIPX - 1, 0, last);
 }
 
+static void free_anchor_near(const Battle *battle, int x_millipx, int y_millipx, int *column, int *row)
+{
+    int nearest_column = anchor_of(x_millipx, ARENA_WIDTH_TILES - 1), nearest_row = anchor_of(y_millipx, ARENA_HEIGHT_TILES - 1);
+    *column = nearest_column;
+    *row = nearest_row;
+    if (!footprint_is_blocked(battle, nearest_column, nearest_row)) return;
+    int64_t best = INT64_MAX;
+    for (int dy = -1; dy <= 1; dy++)
+        for (int dx = -1; dx <= 1; dx++) {
+            int c = clamp(nearest_column + dx, 0, ARENA_WIDTH_TILES - 1), r = clamp(nearest_row + dy, 0, ARENA_HEIGHT_TILES - 1);
+            int64_t away = distance_squared(x_millipx, y_millipx, (c + 1) * TILE_MILLIPX, (r + 1) * TILE_MILLIPX);
+            if (footprint_is_blocked(battle, c, r) || away >= best) continue;
+            best = away, *column = c, *row = r;
+        }
+}
+
 static void advance(Battle *battle, int self, int target_x, int target_y, int step)
 {
     const Combatant *me = &battle->combatants[self];
     target_x = clamp(target_x, 0, ARENA_WIDTH_MILLIPX - 1);
     target_y = clamp(target_y, 0, ARENA_HEIGHT_MILLIPX - 1);
-    int column = anchor_of(me->x_millipx, ARENA_WIDTH_TILES - 1), row = anchor_of(me->y_millipx, ARENA_HEIGHT_TILES - 1);
+    int column, row;
+    free_anchor_near(battle, me->x_millipx, me->y_millipx, &column, &row);
     int target_column = anchor_of(target_x, ARENA_WIDTH_TILES - 1), target_row = anchor_of(target_y, ARENA_HEIGHT_TILES - 1);
     int next_column = target_column, next_row = target_row;
     bool same_anchor = column == target_column && row == target_row;

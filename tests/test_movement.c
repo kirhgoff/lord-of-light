@@ -238,6 +238,41 @@ static void test_two_tile_gap_is_wide_enough(void)
     CHECK(battle.combatants[0].x_millipx == 30 * TILE + TILE / 2);
 }
 
+static void test_combatant_beside_obstacle_corner_still_moves(void)
+{
+    open_field();
+    battle.obstacle[10][10] = 1;
+    place(0, 0, 0);
+    battle.combatants[0].x_millipx = battle.combatants[0].y_millipx = 152000;
+    send_to(0, 40000, 40000);
+    run(200);
+    CHECK(battle.combatants[0].x_millipx == 40000 && battle.combatants[0].y_millipx == 40000);
+    battle.combatants[0].x_millipx = battle.combatants[0].y_millipx = 183999;
+    send_to(0, 400000, 400000);
+    run(400);
+    CHECK(battle.combatants[0].x_millipx == 400000 && battle.combatants[0].y_millipx == 400000);
+}
+
+static void overlap_pair_for_one_tick(int first_x, int second_x, int y)
+{
+    battle.combatants[0].x_millipx = first_x;
+    battle.combatants[1].x_millipx = second_x;
+    battle.combatants[0].y_millipx = battle.combatants[1].y_millipx = y;
+    run(1);
+}
+
+static void test_push_apart_never_pushes_into_terrain(void)
+{
+    open_field();
+    overlap_pair_for_one_tick(COMBATANT_RADIUS_MILLIPX, COMBATANT_RADIUS_MILLIPX + 12 * PX, 100 * PX);
+    CHECK(battle.combatants[0].x_millipx >= COMBATANT_RADIUS_MILLIPX);
+    open_field();
+    battle.obstacle[10][10] = 1;
+    int edge = 10 * TILE;
+    overlap_pair_for_one_tick(edge - COMBATANT_RADIUS_MILLIPX - 12 * PX, edge - COMBATANT_RADIUS_MILLIPX, 10 * TILE + TILE / 2);
+    CHECK(battle.combatants[1].x_millipx <= edge - COMBATANT_RADIUS_MILLIPX);
+}
+
 static void test_combatants_at_the_same_spot_are_pushed_apart(void)
 {
     open_field();
@@ -500,6 +535,8 @@ void run_movement_tests(void)
     test_one_tile_gap_is_too_narrow_to_path_through();
     test_two_tile_gap_is_wide_enough();
     test_combatants_at_the_same_spot_are_pushed_apart();
+    test_combatant_beside_obstacle_corner_still_moves();
+    test_push_apart_never_pushes_into_terrain();
     test_obstacle_blocks_line_of_sight();
     test_line_of_sight_blocked_at_diagonal_joint();
     test_line_of_sight_blocked_when_either_corner_neighbour_is_solid();
