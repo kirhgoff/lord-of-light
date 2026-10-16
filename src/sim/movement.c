@@ -205,6 +205,13 @@ static bool try_move(Battle *battle, int self, int dx, int dy)
     return true;
 }
 
+static bool is_cramped(const Battle *battle, const Combatant *who, int tx, int ty, int step)
+{
+    int sideways_x = (int)((int64_t)tx * COMBATANT_RADIUS_MILLIPX / step), sideways_y = (int)((int64_t)ty * COMBATANT_RADIUS_MILLIPX / step);
+    return hits_terrain(battle, who->x_millipx + sideways_x, who->y_millipx + sideways_y) ||
+           hits_terrain(battle, who->x_millipx - sideways_x, who->y_millipx - sideways_y);
+}
+
 static void slide_around(Battle *battle, int self, int blocker, int dx, int dy, int step)
 {
     const Combatant *me = &battle->combatants[self], *other = &battle->combatants[blocker];
@@ -213,6 +220,9 @@ static void slide_around(Battle *battle, int self, int blocker, int dx, int dy, 
     if (length == 0) return;
     int tx = (int)(-by * step / length), ty = (int)(bx * step / length);
     if ((int64_t)tx * dx + (int64_t)ty * dy < 0) tx = -tx, ty = -ty;
+    bool head_on = ((int64_t)tx * dx + (int64_t)ty * dy) * 4 < squared(step);
+    bool cramped = is_cramped(battle, me, tx, ty, step) || is_cramped(battle, other, tx, ty, step);
+    if (head_on && cramped && self > blocker && try_move(battle, self, -dx, -dy)) return;
     if (!try_move(battle, self, tx, ty)) try_move(battle, self, -tx, -ty);
 }
 
