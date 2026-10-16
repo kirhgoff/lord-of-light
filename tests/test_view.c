@@ -299,7 +299,13 @@ static void test_agni_feet_sit_33_px_below_the_origin(void)
     for (int p = 0; p < data.pantheon_count; p++)
         for (int d = 0; d < DEITIES_PER_PANTHEON; d++)
             if (strcmp(data.pantheons[p].deities[d].name, "Agni") == 0) {
-                CHECK(body_feet_offset(&data.pantheons[p].deities[d].body, &atlases) == 33);
+                Body body = data.pantheons[p].deities[d].body;
+                CHECK(body_feet_offset(&body, &atlases) == 33);
+                body.slots[body.slot_count] = body.slots[0];
+                body.slots[body.slot_count].internal = true;
+                body.slots[body.slot_count].anchor_y = 200;
+                body.slot_count++;
+                CHECK(body_feet_offset(&body, &atlases) == 33);
                 found++;
             }
     CHECK(found == 1);
