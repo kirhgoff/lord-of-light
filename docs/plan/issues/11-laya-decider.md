@@ -18,3 +18,5 @@ Blocked by: 06, 13
 ## Comments
 
 From the ticket 06 review: `most_vulnerable_element` reads the focus's true resistances even at Far Band. Fine for the Reflex, but the Laya Briefing must only expose what the Combatant perceives at that Band.
+
+**Plan (fable): `docs/plan/plan-11-laya.md`.** User accepted all nine defaults 2026-10-16, plus the addendum: URL list with a local `make laya-local` fallback.
