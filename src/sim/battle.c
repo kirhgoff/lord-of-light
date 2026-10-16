@@ -3,7 +3,9 @@
 #include "combat.h"
 #include "decide.h"
 #include "floor.h"
+#include "horde.h"
 #include "movement.h"
+#include "power.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -103,38 +105,24 @@ int battle_add_combatant(Battle *battle, const GameData *data, const char *name,
     return index;
 }
 
-static int random_part(Battle *battle, const GameData *data, const BodySlot *slot)
+static int row_y(int index, int row_count)
 {
-    if (slot->part >= 0) return slot->part;
-    int eligible[MAX_PARTS], count = 0;
-    for (int p = 0; p < data->part_count; p++)
-        if (fills_horde_slot(data, p, slot)) eligible[count++] = p;
-    return eligible[rng_below(&battle->rng, count)];
-}
-
-static void add_monster(Battle *battle, const GameData *data, int x_millipx, int y_millipx)
-{
-    int plans[MAX_BODY_PLANS], count = 0;
-    for (int p = 0; p < data->body_plan_count; p++)
-        if (!is_spawn_plan(data, p)) plans[count++] = p;
-    const BodyPlan *plan = &data->body_plans[plans[rng_below(&battle->rng, count)]];
-    Body body = plan->body;
-    for (int s = 0; s < body.slot_count; s++) body.slots[s].part = random_part(battle, data, &body.slots[s]);
-    battle_add_combatant(battle, data, plan->id, SIDE_HORDE, &body, x_millipx, y_millipx);
-}
-
-static int row_y(int index)
-{
-    return ((index * 2 + 1) * ARENA_HEIGHT_TILES / (DEITIES_PER_PANTHEON * 2)) * TILE_MILLIPX;
+    return ((index * 2 + 1) * ARENA_HEIGHT_TILES / (row_count * 2)) * TILE_MILLIPX;
 }
 
 void battle_setup(Battle *battle, const GameData *data, uint32_t seed)
+{
+    battle_setup_pantheon(battle, data, seed, -1);
+}
+
+void battle_setup_pantheon(Battle *battle, const GameData *data, uint32_t seed, int forced_pantheon)
 {
     battle_free(battle);
     memset(battle, 0, sizeof *battle);
     battle->seed = seed;
     battle->rng = scramble_seed(seed);
     battle->pantheon = rng_below(&battle->rng, data->pantheon_count);
+    if (forced_pantheon >= 0) battle->pantheon = forced_pantheon;
     for (int i = 0; i < 12; i++) {
         int row = rng_below(&battle->rng, ARENA_HEIGHT_TILES);
         battle->obstacle[row][6 + rng_below(&battle->rng, ARENA_WIDTH_TILES - 12)] = 1;
@@ -142,8 +130,11 @@ void battle_setup(Battle *battle, const GameData *data, uint32_t seed)
     const Pantheon *pantheon = &data->pantheons[battle->pantheon];
     for (int d = 0; d < DEITIES_PER_PANTHEON; d++)
         battle_add_combatant(battle, data, pantheon->deities[d].name, SIDE_PANTHEON, &pantheon->deities[d].body,
-                             2 * TILE_MILLIPX, row_y(d));
-    for (int m = 0; m < HORDE_SIZE; m++) add_monster(battle, data, (ARENA_WIDTH_TILES - 2) * TILE_MILLIPX, row_y(m));
+                             2 * TILE_MILLIPX, row_y(d, DEITIES_PER_PANTHEON));
+    Horde horde = generate_horde(data, pantheon_power(data, battle->pantheon), &battle->rng);
+    for (int m = 0; m < horde.count; m++)
+        battle_add_combatant(battle, data, data->body_plans[horde.monsters[m].plan].id, SIDE_HORDE, &horde.monsters[m].body,
+                             (ARENA_WIDTH_TILES - 2) * TILE_MILLIPX, row_y(m, HORDE_MAX_SIZE));
     battle_place_floor_objects(battle, data);
 }
 
