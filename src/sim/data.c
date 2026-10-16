@@ -1,5 +1,6 @@
 #include "data.h"
 
+#include <ctype.h>
 #include <dirent.h>
 #include <limits.h>
 #include <math.h>
@@ -288,6 +289,19 @@ static bool load_file(GameData *data, const char *path, char *err, size_t err_si
     return ok;
 }
 
+static bool get_sound(Context *ctx, const cJSON *obj, const char *parent, const char *key,
+                      char *out, bool required)
+{
+    if (!get_string(ctx, obj, parent, key, out, ID_LEN, required)) return false;
+    if (!required && out[0] == '\0') return true;
+    char path[PATH_LEN];
+    join_key(path, parent, key);
+    bool valid = out[0] != '\0';
+    for (const char *c = out; *c; c++)
+        if (!(islower((unsigned char)*c) || isdigit((unsigned char)*c) || *c == '_')) valid = false;
+    return valid || fail(ctx, path, "invalid sound id \"%s\"", out);
+}
+
 static bool read_element_def(Context *ctx, const cJSON *obj, const char *path, ElementDef *def)
 {
     return get_int(ctx, obj, path, "dot_damage", &def->dot_damage, false)
@@ -299,7 +313,18 @@ static bool read_element_def(Context *ctx, const cJSON *obj, const char *path, E
         && get_int(ctx, obj, path, "pierce_targets", &def->pierce_targets, false)
         && get_bool(ctx, obj, path, "internal_first", &def->internal_first)
         && get_int(ctx, obj, path, "charm_ticks", &def->charm_ticks, false)
-        && get_int(ctx, obj, path, "buff_strip_count", &def->buff_strip_count, false);
+        && get_int(ctx, obj, path, "buff_strip_count", &def->buff_strip_count, false)
+        && get_sound(ctx, obj, path, "hit_sound", def->hit_sound, true)
+        && get_sound(ctx, obj, path, "effect_sound", def->effect_sound, true);
+}
+
+static bool read_cues(Context *ctx, const cJSON *root, SoundCues *cues)
+{
+    const cJSON *obj;
+    if (!get_object(ctx, root, "", "cues", &obj, true)) return false;
+    return get_sound(ctx, obj, "cues", "death", cues->death, true)
+        && get_sound(ctx, obj, "cues", "part_destroyed", cues->part_destroyed, true)
+        && get_sound(ctx, obj, "cues", "spawn_appear", cues->spawn_appear, true);
 }
 
 static bool elements_from_root(Context *ctx, const cJSON *root, GameData *data)
@@ -325,6 +350,7 @@ static bool elements_from_root(Context *ctx, const cJSON *root, GameData *data)
     }
     for (int i = 0; i < ELEMENT_COUNT; i++)
         if (!seen[i]) return fail(ctx, "elements", "missing element \"%s\"", ELEMENT_IDS[i]);
+    if (!read_cues(ctx, root, &data->cues)) return false;
     memcpy(data->elements, loaded, sizeof loaded);
     return true;
 }
@@ -658,6 +684,7 @@ static bool read_ability(Context *ctx, const cJSON *obj, const char *path, Abili
         && get_count(ctx, obj, path, "range", &ability->range, false)
         && get_count(ctx, obj, path, "cooldown", &ability->cooldown_ticks, false)
         && get_count(ctx, obj, path, "area", &ability->area, false)
+        && get_sound(ctx, obj, path, "sound", ability->sound, true)
         && check_non_negative(ctx, path, "damage", ability->damage)
         && check_non_negative(ctx, path, "heal", ability->heal);
 }
@@ -764,6 +791,7 @@ static bool read_part(Context *ctx, const cJSON *obj, const char *path, const Ga
         && get_bool(ctx, obj, path, "minion_only", &part->minion_only)
         && read_part_stats(ctx, obj, path, part)
         && get_string(ctx, obj, path, "sprite", part->sprite, sizeof part->sprite, true)
+        && get_sound(ctx, obj, path, "step_sound", part->step_sound, part->move_speed_px_per_second > 0)
         && read_abilities(ctx, obj, path, part)
         && read_resistances(ctx, obj, path, part)
         && read_vision(ctx, obj, path, part)
@@ -804,6 +832,7 @@ static bool read_arena_object(Context *ctx, const cJSON *obj, const char *path, 
     return get_string(ctx, obj, path, "id", def->id, sizeof def->id, true)
         && get_string(ctx, obj, path, "name", def->name, sizeof def->name, true)
         && get_string(ctx, obj, path, "sprite", def->sprite, sizeof def->sprite, true)
+        && get_sound(ctx, obj, path, "sound", def->sound, true)
         && get_element(ctx, obj, path, "element", &def->element, false)
         && get_count(ctx, obj, path, "damage", &def->damage, false)
         && get_count(ctx, obj, path, "heal", &def->heal, false)

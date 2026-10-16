@@ -16,6 +16,7 @@ A playable raylib arena: a random Pantheon (from JSON) fights a Power-matched Ho
 
 ## Decisions so far
 
+- [Sound assets](issues/19-sound-assets.md): generated WAVs named per action in the data; the sim validates id format only, asset tests check the files.
 - [Sprite proportions](issues/18-sprite-proportions.md): minion bodies use their own small Parts (`minion_claw`, `wisp_spark`); shared sprites are tuned by anchors, not per-Deity pivots.
 - [Movement + vision](issues/04-movement-vision.md): 11 px feet footprint, A* on 2x2 footprint anchors (gaps ≥2 tiles), grid LOS blocks diagonal corner crossings, charm flips enemy/ally in both views.
 - [Slot roles](issues/17-slot-roles.md): slots carry roles and optional fixed Parts; Cores and minion/Deity Parts never fill Horde slots; side-view anchors with far Parts drawn first.
@@ -27,6 +28,10 @@ A playable raylib arena: a random Pantheon (from JSON) fights a Power-matched Ho
 - [Data schema](issues/02-data-schema.md): all-or-nothing validating loaders in `src/sim/data.c`; shapes listed in the ticket's Answer.
 - [Skeleton](issues/01-skeleton.md): Makefile + vendored raylib 5.5 / Clay v0.14 / cJSON v1.7.19, header-tracked builds, tiny test runner.
 
+## Sound
+
+User request 2026-10-16: generated sounds for every action, stored as data attributes (ticket 19), played relative to the viewport (ticket 20).
+
 ## Not yet specified
 
 - Power weight values and Horde size limits: tuned once `make balance` exists and real Battles can be watched.
@@ -35,6 +40,6 @@ A playable raylib arena: a random Pantheon (from JSON) fights a Power-matched Ho
 
 ## Out of scope
 
-- Sound and music.
+- Music.
 - Player control of Combatants; multiplayer.
 - Linear tracking for this project.

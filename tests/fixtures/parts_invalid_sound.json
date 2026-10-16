@@ -1,0 +1,1037 @@
+{
+  "parts": [
+    {
+      "id": "torso",
+      "name": "Torso",
+      "kind": "external",
+      "integrity": 60,
+      "sprite": "torso"
+    },
+    {
+      "id": "carapace",
+      "name": "Carapace",
+      "kind": "external",
+      "integrity": 70,
+      "sprite": "carapace",
+      "resistances": {
+        "kinetic": 25
+      }
+    },
+    {
+      "id": "gel_mass",
+      "name": "Gel Mass",
+      "kind": "external",
+      "integrity": 80,
+      "sprite": "gel_mass",
+      "resistances": {
+        "venom": 30,
+        "kinetic": -20
+      }
+    },
+    {
+      "id": "serpent_coil",
+      "name": "Serpent Coil",
+      "kind": "external",
+      "integrity": 65,
+      "sprite": "serpent_coil",
+      "move_speed": 30,
+      "step_sound": "step_slither"
+    },
+    {
+      "id": "gas_bladder",
+      "name": "Gas Bladder",
+      "kind": "external",
+      "integrity": 50,
+      "sprite": "gas_bladder",
+      "move_speed": 40,
+      "resistances": {
+        "fire": -30
+      },
+      "step_sound": "step_levitate"
+    },
+    {
+      "id": "imp_body",
+      "name": "Imp Body",
+      "kind": "external",
+      "minion_only": true,
+      "integrity": 14,
+      "sprite": "imp_body",
+      "vision": {
+        "close": 48,
+        "medium": 96,
+        "far": 160
+      },
+      "move_speed": 50,
+      "step_sound": "step_feet"
+    },
+    {
+      "id": "crow_body",
+      "name": "Crow Body",
+      "kind": "external",
+      "minion_only": true,
+      "integrity": 10,
+      "sprite": "crow_body",
+      "move_speed": 80,
+      "step_sound": "step_wings"
+    },
+    {
+      "id": "wisp_core",
+      "name": "Wisp Core",
+      "kind": "external",
+      "minion_only": true,
+      "integrity": 8,
+      "sprite": "wisp_core",
+      "move_speed": 70,
+      "resistances": {
+        "kinetic": 50
+      },
+      "step_sound": "step_levitate"
+    },
+    {
+      "id": "head",
+      "name": "Head",
+      "kind": "external",
+      "integrity": 30,
+      "sprite": "head",
+      "initiative": 1,
+      "vision": {
+        "close": 96,
+        "medium": 192,
+        "far": 320
+      }
+    },
+    {
+      "id": "keen_head",
+      "name": "Keen Head",
+      "kind": "external",
+      "integrity": 30,
+      "sprite": "keen_head",
+      "initiative": 2,
+      "vision": {
+        "close": 128,
+        "medium": 256,
+        "far": 448
+      }
+    },
+    {
+      "id": "eye_stalk",
+      "name": "Eye Stalk",
+      "kind": "external",
+      "integrity": 12,
+      "sprite": "eye_stalk",
+      "initiative": 1,
+      "vision": {
+        "close": 160,
+        "medium": 288,
+        "far": 480
+      }
+    },
+    {
+      "id": "compound_eyes",
+      "name": "Compound Eyes",
+      "kind": "external",
+      "integrity": 20,
+      "sprite": "compound_eyes",
+      "initiative": 1,
+      "vision": {
+        "close": 64,
+        "medium": 224,
+        "far": 384
+      }
+    },
+    {
+      "id": "dim_eye",
+      "name": "Dim Eye",
+      "kind": "external",
+      "integrity": 12,
+      "sprite": "dim_eye",
+      "vision": {
+        "close": 48,
+        "medium": 96,
+        "far": 160
+      }
+    },
+    {
+      "id": "fanged_head",
+      "name": "Fanged Head",
+      "kind": "external",
+      "integrity": 28,
+      "sprite": "fanged_head",
+      "initiative": 1,
+      "vision": {
+        "close": 80,
+        "medium": 160,
+        "far": 256
+      },
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "kinetic",
+          "damage": 9,
+          "range": 20,
+          "cooldown": 14,
+          "area": 0,
+          "sound": "../sounds_sheet"
+        }
+      ]
+    },
+    {
+      "id": "heart",
+      "name": "Heart",
+      "kind": "internal",
+      "integrity": 20,
+      "sprite": "heart",
+      "vitality": 40
+    },
+    {
+      "id": "small_heart",
+      "name": "Small Heart",
+      "kind": "internal",
+      "minion_only": true,
+      "integrity": 10,
+      "sprite": "small_heart",
+      "vitality": 15
+    },
+    {
+      "id": "large_heart",
+      "name": "Large Heart",
+      "kind": "internal",
+      "integrity": 25,
+      "sprite": "large_heart",
+      "vitality": 60
+    },
+    {
+      "id": "great_heart",
+      "name": "Great Heart",
+      "kind": "internal",
+      "integrity": 30,
+      "sprite": "great_heart",
+      "vitality": 80
+    },
+    {
+      "id": "legs",
+      "name": "Legs",
+      "kind": "external",
+      "integrity": 40,
+      "sprite": "legs",
+      "move_speed": 60,
+      "step_sound": "step_feet"
+    },
+    {
+      "id": "beast_legs",
+      "name": "Beast Legs",
+      "kind": "external",
+      "integrity": 45,
+      "sprite": "beast_legs",
+      "move_speed": 80,
+      "step_sound": "step_feet"
+    },
+    {
+      "id": "spider_legs",
+      "name": "Spider Legs",
+      "kind": "external",
+      "integrity": 35,
+      "sprite": "spider_legs",
+      "move_speed": 70,
+      "step_sound": "step_feet"
+    },
+    {
+      "id": "pseudopods",
+      "name": "Pseudopods",
+      "kind": "external",
+      "integrity": 40,
+      "sprite": "pseudopods",
+      "move_speed": 30,
+      "step_sound": "step_slither"
+    },
+    {
+      "id": "levitator",
+      "name": "Levitator",
+      "kind": "external",
+      "integrity": 25,
+      "sprite": "levitator",
+      "move_speed": 50,
+      "step_sound": "step_levitate"
+    },
+    {
+      "id": "bat_wings",
+      "name": "Bat Wings",
+      "kind": "external",
+      "integrity": 25,
+      "sprite": "bat_wings",
+      "move_speed": 90,
+      "step_sound": "step_wings"
+    },
+    {
+      "id": "serpent_tail",
+      "name": "Serpent Tail",
+      "kind": "external",
+      "integrity": 35,
+      "sprite": "serpent_tail",
+      "move_speed": 45,
+      "step_sound": "step_slither"
+    },
+    {
+      "id": "sword_hand",
+      "name": "Sword Hand",
+      "kind": "external",
+      "integrity": 25,
+      "sprite": "sword_hand",
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "kinetic",
+          "damage": 12,
+          "range": 24,
+          "cooldown": 12,
+          "area": 0,
+          "sound": "kinetic_strike"
+        }
+      ]
+    },
+    {
+      "id": "shield_hand",
+      "name": "Shield Hand",
+      "kind": "external",
+      "integrity": 35,
+      "sprite": "shield_hand",
+      "abilities": [
+        {
+          "order": "block",
+          "element": "kinetic",
+          "damage": 0,
+          "range": 0,
+          "cooldown": 0,
+          "area": 0,
+          "sound": "kinetic_block"
+        }
+      ]
+    },
+    {
+      "id": "spear_hand",
+      "name": "Spear Hand",
+      "kind": "external",
+      "integrity": 25,
+      "sprite": "spear_hand",
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "kinetic",
+          "damage": 10,
+          "range": 44,
+          "cooldown": 14,
+          "area": 0,
+          "sound": "kinetic_strike"
+        }
+      ]
+    },
+    {
+      "id": "bow_hand",
+      "name": "Bow Hand",
+      "kind": "external",
+      "integrity": 20,
+      "sprite": "bow_hand",
+      "abilities": [
+        {
+          "order": "cast",
+          "element": "kinetic",
+          "damage": 9,
+          "range": 200,
+          "cooldown": 24,
+          "area": 0,
+          "sound": "kinetic_cast"
+        }
+      ]
+    },
+    {
+      "id": "claw",
+      "name": "Claw",
+      "kind": "external",
+      "integrity": 20,
+      "sprite": "claw",
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "kinetic",
+          "damage": 8,
+          "range": 20,
+          "cooldown": 10,
+          "area": 0,
+          "sound": "kinetic_strike"
+        }
+      ]
+    },
+    {
+      "id": "mandibles",
+      "name": "Mandibles",
+      "kind": "external",
+      "integrity": 22,
+      "sprite": "mandibles",
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "kinetic",
+          "damage": 10,
+          "range": 18,
+          "cooldown": 12,
+          "area": 0,
+          "sound": "kinetic_strike"
+        }
+      ]
+    },
+    {
+      "id": "electric_tentacle",
+      "name": "Electric Tentacle",
+      "kind": "external",
+      "integrity": 18,
+      "sprite": "electric_tentacle",
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "lightning",
+          "damage": 7,
+          "range": 64,
+          "cooldown": 16,
+          "area": 0,
+          "sound": "lightning_strike"
+        }
+      ]
+    },
+    {
+      "id": "venom_stinger",
+      "name": "Venom Stinger",
+      "kind": "external",
+      "integrity": 15,
+      "sprite": "venom_stinger",
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "venom",
+          "damage": 5,
+          "range": 24,
+          "cooldown": 14,
+          "area": 0,
+          "sound": "venom_strike"
+        }
+      ]
+    },
+    {
+      "id": "mind_lobe",
+      "name": "Mind Lobe",
+      "kind": "external",
+      "integrity": 15,
+      "sprite": "mind_lobe",
+      "abilities": [
+        {
+          "order": "cast",
+          "element": "mind",
+          "damage": 0,
+          "range": 128,
+          "cooldown": 80,
+          "area": 0,
+          "sound": "mind_cast"
+        }
+      ]
+    },
+    {
+      "id": "ember_maw",
+      "name": "Ember Maw",
+      "kind": "external",
+      "integrity": 22,
+      "sprite": "ember_maw",
+      "abilities": [
+        {
+          "order": "cast",
+          "element": "fire",
+          "damage": 6,
+          "range": 96,
+          "cooldown": 24,
+          "area": 16,
+          "sound": "fire_cast"
+        }
+      ]
+    },
+    {
+      "id": "frost_fang",
+      "name": "Frost Fang",
+      "kind": "external",
+      "integrity": 20,
+      "sprite": "frost_fang",
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "frost",
+          "damage": 7,
+          "range": 20,
+          "cooldown": 14,
+          "area": 0,
+          "sound": "frost_strike"
+        }
+      ]
+    },
+    {
+      "id": "glow_lantern",
+      "name": "Glow Lantern",
+      "kind": "external",
+      "integrity": 14,
+      "sprite": "glow_lantern",
+      "abilities": [
+        {
+          "order": "cast",
+          "element": "radiance",
+          "damage": 6,
+          "range": 110,
+          "cooldown": 28,
+          "area": 0,
+          "sound": "radiance_cast"
+        }
+      ]
+    },
+    {
+      "id": "void_tendril",
+      "name": "Void Tendril",
+      "kind": "external",
+      "integrity": 16,
+      "sprite": "void_tendril",
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "void",
+          "damage": 6,
+          "range": 36,
+          "cooldown": 18,
+          "area": 0,
+          "sound": "void_strike"
+        }
+      ]
+    },
+    {
+      "id": "spawning_sac",
+      "name": "Spawning Sac",
+      "kind": "internal",
+      "integrity": 20,
+      "sprite": "spawning_sac",
+      "spawning": {
+        "plan": "minion_imp",
+        "cap": 3
+      },
+      "abilities": [
+        {
+          "order": "spawn",
+          "element": "kinetic",
+          "damage": 0,
+          "range": 0,
+          "cooldown": 120,
+          "area": 0,
+          "sound": "kinetic_spawn"
+        }
+      ]
+    },
+    {
+      "id": "brood_sac",
+      "name": "Brood Sac",
+      "kind": "internal",
+      "integrity": 18,
+      "sprite": "brood_sac",
+      "spawning": {
+        "plan": "minion_wisp",
+        "cap": 4
+      },
+      "abilities": [
+        {
+          "order": "spawn",
+          "element": "kinetic",
+          "damage": 0,
+          "range": 0,
+          "cooldown": 100,
+          "area": 0,
+          "sound": "kinetic_spawn"
+        }
+      ]
+    },
+    {
+      "id": "fire_gland",
+      "name": "Fire-proof Gland",
+      "kind": "internal",
+      "integrity": 15,
+      "sprite": "fire_gland",
+      "resistances": {
+        "fire": 75
+      }
+    },
+    {
+      "id": "frost_gland",
+      "name": "Frost-proof Gland",
+      "kind": "internal",
+      "integrity": 15,
+      "sprite": "frost_gland",
+      "resistances": {
+        "frost": 75
+      }
+    },
+    {
+      "id": "lightning_gland",
+      "name": "Lightning-proof Gland",
+      "kind": "internal",
+      "integrity": 15,
+      "sprite": "lightning_gland",
+      "resistances": {
+        "lightning": 75
+      }
+    },
+    {
+      "id": "radiance_gland",
+      "name": "Radiance-proof Gland",
+      "kind": "internal",
+      "integrity": 15,
+      "sprite": "radiance_gland",
+      "resistances": {
+        "radiance": 75
+      }
+    },
+    {
+      "id": "venom_gland",
+      "name": "Venom-proof Gland",
+      "kind": "internal",
+      "integrity": 15,
+      "sprite": "venom_gland",
+      "resistances": {
+        "venom": 75
+      }
+    },
+    {
+      "id": "mind_gland",
+      "name": "Mind-proof Gland",
+      "kind": "internal",
+      "integrity": 15,
+      "sprite": "mind_gland",
+      "resistances": {
+        "mind": 75
+      }
+    },
+    {
+      "id": "void_gland",
+      "name": "Void-proof Gland",
+      "kind": "internal",
+      "integrity": 15,
+      "sprite": "void_gland",
+      "resistances": {
+        "void": 75
+      }
+    },
+    {
+      "id": "armour_plate",
+      "name": "Armour Plate",
+      "kind": "external",
+      "integrity": 50,
+      "sprite": "armour_plate",
+      "resistances": {
+        "kinetic": 40
+      }
+    },
+    {
+      "id": "ganglion",
+      "name": "Initiative Ganglion",
+      "kind": "internal",
+      "integrity": 10,
+      "sprite": "ganglion",
+      "initiative": 3
+    },
+    {
+      "id": "fire_hand",
+      "name": "Fire Hand",
+      "kind": "external",
+      "integrity": 25,
+      "sprite": "fire_hand",
+      "deity_only": true,
+      "abilities": [
+        {
+          "order": "cast",
+          "element": "fire",
+          "damage": 8,
+          "range": 160,
+          "cooldown": 20,
+          "area": 24,
+          "sound": "fire_cast"
+        }
+      ]
+    },
+    {
+      "id": "lightning_hammer",
+      "name": "Lightning Hammer",
+      "kind": "external",
+      "integrity": 35,
+      "sprite": "lightning_hammer",
+      "deity_only": true,
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "lightning",
+          "damage": 14,
+          "range": 28,
+          "cooldown": 16,
+          "area": 0,
+          "sound": "lightning_strike"
+        },
+        {
+          "order": "cast",
+          "element": "lightning",
+          "damage": 10,
+          "range": 140,
+          "cooldown": 30,
+          "area": 0,
+          "sound": "lightning_cast"
+        }
+      ]
+    },
+    {
+      "id": "thunderbolt_hand",
+      "name": "Thunderbolt Hand",
+      "kind": "external",
+      "integrity": 25,
+      "sprite": "thunderbolt_hand",
+      "deity_only": true,
+      "abilities": [
+        {
+          "order": "cast",
+          "element": "lightning",
+          "damage": 12,
+          "range": 170,
+          "cooldown": 24,
+          "area": 0,
+          "sound": "lightning_cast"
+        }
+      ]
+    },
+    {
+      "id": "healing_hand",
+      "name": "Healing Hand",
+      "kind": "external",
+      "integrity": 25,
+      "sprite": "healing_hand",
+      "deity_only": true,
+      "abilities": [
+        {
+          "order": "support",
+          "element": "radiance",
+          "damage": 0,
+          "range": 96,
+          "cooldown": 40,
+          "area": 0,
+          "heal": 10,
+          "sound": "radiance_support"
+        }
+      ]
+    },
+    {
+      "id": "third_eye",
+      "name": "Third Eye",
+      "kind": "external",
+      "integrity": 15,
+      "sprite": "third_eye",
+      "deity_only": true,
+      "initiative": 2,
+      "vision": {
+        "close": 128,
+        "medium": 256,
+        "far": 512
+      },
+      "abilities": [
+        {
+          "order": "cast",
+          "element": "radiance",
+          "damage": 12,
+          "range": 200,
+          "cooldown": 30,
+          "area": 0,
+          "sound": "radiance_cast"
+        }
+      ]
+    },
+    {
+      "id": "void_maw",
+      "name": "Void Maw",
+      "kind": "external",
+      "integrity": 25,
+      "sprite": "void_maw",
+      "deity_only": true,
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "void",
+          "damage": 10,
+          "range": 24,
+          "cooldown": 20,
+          "area": 0,
+          "sound": "void_strike"
+        }
+      ]
+    },
+    {
+      "id": "frost_trident",
+      "name": "Frost Trident",
+      "kind": "external",
+      "integrity": 30,
+      "sprite": "frost_trident",
+      "deity_only": true,
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "frost",
+          "damage": 11,
+          "range": 40,
+          "cooldown": 16,
+          "area": 0,
+          "sound": "frost_strike"
+        }
+      ]
+    },
+    {
+      "id": "sun_bow",
+      "name": "Sun Bow",
+      "kind": "external",
+      "integrity": 22,
+      "sprite": "sun_bow",
+      "deity_only": true,
+      "abilities": [
+        {
+          "order": "cast",
+          "element": "radiance",
+          "damage": 10,
+          "range": 220,
+          "cooldown": 26,
+          "area": 0,
+          "sound": "radiance_cast"
+        }
+      ]
+    },
+    {
+      "id": "radiant_crown",
+      "name": "Radiant Crown",
+      "kind": "external",
+      "integrity": 25,
+      "sprite": "radiant_crown",
+      "deity_only": true,
+      "initiative": 2,
+      "vision": {
+        "close": 128,
+        "medium": 256,
+        "far": 480
+      },
+      "abilities": [
+        {
+          "order": "cast",
+          "element": "radiance",
+          "damage": 9,
+          "range": 160,
+          "cooldown": 24,
+          "area": 0,
+          "sound": "radiance_cast"
+        }
+      ]
+    },
+    {
+      "id": "wings_of_light",
+      "name": "Wings of Light",
+      "kind": "external",
+      "integrity": 25,
+      "sprite": "wings_of_light",
+      "deity_only": true,
+      "move_speed": 90,
+      "abilities": [
+        {
+          "order": "support",
+          "element": "radiance",
+          "damage": 0,
+          "range": 96,
+          "cooldown": 50,
+          "area": 0,
+          "heal": 6,
+          "sound": "radiance_support"
+        }
+      ],
+      "step_sound": "step_wings"
+    },
+    {
+      "id": "war_club",
+      "name": "War Club",
+      "kind": "external",
+      "integrity": 35,
+      "sprite": "war_club",
+      "deity_only": true,
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "kinetic",
+          "damage": 16,
+          "range": 28,
+          "cooldown": 18,
+          "area": 0,
+          "sound": "kinetic_strike"
+        }
+      ]
+    },
+    {
+      "id": "lugh_spear",
+      "name": "Lugh's Spear",
+      "kind": "external",
+      "integrity": 28,
+      "sprite": "lugh_spear",
+      "deity_only": true,
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "radiance",
+          "damage": 12,
+          "range": 56,
+          "cooldown": 14,
+          "area": 0,
+          "sound": "radiance_strike"
+        }
+      ]
+    },
+    {
+      "id": "gungnir",
+      "name": "Gungnir",
+      "kind": "external",
+      "integrity": 28,
+      "sprite": "gungnir",
+      "deity_only": true,
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "kinetic",
+          "damage": 12,
+          "range": 56,
+          "cooldown": 14,
+          "area": 0,
+          "sound": "kinetic_strike"
+        }
+      ]
+    },
+    {
+      "id": "judging_eye",
+      "name": "Judging Eye",
+      "kind": "external",
+      "integrity": 15,
+      "sprite": "judging_eye",
+      "deity_only": true,
+      "initiative": 2,
+      "vision": {
+        "close": 112,
+        "medium": 240,
+        "far": 448
+      },
+      "abilities": [
+        {
+          "order": "cast",
+          "element": "mind",
+          "damage": 0,
+          "range": 160,
+          "cooldown": 70,
+          "area": 0,
+          "sound": "mind_cast"
+        }
+      ]
+    },
+    {
+      "id": "raven_sac",
+      "name": "Raven Sac",
+      "kind": "internal",
+      "integrity": 18,
+      "sprite": "raven_sac",
+      "deity_only": true,
+      "spawning": {
+        "plan": "minion_crow",
+        "cap": 3
+      },
+      "abilities": [
+        {
+          "order": "spawn",
+          "element": "kinetic",
+          "damage": 0,
+          "range": 0,
+          "cooldown": 110,
+          "area": 0,
+          "sound": "kinetic_spawn"
+        }
+      ]
+    },
+    {
+      "id": "serpent_hand",
+      "name": "Serpent Hand",
+      "kind": "external",
+      "integrity": 22,
+      "sprite": "serpent_hand",
+      "deity_only": true,
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "venom",
+          "damage": 7,
+          "range": 30,
+          "cooldown": 14,
+          "area": 0,
+          "sound": "venom_strike"
+        }
+      ]
+    },
+    {
+      "id": "hearth_hand",
+      "name": "Hearth Hand",
+      "kind": "external",
+      "integrity": 25,
+      "sprite": "hearth_hand",
+      "deity_only": true,
+      "abilities": [
+        {
+          "order": "cast",
+          "element": "fire",
+          "damage": 7,
+          "range": 150,
+          "cooldown": 22,
+          "area": 20,
+          "sound": "fire_cast"
+        }
+      ]
+    },
+    {
+      "id": "minion_claw",
+      "name": "Minion Claw",
+      "kind": "external",
+      "minion_only": true,
+      "integrity": 20,
+      "sprite": "minion_claw",
+      "abilities": [
+        {
+          "order": "strike",
+          "element": "kinetic",
+          "damage": 8,
+          "range": 20,
+          "cooldown": 10,
+          "area": 0,
+          "sound": "kinetic_strike"
+        }
+      ]
+    },
+    {
+      "id": "wisp_spark",
+      "name": "Wisp Spark",
+      "kind": "external",
+      "minion_only": true,
+      "integrity": 14,
+      "sprite": "wisp_spark",
+      "abilities": [
+        {
+          "order": "cast",
+          "element": "radiance",
+          "damage": 6,
+          "range": 110,
+          "cooldown": 28,
+          "area": 0,
+          "sound": "radiance_cast"
+        }
+      ]
+    }
+  ]
+}
