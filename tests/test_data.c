@@ -126,12 +126,23 @@ static void test_file_errors(void)
     check_error(load_parts(&data, FIXTURE("missing.json"), err, ERR_SIZE), "missing.json: cannot read file");
 }
 
+static GameData snapshot;
+
+static void check_unchanged(bool loaded)
+{
+    CHECK(!loaded);
+    CHECK(memcmp(&data, &snapshot, sizeof data) == 0);
+}
+
 static void test_failed_load_keeps_previous_data(void)
 {
     load_real_data();
-    int before = data.part_count;
-    CHECK(!load_parts(&data, FIXTURE("parts_duplicate_id.json"), err, ERR_SIZE));
-    CHECK(data.part_count == before);
+    snapshot = data;
+    check_unchanged(load_parts(&data, FIXTURE("parts_duplicate_id.json"), err, ERR_SIZE));
+    check_unchanged(load_arena_objects(&data, FIXTURE("arena_objects_unknown_element.json"), err, ERR_SIZE));
+    check_unchanged(load_power(&data, FIXTURE("power_missing_weight.json"), err, ERR_SIZE));
+    check_unchanged(load_pantheon(&data, FIXTURE("pantheon_unknown_part.json"), err, ERR_SIZE));
+    check_unchanged(load_game_data(&data, "tests/fixtures/no_such_dir", err, ERR_SIZE));
 }
 
 void run_data_tests(void)

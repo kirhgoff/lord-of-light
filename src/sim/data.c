@@ -236,8 +236,11 @@ static bool load_file(GameData *data, const char *path, char *err, size_t err_si
     Context ctx = { path, err, err_size };
     cJSON *root = parse_file(&ctx, path);
     if (!root) return false;
-    bool ok = cJSON_IsObject(root) ? loader(&ctx, root, data) : fail(&ctx, "", "expected an object");
+    static GameData scratch;
+    scratch = *data;
+    bool ok = cJSON_IsObject(root) ? loader(&ctx, root, &scratch) : fail(&ctx, "", "expected an object");
     cJSON_Delete(root);
+    if (ok) *data = scratch;
     return ok;
 }
 
@@ -713,14 +716,17 @@ static bool load_pantheon_dir(GameData *data, const char *dir, char *err, size_t
 bool load_game_data(GameData *data, const char *dir, char *err, size_t err_size)
 {
     char path[PATH_LEN];
-    memset(data, 0, sizeof *data);
+    static GameData fresh;
+    memset(&fresh, 0, sizeof fresh);
 #define LOAD(loader, file) \
-    (snprintf(path, sizeof path, "%s/" file, dir), loader(data, path, err, err_size))
-    return LOAD(load_elements, "elements.json")
+    (snprintf(path, sizeof path, "%s/" file, dir), loader(&fresh, path, err, err_size))
+    bool ok = LOAD(load_elements, "elements.json")
         && LOAD(load_body_plans, "bodyplans.json")
         && LOAD(load_parts, "parts.json")
         && LOAD(load_arena_objects, "arena_objects.json")
         && LOAD(load_power, "power.json")
-        && load_pantheon_dir(data, dir, err, err_size);
+        && load_pantheon_dir(&fresh, dir, err, err_size);
 #undef LOAD
+    if (ok) *data = fresh;
+    return ok;
 }
