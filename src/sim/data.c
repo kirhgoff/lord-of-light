@@ -303,6 +303,17 @@ static bool load_file(GameData *data, const char *path, char *err, size_t err_si
     return ok;
 }
 
+static bool get_name(Context *ctx, const cJSON *obj, const char *parent, const char *key, char *out, size_t size)
+{
+    if (!get_string(ctx, obj, parent, key, out, size, true)) return false;
+    bool valid = out[0] != '\0';
+    for (const char *c = out; *c; c++)
+        if (!(isalpha((unsigned char)*c) || *c == ' ' || *c == '\'' || *c == '_')) valid = false;
+    char path[PATH_LEN];
+    join_key(path, parent, key);
+    return valid || fail(ctx, path, "invalid name \"%s\": use letters, spaces, apostrophes or underscores", out);
+}
+
 static bool get_sound(Context *ctx, const cJSON *obj, const char *parent, const char *key,
                       char *out, bool required)
 {
@@ -689,7 +700,7 @@ static bool body_plans_from_root(Context *ctx, const cJSON *root, GameData *data
         if (count == MAX_BODY_PLANS) return fail(ctx, "bodyplans", "more than %d body plans", MAX_BODY_PLANS);
         if (!cJSON_IsObject(item)) return fail(ctx, path, "expected an object");
         BodyPlan *plan = &plans[count];
-        if (!get_string(ctx, item, path, "id", plan->id, sizeof plan->id, true)) return false;
+        if (!get_name(ctx, item, path, "id", plan->id, sizeof plan->id)) return false;
         for (int i = 0; i < count; i++)
             if (strcmp(plans[i].id, plan->id) == 0) {
                 char id_path[PATH_LEN];
@@ -878,7 +889,7 @@ static bool check_arena_object_ranges(Context *ctx, const char *path, const Aren
 static bool read_arena_object(Context *ctx, const cJSON *obj, const char *path, ArenaObjectDef *def)
 {
     return get_string(ctx, obj, path, "id", def->id, sizeof def->id, true)
-        && get_string(ctx, obj, path, "name", def->name, sizeof def->name, true)
+        && get_name(ctx, obj, path, "name", def->name, sizeof def->name)
         && get_string(ctx, obj, path, "sprite", def->sprite, sizeof def->sprite, true)
         && get_sound(ctx, obj, path, "sound", def->sound, true)
         && get_element(ctx, obj, path, "element", &def->element, false)
@@ -979,7 +990,7 @@ static bool read_deity(Context *ctx, const cJSON *obj, const char *path, const G
     const cJSON *body;
     char body_path[PATH_LEN];
     join_key(body_path, path, "body");
-    return get_string(ctx, obj, path, "name", deity->name, sizeof deity->name, true)
+    return get_name(ctx, obj, path, "name", deity->name, sizeof deity->name)
         && get_string(ctx, obj, path, "epithet", deity->epithet, sizeof deity->epithet, false)
         && get_object(ctx, obj, path, "body", &body, true)
         && read_body(ctx, body, body_path, "parts", data, read_deity_slot, &deity->body);

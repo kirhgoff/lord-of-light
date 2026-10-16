@@ -257,6 +257,9 @@ static void test_other_file_errors(void)
     check_error(load_power(&data, FIXTURE("power_negative_weight.json"), err, ERR_SIZE), "integrity: must be between 0 and 1000");
     check_error(load_arena_objects(&data, FIXTURE("arena_objects_unknown_element.json"), err, ERR_SIZE),
                 "traps[0].element: unknown element \"steam\"");
+    check_error(load_pantheon(&data, FIXTURE("pantheon_deity_name_digit.json"), err, ERR_SIZE), "invalid name \"Agni2\"");
+    check_error(load_body_plans(&data, FIXTURE("bodyplans_name_newline.json"), err, ERR_SIZE), "bodyplans[0].id: invalid name");
+    check_error(load_arena_objects(&data, FIXTURE("arena_objects_digit_name.json"), err, ERR_SIZE), "invalid name \"Health Vial 2\"");
     check_error(load_laya(&data, FIXTURE("laya_threshold_out_of_range.json"), err, ERR_SIZE),
                 "min_stance_confidence_permille: must be between 0 and 1000");
     check_error(load_laya(&data, FIXTURE("laya_missing_urls.json"), err, ERR_SIZE), "urls: missing");
