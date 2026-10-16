@@ -37,7 +37,7 @@ User request 2026-10-16: generated sounds for every action, stored as data attri
 
 ## Not yet specified
 
-- Power weight values and Horde size limits: tuned once `make balance` exists and real Battles can be watched.
+- Power weight values and Horde size limits: tuned once real Battles can be watched. User 2026-10-16: the Pantheon winning more often is fine; don't tune to even out win rates.
 - Tuning the Stance confidence threshold and Briefing wording once Laya drives real Battles.
 - Replacing placeholder sprites with real art; whether Parts need per-direction frames.
 
