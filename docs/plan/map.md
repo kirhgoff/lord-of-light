@@ -11,6 +11,7 @@ A playable raylib arena: a random Pantheon (from JSON) fights a Power-matched Ho
 - Every task leaves `make test` green and adds tests for its logic; `src/sim/` never includes raylib (ADR 0002).
 - No comments in code unless the logic is genuinely tricky (user's global rule).
 - Laya: `POST http://192.168.0.3:8000/v1/systemone`, classifier with choice questions; LAN only. ADR 0001 (async, Reflex fallback) + ADR 0003 (Laya sets Stance + Appraisals, Tactics pick Orders). Facts: `docs/research/laya.md`.
+- Orchestration state and how to resume: `STATUS.md`. Agent briefs: `executor-brief.md`, `reviewer-brief.md`.
 - Tracker: this folder. Ticket files carry `Type:`, `Status:` (open/claimed/resolved) and `Blocked by:` lines.
 
 ## Decisions so far
