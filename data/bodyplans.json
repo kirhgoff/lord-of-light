@@ -607,8 +607,8 @@
           "kind": "external",
           "role": "attack",
           "part": "minion_claw",
-          "x": 6,
-          "y": -2
+          "x": 11,
+          "y": -3
         },
         {
           "id": "heart",
@@ -650,8 +650,8 @@
           "kind": "external",
           "role": "attack",
           "part": "wisp_spark",
-          "x": 5,
-          "y": 0
+          "x": 12,
+          "y": -6
         },
         {
           "id": "heart",
