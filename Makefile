@@ -17,7 +17,7 @@ PLATFORM_LIBS := -framework Cocoa -framework IOKit -framework CoreVideo -framewo
 RGLFW_LANGUAGE := objective-c
 RGLFW_DEFINES :=
 else
-TIDY_PLATFORM_FLAGS := -D_POSIX_C_SOURCE=200809L
+TIDY_PLATFORM_FLAGS :=
 PLATFORM_LIBS := -lGL -lm -lpthread -ldl -lrt -lX11
 RGLFW_LANGUAGE := c
 RGLFW_DEFINES := -D_GLFW_X11
@@ -39,11 +39,14 @@ BALANCE_OBJECTS := $(BUILD)/obj/src/main_balance.o $(SIM_OBJECTS) $(CJSON_OBJECT
 FORMAT_FILES := $(shell find src tests -name '*.c' -o -name '*.h')
 CLANG_FORMAT := uv tool run --exclude-newer 2026-10-15 clang-format==22.1.8
 
-TIDY_FILES := $(wildcard src/*.c src/sim/*.c src/laya/*.c src/view/*.c)
+TIDY_FILES := $(shell find src -name '*.c')
+TIDY_VIEW_FILES := $(filter src/main_game.c src/view/%,$(TIDY_FILES))
+TIDY_CORE_FILES := $(filter-out $(TIDY_VIEW_FILES),$(TIDY_FILES))
 CLANG_TIDY := uv tool run --exclude-newer 2026-10-15 clang-tidy==22.1.8
-TIDY_FLAGS := $(STD) -Ivendor/cjson -I$(RAYLIB_DIR) -isystem vendor/clay $(TIDY_PLATFORM_FLAGS)
+TIDY_CORE_FLAGS := $(STRICT) $(TIDY_PLATFORM_FLAGS)
+TIDY_VIEW_FLAGS := $(TIDY_CORE_FLAGS) $(RAYLIB_DEFINES) -I$(RAYLIB_DIR) -isystem vendor/clay
 
-.PHONY: cppcheck tidy game headless test run clean asan balance screenshots laya-local format format-check
+.PHONY: print-clang-format cppcheck tidy game headless test run clean asan balance screenshots laya-local format format-check
 
 game: $(BUILD)/game
 headless: $(BUILD)/headless
@@ -118,6 +121,9 @@ screenshots: game
 	$(BUILD)/game --seed 1 --ticks 60 --xray --screenshot $(BUILD)/shots/s1_t60_xray.png
 	$(BUILD)/game --seed 1 --ticks 60 --xray --select 0 --screenshot $(BUILD)/shots/s1_t60_xray_select0.png
 
+print-clang-format:
+	@echo $(CLANG_FORMAT)
+
 format:
 	$(CLANG_FORMAT) -i $(FORMAT_FILES)
 
@@ -125,7 +131,8 @@ format-check:
 	$(CLANG_FORMAT) --dry-run --Werror $(FORMAT_FILES)
 
 tidy:
-	$(CLANG_TIDY) $(TIDY_FILES) -- $(TIDY_FLAGS)
+	$(CLANG_TIDY) $(TIDY_CORE_FILES) -- $(TIDY_CORE_FLAGS)
+	$(CLANG_TIDY) $(TIDY_VIEW_FILES) -- $(TIDY_VIEW_FLAGS)
 
 cppcheck:
 	cppcheck --enable=warning,performance,portability --error-exitcode=1 --quiet --std=c11 -Ivendor/cjson --suppress=missingInclude -i src/view/ui.c src
