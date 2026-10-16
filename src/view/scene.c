@@ -1,5 +1,8 @@
 #include "scene.h"
 
+#include <stdint.h>
+#include <stdlib.h>
+
 #define ARENA_WIDTH_PX (ARENA_WIDTH_TILES * TILE_SIZE)
 #define ARENA_HEIGHT_PX (ARENA_HEIGHT_TILES * TILE_SIZE)
 
@@ -175,4 +178,71 @@ int effect_frame(const Effect *effect, int tick)
     int age = tick - effect->since_tick;
     if (age < 0 || age >= EFFECT_TICKS) return -1;
     return age * 5 / EFFECT_TICKS;
+}
+
+static int compare_drawables(const void *left, const void *right)
+{
+    const Drawable *a = left, *b = right;
+    if (a->y != b->y) return a->y < b->y ? -1 : 1;
+    if (a->kind != b->kind) return a->kind < b->kind ? -1 : 1;
+    return a->index - b->index;
+}
+
+static void collect_floor_objects(const FloorObject *objects, int count, DrawableKind kind, Drawable *out, int *n)
+{
+    for (int i = 0; i < count; i++) {
+        if (objects[i].respawn_in > 0) continue;
+        out[(*n)++] = (Drawable){kind, i, (float)objects[i].x_millipx / MILLIPX_PER_PX, (float)objects[i].y_millipx / MILLIPX_PER_PX};
+    }
+}
+
+int scene_collect(const Scene *s, const Battle *b, Drawable *out)
+{
+    int n = 0;
+    for (int row = 0; row < ARENA_HEIGHT_TILES; row++)
+        for (int column = 0; column < ARENA_WIDTH_TILES; column++)
+            if (b->obstacle[row][column])
+                out[n++] = (Drawable){DRAW_OBSTACLE, row * ARENA_WIDTH_TILES + column, (float)(column * TILE_SIZE + TILE_SIZE / 2),
+                                      (float)(row * TILE_SIZE + TILE_SIZE)};
+    collect_floor_objects(b->pickups, b->pickup_count, DRAW_PICKUP, out, &n);
+    for (int t = 0; t < b->trap_count; t++)
+        out[n++] = (Drawable){DRAW_TRAP, t, (float)b->traps[t].x_millipx / MILLIPX_PER_PX, (float)b->traps[t].y_millipx / MILLIPX_PER_PX};
+    for (int r = 0; r < b->remains_count; r++)
+        out[n++] = (Drawable){DRAW_REMAINS, r, (float)b->remains[r].x_millipx / MILLIPX_PER_PX, (float)b->remains[r].y_millipx / MILLIPX_PER_PX};
+    for (int c = 0; c < b->combatant_count; c++) {
+        if (!b->combatants[c].alive) continue;
+        out[n] = (Drawable){DRAW_COMBATANT, c, 0, 0};
+        scene_position(s, b, c, &out[n].x, &out[n].y);
+        n++;
+    }
+    qsort(out, (size_t)n, sizeof *out, compare_drawables);
+    return n;
+}
+
+int tile_hash(int column, int row)
+{
+    return (column * 7 + row * 13) & 0xff;
+}
+
+int body_feet_offset(const Body *body, const Atlases *atlases)
+{
+    int feet = 0;
+    for (int s = 0; s < body->slot_count; s++) {
+        const BodySlot *slot = &body->slots[s];
+        if (slot->internal) continue;
+        const Atlas *atlas = &atlases->parts[slot->part];
+        int bottom = slot->anchor_y - atlas->pivot_y + atlas->frame_h;
+        if (bottom > feet) feet = bottom;
+    }
+    return feet ? feet : 32;
+}
+
+void remains_offset(int remains_index, int part_index, int *dx, int *dy)
+{
+    uint32_t h = ((uint32_t)remains_index * 2654435761u) ^ ((uint32_t)part_index * 40503u + 12345u);
+    h ^= h >> 15;
+    h *= 2246822519u;
+    h ^= h >> 13;
+    *dx = (int)(h % (2 * REMAINS_SPREAD_PX + 1)) - REMAINS_SPREAD_PX;
+    *dy = (int)((h >> 8) % 11) - 4;
 }

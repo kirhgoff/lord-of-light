@@ -253,8 +253,96 @@ static void test_effect_frame_expires(void)
     CHECK(effect_frame(&effect, 10 + EFFECT_TICKS) == -1);
 }
 
+static int index_of(const Drawable *list, int count, DrawableKind kind, int index)
+{
+    for (int i = 0; i < count; i++)
+        if (list[i].kind == kind && list[i].index == index) return i;
+    return -1;
+}
+
+static void test_collect_sorts_by_y_and_skips_dead_and_respawning(void)
+{
+    setup_battle();
+    battle.pickup_count = 2;
+    battle.pickups[0] = (FloorObject){0, 50000, 110000, 0};
+    battle.pickups[1] = (FloorObject){0, 50000, 120000, 5};
+    battle.remains_count = 1;
+    battle.remains[0] = (Remains){60000, 90000, 0, {0}};
+    battle.combatants[0].x_millipx = 70000;
+    battle.combatants[0].y_millipx = 100000;
+    battle.combatants[1].alive = false;
+    Scene scene = {0};
+    scene_reset(&scene, &battle);
+    Drawable list[MAX_DRAWABLES];
+    int count = scene_collect(&scene, &battle, list);
+    int remains = index_of(list, count, DRAW_REMAINS, 0);
+    int combatant = index_of(list, count, DRAW_COMBATANT, 0);
+    int pickup = index_of(list, count, DRAW_PICKUP, 0);
+    CHECK(remains >= 0 && remains < combatant && combatant < pickup);
+    CHECK(index_of(list, count, DRAW_COMBATANT, 1) == -1);
+    CHECK(index_of(list, count, DRAW_PICKUP, 1) == -1);
+    int obstacles = 0, cells = 0;
+    for (int i = 0; i < count; i++) obstacles += list[i].kind == DRAW_OBSTACLE;
+    for (int r = 0; r < ARENA_HEIGHT_TILES; r++)
+        for (int c = 0; c < ARENA_WIDTH_TILES; c++) cells += battle.obstacle[r][c] != 0;
+    CHECK(obstacles == cells);
+    for (int i = 1; i < count; i++) CHECK(list[i - 1].y <= list[i].y);
+}
+
+static void test_agni_feet_sit_33_px_below_the_origin(void)
+{
+    static Atlases atlases;
+    char err[ERR_SIZE];
+    setup_battle();
+    CHECK(atlases_load(&atlases, &data, err, ERR_SIZE));
+    int found = 0;
+    for (int p = 0; p < data.pantheon_count; p++)
+        for (int d = 0; d < DEITIES_PER_PANTHEON; d++)
+            if (strcmp(data.pantheons[p].deities[d].name, "Agni") == 0) {
+                CHECK(body_feet_offset(&data.pantheons[p].deities[d].body, &atlases) == 33);
+                found++;
+            }
+    CHECK(found == 1);
+    Body empty = {0};
+    CHECK(body_feet_offset(&empty, &atlases) == 32);
+}
+
+static void test_tile_hash_covers_every_variant(void)
+{
+    int variants[4] = {0}, pillars = 0, rocks = 0;
+    for (int r = 0; r < ARENA_HEIGHT_TILES; r++)
+        for (int c = 0; c < ARENA_WIDTH_TILES; c++) {
+            int h = tile_hash(c, r);
+            CHECK(h >= 0 && h < 256);
+            variants[h % 4]++;
+            if (h % 3 == 0) pillars++; else rocks++;
+        }
+    for (int v = 0; v < 4; v++) CHECK(variants[v] > 0);
+    CHECK(pillars > 0 && rocks > 0);
+}
+
+static void test_remains_offset_is_bounded_and_deterministic(void)
+{
+    int distinct = 0, first_dx = 0, first_dy = 0;
+    remains_offset(0, 0, &first_dx, &first_dy);
+    for (int r = 0; r < 8; r++)
+        for (int p = 0; p < 8; p++) {
+            int dx, dy, again_dx, again_dy;
+            remains_offset(r, p, &dx, &dy);
+            remains_offset(r, p, &again_dx, &again_dy);
+            CHECK(dx == again_dx && dy == again_dy);
+            CHECK(dx >= -REMAINS_SPREAD_PX && dx <= REMAINS_SPREAD_PX && dy >= -4 && dy <= 6);
+            distinct += dx != first_dx || dy != first_dy;
+        }
+    CHECK(distinct > 30);
+}
+
 void run_view_tests(void)
 {
+    test_collect_sorts_by_y_and_skips_dead_and_respawning();
+    test_agni_feet_sit_33_px_below_the_origin();
+    test_tile_hash_covers_every_variant();
+    test_remains_offset_is_bounded_and_deterministic();
     test_hit_event_marks_actor_target_and_effect();
     test_trap_hit_without_actor_marks_only_the_target();
     test_trap_event_marks_the_trap();

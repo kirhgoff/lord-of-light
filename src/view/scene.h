@@ -41,6 +41,17 @@ void viewport_zoom(Viewport *v, int step);
 float viewport_screen_x(const Viewport *v, float world_x);
 float viewport_screen_y(const Viewport *v, float world_y);
 
+typedef enum { DRAW_OBSTACLE, DRAW_PICKUP, DRAW_TRAP, DRAW_REMAINS, DRAW_COMBATANT } DrawableKind;
+
+typedef struct {
+    DrawableKind kind;
+    int index;
+    float x;
+    float y;
+} Drawable;
+
+#define MAX_DRAWABLES (ARENA_WIDTH_TILES * ARENA_HEIGHT_TILES + MAX_COMBATANTS + MAX_REMAINS + 2 * MAX_ARENA_OBJECTS)
+
 typedef struct {
     float x;
     float y;
@@ -73,5 +84,9 @@ void scene_position(const Scene *s, const Battle *b, int c, float *x_px, float *
 int part_frame(const Atlas *atlas, const Combatant *who, int slot, const Part *part, bool moving, int act_since,
                int hit_since, int idle_phase, int tick);
 int effect_frame(const Effect *effect, int tick);
+int scene_collect(const Scene *s, const Battle *b, Drawable *out);
+int tile_hash(int column, int row);
+int body_feet_offset(const Body *body, const Atlases *atlases);
+void remains_offset(int remains_index, int part_index, int *dx, int *dy);
 
 #endif
