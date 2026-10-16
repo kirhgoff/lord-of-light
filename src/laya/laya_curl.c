@@ -54,7 +54,10 @@ static size_t append_download(char *chunk, size_t size, size_t count, void *user
 
 static int abort_when_closing(void *user, curl_off_t total_down, curl_off_t down, curl_off_t total_up, curl_off_t up)
 {
-    (void)total_down, (void)down, (void)total_up, (void)up;
+    (void)total_down;
+    (void)down;
+    (void)total_up;
+    (void)up;
     return atomic_load(&((CurlTransport *)user)->abort_transfer);
 }
 
@@ -79,8 +82,7 @@ static LayaReply perform(CURL *curl, const Request *request, CurlTransport *tran
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
     curl_easy_getinfo(curl, CURLINFO_PRETRANSFER_TIME_T, &pretransfer_us);
     curl_slist_free_all(headers);
-    TransferOutcome outcome = {.curl_ok = result == CURLE_OK, .timed_out = result == CURLE_OPERATION_TIMEDOUT,
-                               .connected = pretransfer_us > 0, .too_large = download.too_large, .http_status = status};
+    TransferOutcome outcome = {.curl_ok = result == CURLE_OK, .timed_out = result == CURLE_OPERATION_TIMEDOUT, .connected = pretransfer_us > 0, .too_large = download.too_large, .http_status = status};
     LayaReply reply = {request->id, download.text, laya_classify_transfer(&outcome)};
     if (reply.failure != FALLBACK_NONE) free(reply.text), reply.text = NULL;
     return reply;

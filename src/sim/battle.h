@@ -12,7 +12,9 @@
 #define MAX_REMAINS MAX_COMBATANTS
 #define EVENT_AMOUNT_LIMIT 1000000000
 
-typedef enum { SIDE_PANTHEON, SIDE_HORDE, SIDE_COUNT } Side;
+typedef enum { SIDE_PANTHEON,
+               SIDE_HORDE,
+               SIDE_COUNT } Side;
 
 typedef enum {
     STANCE_NONE,
@@ -34,7 +36,11 @@ typedef enum {
     EVENT_KIND_COUNT
 } EventKind;
 
-typedef enum { EFFECT_DOT, EFFECT_SLOW, EFFECT_CHARM, EFFECT_STRIP, EFFECT_HEAL } EffectKind;
+typedef enum { EFFECT_DOT,
+               EFFECT_SLOW,
+               EFFECT_CHARM,
+               EFFECT_STRIP,
+               EFFECT_HEAL } EffectKind;
 
 typedef struct {
     OrderKind kind;
@@ -49,9 +55,16 @@ typedef struct {
     Order order;
 } PartState;
 
-typedef enum { HURT_UNHURT, HURT_WOUNDED, HURT_BADLY_WOUNDED, HURT_NEAR_DEATH, HURT_COUNT } HurtLevel;
+typedef enum { HURT_UNHURT,
+               HURT_WOUNDED,
+               HURT_BADLY_WOUNDED,
+               HURT_NEAR_DEATH,
+               HURT_COUNT } HurtLevel;
 
-typedef enum { DECIDER_NONE, DECIDER_REFLEX, DECIDER_LAYA, DECIDER_COUNT } DeciderKind;
+typedef enum { DECIDER_NONE,
+               DECIDER_REFLEX,
+               DECIDER_LAYA,
+               DECIDER_COUNT } DeciderKind;
 
 typedef struct {
     Stance stance;

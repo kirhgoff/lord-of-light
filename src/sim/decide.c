@@ -48,7 +48,7 @@ int combatant_initiative(const Combatant *c, const GameData *data)
 
 Event decision_event(int combatant, Stance stance, HurtLevel hurt, int element, DeciderKind decider)
 {
-    return (Event){.tick = 0, .kind = EVENT_DECISION, .actor = combatant, .actor_part = -1, .target = -1, .target_part = -1, .element = element, .amount = stance, .detail = hurt, .decider = decider};
+    return (Event){.tick = 0, .kind = EVENT_DECISION, .actor = combatant, .actor_part = -1, .target = -1, .target_part = -1, .element = element, .amount = (int)stance, .detail = (int)hurt, .decider = decider};
 }
 
 Decision event_decision(const Event *event)
@@ -58,7 +58,9 @@ Decision event_decision(const Event *event)
 
 HurtLevel hurt_level_from_quarters(int quarters)
 {
-    return quarters >= 4 ? HURT_UNHURT : quarters == 3 ? HURT_WOUNDED : quarters == 2 ? HURT_BADLY_WOUNDED : HURT_NEAR_DEATH;
+    return quarters >= 4 ? HURT_UNHURT : quarters == 3 ? HURT_WOUNDED
+                                     : quarters == 2   ? HURT_BADLY_WOUNDED
+                                                       : HURT_NEAR_DEATH;
 }
 
 bool perceived_is_enemy(const Combatant *me, const Perceived *seen)
@@ -108,7 +110,7 @@ static int most_vulnerable_element(const Combatant *me, const Combatant *focus, 
             if (!is_attack(&part->abilities[a])) continue;
             Element element = part->abilities[a].element;
             int resistance = combatant_resistance_percent(focus, data, element, element == ELEMENT_RADIANCE);
-            if (best < 0 || resistance < best_resistance) best = element, best_resistance = resistance;
+            if (best < 0 || resistance < best_resistance) best = (int)element, best_resistance = resistance;
         }
     }
     return best;
@@ -289,7 +291,8 @@ static Movement fight_movement(const Situation *situation)
 
 static int clamp_to_arena(int millipx, int limit)
 {
-    return millipx < 0 ? 0 : millipx >= limit ? limit - 1 : millipx;
+    return millipx < 0 ? 0 : millipx >= limit ? limit - 1
+                                              : millipx;
 }
 
 static Movement flee_movement(const Situation *situation)
@@ -361,7 +364,7 @@ static void avoid_traps(const Situation *situation, Movement *movement)
     for (int i = 0; i < situation->perception.seen_count; i++) {
         const Perceived *seen = &situation->perception.seen[i];
         if (seen->kind != PERCEIVED_TRAP) continue;
-        int64_t avoid = (int64_t)situation->data->traps[seen->def].radius * MILLIPX_PER_PX + 2 * COMBATANT_RADIUS_MILLIPX;
+        int64_t avoid = (int64_t)situation->data->traps[seen->def].radius * MILLIPX_PER_PX + 2 * (int64_t)COMBATANT_RADIUS_MILLIPX;
         if (waypoint_around(situation->me, movement->x_millipx, movement->y_millipx, seen->x_millipx, seen->y_millipx, avoid,
                             &movement->x_millipx, &movement->y_millipx))
             return;
@@ -378,6 +381,7 @@ static Order attack_order(const Situation *situation, const Part *part)
         if (combatant_in_reach(situation->me, focus, ability->range)) return (Order){ability->order, situation->focus->index, 0, 0};
         if (!first) first = ability;
     }
+    if (!first) return (Order){ORDER_IDLE, -1, 0, 0};
     return (Order){first->order, situation->focus->index, 0, 0};
 }
 
@@ -388,9 +392,18 @@ static bool part_has(const Part *part, bool (*matches)(const Ability *))
     return false;
 }
 
-static bool is_support(const Ability *ability) { return ability->order == ORDER_SUPPORT; }
-static bool is_block(const Ability *ability) { return ability->order == ORDER_BLOCK; }
-static bool is_spawn(const Ability *ability) { return ability->order == ORDER_SPAWN; }
+static bool is_support(const Ability *ability)
+{
+    return ability->order == ORDER_SUPPORT;
+}
+static bool is_block(const Ability *ability)
+{
+    return ability->order == ORDER_BLOCK;
+}
+static bool is_spawn(const Ability *ability)
+{
+    return ability->order == ORDER_SPAWN;
+}
 
 static Order order_for_part(const Situation *situation, const Part *part, const Movement *movement)
 {

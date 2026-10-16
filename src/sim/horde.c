@@ -12,7 +12,7 @@
 static int random_part(uint32_t *rng, const GameData *data, const BodySlot *slot)
 {
     if (slot->part >= 0) return slot->part;
-    int eligible[MAX_PARTS], count = 0;
+    int eligible[MAX_PARTS] = {0}, count = 0;
     for (int p = 0; p < data->part_count; p++)
         if (fills_horde_slot(data, p, slot)) eligible[count++] = p;
     return eligible[rng_below(rng, count)];

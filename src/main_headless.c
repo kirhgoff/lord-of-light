@@ -65,7 +65,8 @@ static void print_decision_stats(const Battle *battle, int truncated)
 
 static const char *winner_name(int winner)
 {
-    return winner == SIDE_PANTHEON ? "Pantheon" : winner == SIDE_HORDE ? "Horde" : "none";
+    return winner == SIDE_PANTHEON ? "Pantheon" : winner == SIDE_HORDE ? "Horde"
+                                                                       : "none";
 }
 
 int main(int argc, char **argv)
@@ -78,8 +79,7 @@ int main(int argc, char **argv)
         bool has_value = i + 1 < argc;
         if (strcmp(argv[i], "--seed") == 0 && has_value) {
             if (!parse_seed(argv[++i], &seed)) return fprintf(stderr, "seed must be 0..%u\n", UINT32_MAX), 2;
-        }
-        else if (strcmp(argv[i], "--ticks") == 0 && has_value) ticks = strtol(argv[++i], NULL, 10);
+        } else if (strcmp(argv[i], "--ticks") == 0 && has_value) ticks = strtol(argv[++i], NULL, 10);
         else if (strcmp(argv[i], "--load") == 0 && has_value) load_path = argv[++i];
         else if (strcmp(argv[i], "--dump") == 0 && has_value) dump_path = argv[++i];
         else if (!decider_setup_parse(&setup, argc, argv, &i)) return usage();

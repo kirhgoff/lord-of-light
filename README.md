@@ -4,9 +4,11 @@ An arena where a Pantheon of self-styled gods fights a Power-matched Horde of mo
 
 ## Requirements
 
-- macOS with `clang` and `make` (the Makefile links Cocoa/OpenGL frameworks)
+- macOS with `clang` and `make` (the Makefile links Cocoa/OpenGL frameworks), or Linux (below)
+- Linux: `clang`, `make`, and `sudo apt-get install libcurl4-openssl-dev libx11-dev libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev`
 - libcurl (ships with macOS)
-- Optional: [`uv`](https://docs.astral.sh/uv/) to run a local Laya server
+- Optional: [`uv`](https://docs.astral.sh/uv/) to run a local Laya server; required for `make format`, `format-check` and `tidy`, which run pinned clang-format and clang-tidy through it
+- `make cppcheck` needs `cppcheck` (`brew install cppcheck` or `apt-get install cppcheck`)
 
 raylib 5.5, Clay v0.14 and cJSON are vendored in `vendor/`, so nothing else needs installing.
 
@@ -66,6 +68,14 @@ make test          # unit tests
 make asan          # tests + headless runs under ASan/UBSan
 make screenshots   # PNGs of a few seeds in build/shots/
 make balance       # Power balance report
+```
+
+### Checks
+
+```sh
+make test asan format-check tidy cppcheck   # what CI runs on every PR and push to main
+make format                                  # apply clang-format to src/ and tests/
+git config core.hooksPath .githooks          # pre-commit: format-check on staged .c/.h files
 ```
 
 - Game data (Parts, Body Plans, Pantheons, Elements, Power weights) is JSON in `data/`

@@ -14,16 +14,13 @@
 #define PATH_LEN 160
 
 static const char *const ELEMENT_IDS[ELEMENT_COUNT] = {
-    "kinetic", "fire", "frost", "lightning", "radiance", "venom", "mind", "void"
-};
+    "kinetic", "fire", "frost", "lightning", "radiance", "venom", "mind", "void"};
 
 static const char *const ORDER_KIND_IDS[ORDER_KIND_COUNT] = {
-    "strike", "cast", "block", "move_to", "support", "spawn", "idle"
-};
+    "strike", "cast", "block", "move_to", "support", "spawn", "idle"};
 
 static const char *const SLOT_ROLE_IDS[SLOT_ROLE_COUNT] = {
-    "any", "heart", "mover", "attack", "sense"
-};
+    "any", "heart", "mover", "attack", "sense"};
 
 typedef struct {
     const char *file;
@@ -107,12 +104,16 @@ static bool fail(Context *ctx, const char *path, const char *format, ...)
 
 static void join_key(char *out, const char *parent, const char *key)
 {
-    snprintf(out, PATH_LEN, parent[0] ? "%s.%s" : "%s%s", parent, key);
+    char parent_copy[PATH_LEN];
+    snprintf(parent_copy, PATH_LEN, "%s", parent);
+    snprintf(out, PATH_LEN, parent_copy[0] ? "%s.%s" : "%s%s", parent_copy, key);
 }
 
 static void join_index(char *out, const char *parent, int index)
 {
-    snprintf(out, PATH_LEN, "%s[%d]", parent, index);
+    char parent_copy[PATH_LEN];
+    snprintf(parent_copy, PATH_LEN, "%s", parent);
+    snprintf(out, PATH_LEN, "%s[%d]", parent_copy, index);
 }
 
 static const cJSON *get_item(Context *ctx, const cJSON *obj, const char *parent, const char *key,
@@ -130,12 +131,10 @@ static bool get_string(Context *ctx, const cJSON *obj, const char *parent, const
                        char *out, size_t size, bool required)
 {
     bool ok;
+    out[0] = '\0';
     const cJSON *item = get_item(ctx, obj, parent, key, required, &ok);
     if (!ok) return false;
-    if (!item) {
-        out[0] = '\0';
-        return true;
-    }
+    if (!item) return true;
     char path[PATH_LEN];
     join_key(path, parent, key);
     if (!cJSON_IsString(item)) return fail(ctx, path, "expected a string");
@@ -261,7 +260,7 @@ static char *read_file(const char *path)
     fseek(file, 0, SEEK_END);
     long size = ftell(file);
     fseek(file, 0, SEEK_SET);
-    char *text = malloc((size_t)size + 1);
+    char *text = size < 0 ? NULL : malloc((size_t)size + 1);
     if (text && fread(text, 1, (size_t)size, file) == (size_t)size) {
         text[size] = '\0';
     } else {
@@ -292,7 +291,7 @@ typedef bool (*RootLoader)(Context *ctx, const cJSON *root, GameData *data);
 
 static bool load_file(GameData *data, const char *path, char *err, size_t err_size, RootLoader loader)
 {
-    Context ctx = { path, err, err_size };
+    Context ctx = {path, err, err_size};
     cJSON *root = parse_file(&ctx, path);
     if (!root) return false;
     static GameData scratch;
@@ -336,54 +335,32 @@ static bool check_range(Context *ctx, const char *path, const char *key, int val
 
 static bool read_element_numbers(Context *ctx, const cJSON *obj, const char *path, ElementDef *def)
 {
-    return get_int(ctx, obj, path, "dot_damage", &def->dot_damage, false)
-        && get_int(ctx, obj, path, "dot_ticks", &def->dot_ticks, false)
-        && get_int(ctx, obj, path, "slow_percent", &def->slow_percent, false)
-        && get_int(ctx, obj, path, "slow_ticks", &def->slow_ticks, false)
-        && get_int(ctx, obj, path, "chain_targets", &def->chain_targets, false)
-        && get_int(ctx, obj, path, "chain_range", &def->chain_range, false)
-        && get_int(ctx, obj, path, "pierce_targets", &def->pierce_targets, false)
-        && get_bool(ctx, obj, path, "internal_first", &def->internal_first)
-        && get_int(ctx, obj, path, "charm_ticks", &def->charm_ticks, false)
-        && get_int(ctx, obj, path, "buff_strip_count", &def->buff_strip_count, false);
+    return get_int(ctx, obj, path, "dot_damage", &def->dot_damage, false) && get_int(ctx, obj, path, "dot_ticks", &def->dot_ticks, false) && get_int(ctx, obj, path, "slow_percent", &def->slow_percent, false) && get_int(ctx, obj, path, "slow_ticks", &def->slow_ticks, false) && get_int(ctx, obj, path, "chain_targets", &def->chain_targets, false) && get_int(ctx, obj, path, "chain_range", &def->chain_range, false) && get_int(ctx, obj, path, "pierce_targets", &def->pierce_targets, false) && get_bool(ctx, obj, path, "internal_first", &def->internal_first) && get_int(ctx, obj, path, "charm_ticks", &def->charm_ticks, false) && get_int(ctx, obj, path, "buff_strip_count", &def->buff_strip_count, false);
 }
 
 static bool check_element_ranges(Context *ctx, const char *path, const ElementDef *def)
 {
-    return check_range(ctx, path, "dot_damage", def->dot_damage, 0, ABILITY_AMOUNT_LIMIT)
-        && check_range(ctx, path, "dot_ticks", def->dot_ticks, 0, ABILITY_AMOUNT_LIMIT)
-        && check_range(ctx, path, "slow_percent", def->slow_percent, 0, 100)
-        && check_range(ctx, path, "slow_ticks", def->slow_ticks, 0, ABILITY_AMOUNT_LIMIT)
-        && check_range(ctx, path, "chain_targets", def->chain_targets, 0, ABILITY_AMOUNT_LIMIT)
-        && check_range(ctx, path, "chain_range", def->chain_range, 0, ABILITY_AMOUNT_LIMIT)
-        && check_range(ctx, path, "pierce_targets", def->pierce_targets, 0, ABILITY_AMOUNT_LIMIT)
-        && check_range(ctx, path, "charm_ticks", def->charm_ticks, 0, ABILITY_AMOUNT_LIMIT)
-        && check_range(ctx, path, "buff_strip_count", def->buff_strip_count, 0, ABILITY_AMOUNT_LIMIT);
+    return check_range(ctx, path, "dot_damage", def->dot_damage, 0, ABILITY_AMOUNT_LIMIT) && check_range(ctx, path, "dot_ticks", def->dot_ticks, 0, ABILITY_AMOUNT_LIMIT) && check_range(ctx, path, "slow_percent", def->slow_percent, 0, 100) && check_range(ctx, path, "slow_ticks", def->slow_ticks, 0, ABILITY_AMOUNT_LIMIT) && check_range(ctx, path, "chain_targets", def->chain_targets, 0, ABILITY_AMOUNT_LIMIT) && check_range(ctx, path, "chain_range", def->chain_range, 0, ABILITY_AMOUNT_LIMIT) && check_range(ctx, path, "pierce_targets", def->pierce_targets, 0, ABILITY_AMOUNT_LIMIT) && check_range(ctx, path, "charm_ticks", def->charm_ticks, 0, ABILITY_AMOUNT_LIMIT) && check_range(ctx, path, "buff_strip_count", def->buff_strip_count, 0, ABILITY_AMOUNT_LIMIT);
 }
 
 static bool read_element_def(Context *ctx, const cJSON *obj, const char *path, ElementDef *def)
 {
-    return read_element_numbers(ctx, obj, path, def)
-        && check_element_ranges(ctx, path, def)
-        && get_sound(ctx, obj, path, "hit_sound", def->hit_sound, true)
-        && get_sound(ctx, obj, path, "effect_sound", def->effect_sound, true);
+    return read_element_numbers(ctx, obj, path, def) && check_element_ranges(ctx, path, def) && get_sound(ctx, obj, path, "hit_sound", def->hit_sound, true) && get_sound(ctx, obj, path, "effect_sound", def->effect_sound, true);
 }
 
 static bool read_cues(Context *ctx, const cJSON *root, SoundCues *cues)
 {
     const cJSON *obj;
     if (!get_object(ctx, root, "", "cues", &obj, true)) return false;
-    return get_sound(ctx, obj, "cues", "death", cues->death, true)
-        && get_sound(ctx, obj, "cues", "part_destroyed", cues->part_destroyed, true)
-        && get_sound(ctx, obj, "cues", "spawn_appear", cues->spawn_appear, true);
+    return get_sound(ctx, obj, "cues", "death", cues->death, true) && get_sound(ctx, obj, "cues", "part_destroyed", cues->part_destroyed, true) && get_sound(ctx, obj, "cues", "spawn_appear", cues->spawn_appear, true);
 }
 
 static bool elements_from_root(Context *ctx, const cJSON *root, GameData *data)
 {
     const cJSON *list;
     if (!get_array(ctx, root, "", "elements", &list, true)) return false;
-    ElementDef loaded[ELEMENT_COUNT] = { 0 };
-    bool seen[ELEMENT_COUNT] = { false };
+    ElementDef loaded[ELEMENT_COUNT] = {0};
+    bool seen[ELEMENT_COUNT] = {false};
     int index = 0;
     const cJSON *item;
     cJSON_ArrayForEach(item, list) {
@@ -408,9 +385,7 @@ static bool elements_from_root(Context *ctx, const cJSON *root, GameData *data)
 
 static bool read_slot_position(Context *ctx, const cJSON *obj, const char *path, BodySlot *slot)
 {
-    return get_string(ctx, obj, path, "id", slot->id, sizeof slot->id, true)
-        && get_int(ctx, obj, path, "x", &slot->anchor_x, false)
-        && get_int(ctx, obj, path, "y", &slot->anchor_y, false);
+    return get_string(ctx, obj, path, "id", slot->id, sizeof slot->id, true) && get_int(ctx, obj, path, "x", &slot->anchor_x, false) && get_int(ctx, obj, path, "y", &slot->anchor_y, false);
 }
 
 static bool read_slot_role(Context *ctx, const cJSON *obj, const char *path, BodySlot *slot)
@@ -442,8 +417,7 @@ static bool read_plan_slot(Context *ctx, const cJSON *obj, const char *path, con
     if (strcmp(kind, "internal") == 0) slot->internal = true;
     else if (strcmp(kind, "external") != 0) return fail(ctx, kind_path, "expected \"external\" or \"internal\"");
     slot->part = -1;
-    return read_slot_role(ctx, obj, path, slot)
-        && get_string(ctx, obj, path, "part", slot->fixed_part_id, sizeof slot->fixed_part_id, false);
+    return read_slot_role(ctx, obj, path, slot) && get_string(ctx, obj, path, "part", slot->fixed_part_id, sizeof slot->fixed_part_id, false);
 }
 
 static bool read_deity_slot(Context *ctx, const cJSON *obj, const char *path, const GameData *data,
@@ -543,7 +517,7 @@ static bool read_core(Context *ctx, const cJSON *obj, const char *path, Body *bo
 static bool check_reachable_from_core(Context *ctx, const char *path, const char *slots_key,
                                       const Body *body)
 {
-    bool reached[MAX_SLOTS] = { false };
+    bool reached[MAX_SLOTS] = {false};
     reached[body->core] = true;
     for (bool grew = true; grew;) {
         grew = false;
@@ -569,10 +543,7 @@ static bool read_body(Context *ctx, const cJSON *obj, const char *path, const ch
                       const GameData *data, SlotReader read_slot, Body *body)
 {
     memset(body, 0, sizeof *body);
-    return read_slots(ctx, obj, path, slots_key, data, read_slot, body)
-        && read_edges(ctx, obj, path, body)
-        && read_core(ctx, obj, path, body)
-        && check_reachable_from_core(ctx, path, slots_key, body);
+    return read_slots(ctx, obj, path, slots_key, data, read_slot, body) && read_edges(ctx, obj, path, body) && read_core(ctx, obj, path, body) && check_reachable_from_core(ctx, path, slots_key, body);
 }
 
 bool is_spawn_plan(const GameData *data, int plan)
@@ -594,8 +565,7 @@ static bool is_core_part(const GameData *data, int part)
 bool fills_horde_slot(const GameData *data, int part, const BodySlot *slot)
 {
     const Part *candidate = &data->parts[part];
-    return !candidate->deity_only && !candidate->minion_only && !is_core_part(data, part)
-        && candidate->internal == slot->internal && part_fits_role(candidate, slot->role);
+    return !candidate->deity_only && !candidate->minion_only && !is_core_part(data, part) && candidate->internal == slot->internal && part_fits_role(candidate, slot->role);
 }
 
 static bool resolve_fixed_part(Context *ctx, const GameData *data, bool spawn_plan, const char *path, BodySlot *slot)
@@ -660,9 +630,9 @@ static bool resolve_body_plan(Context *ctx, GameData *data, int index)
     Body *body = &data->body_plans[index].body;
     bool has_heart = false, can_move = false;
     for (int s = 0; s < body->slot_count; s++) {
-        char path[PATH_LEN], list_path[PATH_LEN];
-        join_index(list_path, "bodyplans", index);
-        join_key(list_path, list_path, "slots");
+        char path[PATH_LEN], plan_path[PATH_LEN], list_path[PATH_LEN];
+        join_index(plan_path, "bodyplans", index);
+        join_key(list_path, plan_path, "slots");
         join_index(path, list_path, s);
         if (body->slots[s].fixed_part_id[0] && !resolve_fixed_part(ctx, data, is_spawn_plan(data, index), path, &body->slots[s])) return false;
         has_heart |= body->slots[s].role == SLOT_ROLE_HEART;
@@ -692,7 +662,7 @@ static bool body_plans_from_root(Context *ctx, const cJSON *root, GameData *data
     const cJSON *list;
     if (!get_array(ctx, root, "", "bodyplans", &list, true)) return false;
     int count = 0;
-    BodyPlan plans[MAX_BODY_PLANS];
+    BodyPlan plans[MAX_BODY_PLANS] = {0};
     const cJSON *item;
     cJSON_ArrayForEach(item, list) {
         char path[PATH_LEN];
@@ -721,16 +691,7 @@ static bool read_ability(Context *ctx, const cJSON *obj, const char *path, Abili
     if (!get_string(ctx, obj, path, "order", order, sizeof order, true)) return false;
     char order_path[PATH_LEN];
     join_key(order_path, path, "order");
-    return lookup_order_kind(ctx, order_path, order, &ability->order)
-        && get_element(ctx, obj, path, "element", &ability->element, true)
-        && get_count(ctx, obj, path, "damage", &ability->damage, false)
-        && get_count(ctx, obj, path, "heal", &ability->heal, false)
-        && get_count(ctx, obj, path, "range", &ability->range, false)
-        && get_count(ctx, obj, path, "cooldown", &ability->cooldown_ticks, false)
-        && get_count(ctx, obj, path, "area", &ability->area, false)
-        && get_sound(ctx, obj, path, "sound", ability->sound, true)
-        && check_range(ctx, path, "damage", ability->damage, 0, ABILITY_AMOUNT_LIMIT)
-        && check_range(ctx, path, "heal", ability->heal, 0, ABILITY_AMOUNT_LIMIT);
+    return lookup_order_kind(ctx, order_path, order, &ability->order) && get_element(ctx, obj, path, "element", &ability->element, true) && get_count(ctx, obj, path, "damage", &ability->damage, false) && get_count(ctx, obj, path, "heal", &ability->heal, false) && get_count(ctx, obj, path, "range", &ability->range, false) && get_count(ctx, obj, path, "cooldown", &ability->cooldown_ticks, false) && get_count(ctx, obj, path, "area", &ability->area, false) && get_sound(ctx, obj, path, "sound", ability->sound, true) && check_range(ctx, path, "damage", ability->damage, 0, ABILITY_AMOUNT_LIMIT) && check_range(ctx, path, "heal", ability->heal, 0, ABILITY_AMOUNT_LIMIT);
 }
 
 static bool read_abilities(Context *ctx, const cJSON *obj, const char *path, Part *part)
@@ -777,9 +738,7 @@ static bool read_vision(Context *ctx, const cJSON *obj, const char *path, Part *
     if (!vision) return true;
     char vision_path[PATH_LEN];
     join_key(vision_path, path, "vision");
-    if (!(get_count(ctx, vision, vision_path, "close", &part->vision_close, false)
-          && get_count(ctx, vision, vision_path, "medium", &part->vision_medium, false)
-          && get_count(ctx, vision, vision_path, "far", &part->vision_far, false)))
+    if (!(get_count(ctx, vision, vision_path, "close", &part->vision_close, false) && get_count(ctx, vision, vision_path, "medium", &part->vision_medium, false) && get_count(ctx, vision, vision_path, "far", &part->vision_far, false)))
         return false;
     if (part->vision_close > part->vision_medium || part->vision_medium > part->vision_far)
         return fail(ctx, vision_path, "bands must satisfy close <= medium <= far");
@@ -821,26 +780,12 @@ static bool read_part_stats(Context *ctx, const cJSON *obj, const char *path, Pa
     char integrity_path[PATH_LEN];
     join_key(integrity_path, path, "integrity");
     if (part->integrity <= 0) return fail(ctx, integrity_path, "must be positive");
-    return get_count(ctx, obj, path, "vitality", &part->vitality, false)
-        && get_count(ctx, obj, path, "initiative", &part->initiative, false)
-        && check_range(ctx, path, "initiative", part->initiative, 0, INITIATIVE_LIMIT)
-        && get_count(ctx, obj, path, "move_speed", &part->move_speed_px_per_second, false);
+    return get_count(ctx, obj, path, "vitality", &part->vitality, false) && get_count(ctx, obj, path, "initiative", &part->initiative, false) && check_range(ctx, path, "initiative", part->initiative, 0, INITIATIVE_LIMIT) && get_count(ctx, obj, path, "move_speed", &part->move_speed_px_per_second, false);
 }
 
 static bool read_part(Context *ctx, const cJSON *obj, const char *path, const GameData *data, Part *part)
 {
-    return get_string(ctx, obj, path, "id", part->id, sizeof part->id, true)
-        && get_string(ctx, obj, path, "name", part->name, sizeof part->name, true)
-        && read_part_kind(ctx, obj, path, part)
-        && get_bool(ctx, obj, path, "deity_only", &part->deity_only)
-        && get_bool(ctx, obj, path, "minion_only", &part->minion_only)
-        && read_part_stats(ctx, obj, path, part)
-        && get_string(ctx, obj, path, "sprite", part->sprite, sizeof part->sprite, true)
-        && get_sound(ctx, obj, path, "step_sound", part->step_sound, part->move_speed_px_per_second > 0)
-        && read_abilities(ctx, obj, path, part)
-        && read_resistances(ctx, obj, path, part)
-        && read_vision(ctx, obj, path, part)
-        && read_spawning(ctx, obj, path, data, part);
+    return get_string(ctx, obj, path, "id", part->id, sizeof part->id, true) && get_string(ctx, obj, path, "name", part->name, sizeof part->name, true) && read_part_kind(ctx, obj, path, part) && get_bool(ctx, obj, path, "deity_only", &part->deity_only) && get_bool(ctx, obj, path, "minion_only", &part->minion_only) && read_part_stats(ctx, obj, path, part) && get_string(ctx, obj, path, "sprite", part->sprite, sizeof part->sprite, true) && get_sound(ctx, obj, path, "step_sound", part->step_sound, part->move_speed_px_per_second > 0) && read_abilities(ctx, obj, path, part) && read_resistances(ctx, obj, path, part) && read_vision(ctx, obj, path, part) && read_spawning(ctx, obj, path, data, part);
 }
 
 static bool parts_from_root(Context *ctx, const cJSON *root, GameData *data)
@@ -874,36 +819,12 @@ static bool parts_from_root(Context *ctx, const cJSON *root, GameData *data)
 
 static bool check_arena_object_ranges(Context *ctx, const char *path, const ArenaObjectDef *def)
 {
-    return check_range(ctx, path, "damage", def->damage, 0, ABILITY_AMOUNT_LIMIT)
-        && check_range(ctx, path, "heal", def->heal, 0, ABILITY_AMOUNT_LIMIT)
-        && check_range(ctx, path, "mend", def->mend, 0, ABILITY_AMOUNT_LIMIT)
-        && check_range(ctx, path, "radius", def->radius, 0, ABILITY_AMOUNT_LIMIT)
-        && check_range(ctx, path, "effect_ticks", def->effect_ticks, 0, ABILITY_AMOUNT_LIMIT)
-        && check_range(ctx, path, "respawn_ticks", def->respawn_ticks, 0, ABILITY_AMOUNT_LIMIT)
-        && check_range(ctx, path, "damage_bonus_percent", def->damage_bonus_percent, 0, 1000)
-        && check_range(ctx, path, "speed_bonus_percent", def->speed_bonus_percent, 0, 1000)
-        && check_range(ctx, path, "vision_bonus_percent", def->vision_bonus_percent, 0, 1000)
-        && check_range(ctx, path, "ward_percent", def->ward_percent, 0, 1000);
+    return check_range(ctx, path, "damage", def->damage, 0, ABILITY_AMOUNT_LIMIT) && check_range(ctx, path, "heal", def->heal, 0, ABILITY_AMOUNT_LIMIT) && check_range(ctx, path, "mend", def->mend, 0, ABILITY_AMOUNT_LIMIT) && check_range(ctx, path, "radius", def->radius, 0, ABILITY_AMOUNT_LIMIT) && check_range(ctx, path, "effect_ticks", def->effect_ticks, 0, ABILITY_AMOUNT_LIMIT) && check_range(ctx, path, "respawn_ticks", def->respawn_ticks, 0, ABILITY_AMOUNT_LIMIT) && check_range(ctx, path, "damage_bonus_percent", def->damage_bonus_percent, 0, 1000) && check_range(ctx, path, "speed_bonus_percent", def->speed_bonus_percent, 0, 1000) && check_range(ctx, path, "vision_bonus_percent", def->vision_bonus_percent, 0, 1000) && check_range(ctx, path, "ward_percent", def->ward_percent, 0, 1000);
 }
 
 static bool read_arena_object(Context *ctx, const cJSON *obj, const char *path, ArenaObjectDef *def)
 {
-    return get_string(ctx, obj, path, "id", def->id, sizeof def->id, true)
-        && get_name(ctx, obj, path, "name", def->name, sizeof def->name)
-        && get_string(ctx, obj, path, "sprite", def->sprite, sizeof def->sprite, true)
-        && get_sound(ctx, obj, path, "sound", def->sound, true)
-        && get_element(ctx, obj, path, "element", &def->element, false)
-        && get_count(ctx, obj, path, "damage", &def->damage, false)
-        && get_count(ctx, obj, path, "heal", &def->heal, false)
-        && get_count(ctx, obj, path, "radius", &def->radius, false)
-        && get_count(ctx, obj, path, "mend", &def->mend, false)
-        && get_count(ctx, obj, path, "effect_ticks", &def->effect_ticks, false)
-        && get_count(ctx, obj, path, "damage_bonus_percent", &def->damage_bonus_percent, false)
-        && get_count(ctx, obj, path, "speed_bonus_percent", &def->speed_bonus_percent, false)
-        && get_count(ctx, obj, path, "vision_bonus_percent", &def->vision_bonus_percent, false)
-        && get_count(ctx, obj, path, "ward_percent", &def->ward_percent, false)
-        && get_count(ctx, obj, path, "respawn_ticks", &def->respawn_ticks, true)
-        && check_arena_object_ranges(ctx, path, def);
+    return get_string(ctx, obj, path, "id", def->id, sizeof def->id, true) && get_name(ctx, obj, path, "name", def->name, sizeof def->name) && get_string(ctx, obj, path, "sprite", def->sprite, sizeof def->sprite, true) && get_sound(ctx, obj, path, "sound", def->sound, true) && get_element(ctx, obj, path, "element", &def->element, false) && get_count(ctx, obj, path, "damage", &def->damage, false) && get_count(ctx, obj, path, "heal", &def->heal, false) && get_count(ctx, obj, path, "radius", &def->radius, false) && get_count(ctx, obj, path, "mend", &def->mend, false) && get_count(ctx, obj, path, "effect_ticks", &def->effect_ticks, false) && get_count(ctx, obj, path, "damage_bonus_percent", &def->damage_bonus_percent, false) && get_count(ctx, obj, path, "speed_bonus_percent", &def->speed_bonus_percent, false) && get_count(ctx, obj, path, "vision_bonus_percent", &def->vision_bonus_percent, false) && get_count(ctx, obj, path, "ward_percent", &def->ward_percent, false) && get_count(ctx, obj, path, "respawn_ticks", &def->respawn_ticks, true) && check_arena_object_ranges(ctx, path, def);
 }
 
 static bool read_arena_object_list(Context *ctx, const cJSON *root, const char *key,
@@ -934,22 +855,13 @@ static bool read_arena_object_list(Context *ctx, const cJSON *root, const char *
 
 static bool arena_objects_from_root(Context *ctx, const cJSON *root, GameData *data)
 {
-    return read_arena_object_list(ctx, root, "pickups", data->pickups, &data->pickup_count)
-        && read_arena_object_list(ctx, root, "traps", data->traps, &data->trap_count);
+    return read_arena_object_list(ctx, root, "pickups", data->pickups, &data->pickup_count) && read_arena_object_list(ctx, root, "traps", data->traps, &data->trap_count);
 }
 
 static bool power_from_root(Context *ctx, const cJSON *root, GameData *data)
 {
     PowerWeights *w = &data->power;
-    if (!(get_int(ctx, root, "", "integrity", &w->integrity, true)
-        && get_int(ctx, root, "", "vitality", &w->vitality, true)
-        && get_int(ctx, root, "", "damage", &w->damage, true)
-        && get_int(ctx, root, "", "range", &w->range, true)
-        && get_int(ctx, root, "", "resistance", &w->resistance, true)
-        && get_int(ctx, root, "", "initiative", &w->initiative, true)
-        && get_int(ctx, root, "", "vision", &w->vision, true)
-        && get_int(ctx, root, "", "move_speed", &w->move_speed, true)
-        && get_int(ctx, root, "", "spawning", &w->spawning, true))) return false;
+    if (!(get_int(ctx, root, "", "integrity", &w->integrity, true) && get_int(ctx, root, "", "vitality", &w->vitality, true) && get_int(ctx, root, "", "damage", &w->damage, true) && get_int(ctx, root, "", "range", &w->range, true) && get_int(ctx, root, "", "resistance", &w->resistance, true) && get_int(ctx, root, "", "initiative", &w->initiative, true) && get_int(ctx, root, "", "vision", &w->vision, true) && get_int(ctx, root, "", "move_speed", &w->move_speed, true) && get_int(ctx, root, "", "spawning", &w->spawning, true))) return false;
     int *weights[] = {&w->integrity, &w->vitality, &w->damage, &w->range, &w->resistance, &w->initiative, &w->vision, &w->move_speed, &w->spawning};
     const char *names[] = {"integrity", "vitality", "damage", "range", "resistance", "initiative", "vision", "move_speed", "spawning"};
     for (size_t i = 0; i < sizeof weights / sizeof weights[0]; i++)
@@ -977,11 +889,7 @@ static bool read_laya_urls(Context *ctx, const cJSON *root, LayaSettings *laya)
 static bool laya_from_root(Context *ctx, const cJSON *root, GameData *data)
 {
     LayaSettings *laya = &data->laya;
-    return read_laya_urls(ctx, root, laya)
-        && get_int(ctx, root, "", "timeout_ms", &laya->timeout_ms, true)
-        && check_range(ctx, "", "timeout_ms", laya->timeout_ms, 1, 60000)
-        && get_int(ctx, root, "", "min_stance_confidence_permille", &laya->min_stance_confidence_permille, true)
-        && check_range(ctx, "", "min_stance_confidence_permille", laya->min_stance_confidence_permille, 0, 1000);
+    return read_laya_urls(ctx, root, laya) && get_int(ctx, root, "", "timeout_ms", &laya->timeout_ms, true) && check_range(ctx, "", "timeout_ms", laya->timeout_ms, 1, 60000) && get_int(ctx, root, "", "min_stance_confidence_permille", &laya->min_stance_confidence_permille, true) && check_range(ctx, "", "min_stance_confidence_permille", laya->min_stance_confidence_permille, 0, 1000);
 }
 
 static bool read_deity(Context *ctx, const cJSON *obj, const char *path, const GameData *data,
@@ -990,10 +898,7 @@ static bool read_deity(Context *ctx, const cJSON *obj, const char *path, const G
     const cJSON *body;
     char body_path[PATH_LEN];
     join_key(body_path, path, "body");
-    return get_name(ctx, obj, path, "name", deity->name, sizeof deity->name)
-        && get_string(ctx, obj, path, "epithet", deity->epithet, sizeof deity->epithet, false)
-        && get_object(ctx, obj, path, "body", &body, true)
-        && read_body(ctx, body, body_path, "parts", data, read_deity_slot, &deity->body);
+    return get_name(ctx, obj, path, "name", deity->name, sizeof deity->name) && get_string(ctx, obj, path, "epithet", deity->epithet, sizeof deity->epithet, false) && get_object(ctx, obj, path, "body", &body, true) && read_body(ctx, body, body_path, "parts", data, read_deity_slot, &deity->body);
 }
 
 static bool pantheon_from_root(Context *ctx, const cJSON *root, GameData *data)
@@ -1112,13 +1017,7 @@ bool load_game_data(GameData *data, const char *dir, char *err, size_t err_size)
     memset(&fresh, 0, sizeof fresh);
 #define LOAD(loader, file) \
     (snprintf(path, sizeof path, "%s/" file, dir), loader(&fresh, path, err, err_size))
-    bool ok = LOAD(load_elements, "elements.json")
-        && LOAD(load_body_plans, "bodyplans.json")
-        && LOAD(load_parts, "parts.json")
-        && LOAD(load_arena_objects, "arena_objects.json")
-        && LOAD(load_power, "power.json")
-        && LOAD(load_laya, "laya.json")
-        && (snprintf(path, sizeof path, "%s/pantheons", dir), append_pantheons(&fresh, path, err, err_size));
+    bool ok = LOAD(load_elements, "elements.json") && LOAD(load_body_plans, "bodyplans.json") && LOAD(load_parts, "parts.json") && LOAD(load_arena_objects, "arena_objects.json") && LOAD(load_power, "power.json") && LOAD(load_laya, "laya.json") && (snprintf(path, sizeof path, "%s/pantheons", dir), append_pantheons(&fresh, path, err, err_size));
 #undef LOAD
     if (ok) *data = fresh;
     return ok;

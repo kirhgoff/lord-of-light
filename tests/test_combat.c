@@ -576,7 +576,9 @@ static void test_effects_round_trip_and_resume(void)
     battle.combatants[DUMMY].damage_bonus_percent = 50;
     battle.combatants[DUMMY].damage_bonus_ticks = 50;
     const char *casters[] = {"maw", "fang", "stinger", "lobe", "tendril", "sac", "tentacle"};
-    for (int i = 0; i < 7; i++) order(STRIKER, casters[i], i == 5 ? ORDER_SPAWN : i == 0 || i == 3 ? ORDER_CAST : ORDER_STRIKE, DUMMY);
+    for (int i = 0; i < 7; i++) order(STRIKER, casters[i], i == 5 ? ORDER_SPAWN : i == 0 || i == 3 ? ORDER_CAST
+                                                                                                   : ORDER_STRIKE,
+                                      DUMMY);
     run(5);
     char *midway = battle_save_json(&battle, &data);
     CHECK(battle.combatants[DUMMY].dot_ticks > 0 && battle.combatants[DUMMY].slow_ticks > 0 && battle.combatants[DUMMY].charm_ticks > 0);

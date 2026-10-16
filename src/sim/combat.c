@@ -10,7 +10,8 @@ static int64_t squared(int64_t value)
 
 static int clamp_percent(int value)
 {
-    return value < -100 ? -100 : value > 100 ? 100 : value;
+    return value < -100 ? -100 : value > 100 ? 100
+                                             : value;
 }
 
 static int percent_of(int value, int percent)
@@ -40,7 +41,7 @@ int combatant_resistance_percent(const Combatant *c, const GameData *data, Eleme
 
 bool combatant_in_reach(const Combatant *from, const Combatant *to, int range_px)
 {
-    int64_t reach = (int64_t)range_px * MILLIPX_PER_PX + 2 * COMBATANT_RADIUS_MILLIPX;
+    int64_t reach = (int64_t)range_px * MILLIPX_PER_PX + 2 * (int64_t)COMBATANT_RADIUS_MILLIPX;
     return squared(from->x_millipx - to->x_millipx) + squared(from->y_millipx - to->y_millipx) <= squared(reach);
 }
 
@@ -86,7 +87,7 @@ static void kill(Battle *battle, int target, int actor, int actor_part, Element 
         for (int s = 0; s < c->body.slot_count; s++) remains->parts[s] = c->body.slots[s].part;
         remains_index = battle->remains_count++;
     }
-    battle_log_event(battle, (Event){.tick = 0, .kind = EVENT_DEATH, .actor = actor, .actor_part = actor_part, .target = target, .target_part = -1, .element = element, .amount = 0, .detail = remains_index, .decider = DECIDER_NONE});
+    battle_log_event(battle, (Event){.tick = 0, .kind = EVENT_DEATH, .actor = actor, .actor_part = actor_part, .target = target, .target_part = -1, .element = (int)element, .amount = 0, .detail = remains_index, .decider = DECIDER_NONE});
 }
 
 static void death_check(Battle *battle, const GameData *data, int target, int actor, int actor_part, Element element)
@@ -105,11 +106,14 @@ static void hit_once(Battle *battle, const GameData *data, int actor, int actor_
     damage = percent_of(damage, 100 - resistance);
     if (is_blocking(victim, data, working)) damage = percent_of(damage, BLOCK_PERCENT);
     int part = pick_target_part(battle, data, victim, working, element);
-    if (part < 0) return death_check(battle, data, target, actor, actor_part, element);
+    if (part < 0) {
+        death_check(battle, data, target, actor, actor_part, element);
+        return;
+    }
     victim->parts[part].integrity = victim->parts[part].integrity > damage ? victim->parts[part].integrity - damage : 0;
     victim->vitality -= percent_of(damage, VITALITY_SHARE_PERCENT);
     if (victim->vitality < 0) victim->vitality = 0;
-    battle_log_event(battle, (Event){.tick = 0, .kind = EVENT_HIT, .actor = actor, .actor_part = actor_part, .target = target, .target_part = part, .element = element, .amount = damage, .detail = victim->parts[part].integrity, .decider = DECIDER_NONE});
+    battle_log_event(battle, (Event){.tick = 0, .kind = EVENT_HIT, .actor = actor, .actor_part = actor_part, .target = target, .target_part = part, .element = (int)element, .amount = damage, .detail = victim->parts[part].integrity, .decider = DECIDER_NONE});
     death_check(battle, data, target, actor, actor_part, element);
 }
 
@@ -120,7 +124,7 @@ static int scaled(int ticks, int resistance)
 
 static void log_effect(Battle *battle, int actor, int actor_part, int target, Element element, int amount, EffectKind kind)
 {
-    battle_log_event(battle, (Event){.tick = 0, .kind = EVENT_EFFECT, .actor = actor, .actor_part = actor_part, .target = target, .target_part = -1, .element = element, .amount = amount, .detail = kind, .decider = DECIDER_NONE});
+    battle_log_event(battle, (Event){.tick = 0, .kind = EVENT_EFFECT, .actor = actor, .actor_part = actor_part, .target = target, .target_part = -1, .element = (int)element, .amount = amount, .detail = (int)kind, .decider = DECIDER_NONE});
 }
 
 static void apply_burning(Combatant *victim, const ElementDef *def, int actor, Element element, int resistance)
@@ -128,7 +132,7 @@ static void apply_burning(Combatant *victim, const ElementDef *def, int actor, E
     int ticks = scaled(def->dot_ticks, resistance);
     if (def->dot_ticks == 0 || ticks == 0) return;
     victim->dot_damage = def->dot_damage;
-    victim->dot_element = element;
+    victim->dot_element = (int)element;
     victim->dot_source = actor;
     victim->dot_ticks = ticks;
 }
@@ -254,7 +258,7 @@ static bool act_support(Battle *battle, int me, int s, const Ability *ability)
     if (gain > ability->heal) gain = ability->heal;
     if (gain <= 0) return false;
     ally->vitality += gain;
-    battle_log_event(battle, (Event){.tick = 0, .kind = EVENT_EFFECT, .actor = me, .actor_part = s, .target = target, .target_part = -1, .element = ability->element, .amount = gain, .detail = EFFECT_HEAL, .decider = DECIDER_NONE});
+    battle_log_event(battle, (Event){.tick = 0, .kind = EVENT_EFFECT, .actor = me, .actor_part = s, .target = target, .target_part = -1, .element = (int)ability->element, .amount = gain, .detail = EFFECT_HEAL, .decider = DECIDER_NONE});
     return true;
 }
 
@@ -319,17 +323,23 @@ static void pulse_dot(Battle *battle, const GameData *data, int target)
     death_check(battle, data, target, who->dot_source, -1, (Element)who->dot_element);
 }
 
+static bool countdown_expired(int *ticks)
+{
+    if (*ticks <= 0) return false;
+    return --*ticks == 0;
+}
+
 void battle_tick_effects(Battle *battle, const GameData *data)
 {
     for (int c = 0; c < battle->combatant_count; c++) {
         Combatant *who = &battle->combatants[c];
         if (!who->alive) continue;
-        if (who->damage_bonus_ticks > 0 && --who->damage_bonus_ticks == 0) who->damage_bonus_percent = 0;
-        if (who->haste_ticks > 0 && --who->haste_ticks == 0) who->haste_percent = 0;
-        if (who->vision_ticks > 0 && --who->vision_ticks == 0) who->vision_percent = 0;
-        if (who->ward_ticks > 0 && --who->ward_ticks == 0) who->ward_percent = 0;
-        if (who->slow_ticks > 0 && --who->slow_ticks == 0) who->slow_percent = 0;
-        if (who->charm_ticks > 0 && --who->charm_ticks == 0) who->charm_side = who->side;
+        if (countdown_expired(&who->damage_bonus_ticks)) who->damage_bonus_percent = 0;
+        if (countdown_expired(&who->haste_ticks)) who->haste_percent = 0;
+        if (countdown_expired(&who->vision_ticks)) who->vision_percent = 0;
+        if (countdown_expired(&who->ward_ticks)) who->ward_percent = 0;
+        if (countdown_expired(&who->slow_ticks)) who->slow_percent = 0;
+        if (countdown_expired(&who->charm_ticks)) who->charm_side = who->side;
         if (who->dot_ticks == 0) continue;
         if (who->dot_ticks % DOT_INTERVAL_TICKS == 0) pulse_dot(battle, data, c);
         who->dot_ticks--;

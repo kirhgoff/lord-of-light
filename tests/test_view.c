@@ -137,7 +137,7 @@ static void test_viewport_centre_maps_to_screen_centre(void)
     viewport_pan(&v, 40, -30);
     CHECK(viewport_screen_x(&v, v.centre_x) == WIDTH / 2);
     CHECK(viewport_screen_y(&v, v.centre_y) == HUD_HEIGHT + (HEIGHT - HUD_HEIGHT) / 2);
-    CHECK(viewport_screen_x(&v, v.centre_x + 10) == WIDTH / 2 + 10 * v.zoom);
+    CHECK(viewport_screen_x(&v, v.centre_x + 10) == (float)(WIDTH / 2 + 10 * v.zoom));
 }
 
 static void test_position_interpolates_between_ticks(void)
@@ -178,8 +178,7 @@ static void test_facing_follows_horizontal_movement(void)
 
 static Event hit_event(int tick, int actor, int actor_part, int target, int target_part)
 {
-    return (Event){.tick = tick, .kind = EVENT_HIT, .actor = actor, .actor_part = actor_part, .target = target,
-                   .target_part = target_part, .element = ELEMENT_FIRE};
+    return (Event){.tick = tick, .kind = EVENT_HIT, .actor = actor, .actor_part = actor_part, .target = target, .target_part = target_part, .element = ELEMENT_FIRE};
 }
 
 static int live_effects(const Scene *scene)
@@ -383,7 +382,8 @@ static void test_tile_hash_covers_every_variant(void)
             int h = tile_hash(c, r);
             CHECK(h >= 0 && h < 256);
             variants[h % 4]++;
-            if (h % 3 == 0) pillars++; else rocks++;
+            if (h % 3 == 0) pillars++;
+            else rocks++;
         }
     for (int v = 0; v < 4; v++) CHECK(variants[v] > 0);
     CHECK(pillars > 0 && rocks > 0);
