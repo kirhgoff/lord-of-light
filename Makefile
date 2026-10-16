@@ -135,7 +135,7 @@ tidy:
 	$(CLANG_TIDY) $(TIDY_VIEW_FILES) -- $(TIDY_VIEW_FLAGS)
 
 cppcheck:
-	cppcheck --enable=warning,performance,portability --error-exitcode=1 --quiet --std=c11 -Ivendor/cjson --suppress=missingInclude -i src/view/ui.c src
+	cppcheck --enable=warning,performance,portability --error-exitcode=1 --quiet --std=c11 -Ivendor/cjson --suppress=missingInclude '-DCLAY(...)=if (1)' src
 
 clean:
 	rm -rf $(BUILD)
