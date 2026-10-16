@@ -1,6 +1,7 @@
 #include "battle.h"
 
 #include "combat.h"
+#include "decide.h"
 #include "movement.h"
 
 #include <stdio.h>
@@ -176,7 +177,7 @@ int battle_winner(const Battle *battle)
 
 void battle_step(Battle *battle, const GameData *data, Decider *decider)
 {
-    (void)decider;
+    if (decider) battle_decide(battle, data, decider);
     battle_act(battle, data);
     battle_tick_effects(battle, data);
     battle_move_combatants(battle, data);

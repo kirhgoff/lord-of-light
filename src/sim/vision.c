@@ -69,7 +69,7 @@ static int band_at(const int range_millipx[3], int64_t distance_squared)
     return UNKNOWN;
 }
 
-static int health_quarters(const Combatant *combatant)
+int combatant_health_quarters(const Combatant *combatant)
 {
     return combatant->vitality_max ? (combatant->vitality * 4 + combatant->vitality_max - 1) / combatant->vitality_max : 0;
 }
@@ -95,7 +95,7 @@ void perceive(const Battle *battle, const GameData *data, int self, Perception *
         if (!line_of_sight(battle, me->x_millipx, me->y_millipx, other->x_millipx, other->y_millipx)) continue;
         bool detailed = band != BAND_FAR;
         add(out, (Perceived){PERCEIVED_COMBATANT, c, (Band)band, UNKNOWN, detailed ? other->charm_side : UNKNOWN,
-                             detailed ? health_quarters(other) : UNKNOWN, detailed ? other->name : NULL,
+                             detailed ? combatant_health_quarters(other) : UNKNOWN, detailed ? other->name : NULL,
                              other->x_millipx, other->y_millipx});
     }
 
