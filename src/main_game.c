@@ -88,6 +88,7 @@ static void render_to_png(const char *path, const Battle *b, const GameData *dat
     }
     Image image = LoadImageFromTexture(target.texture);
     ImageFlipVertical(&image);
+    ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_R8G8B8);
     ExportImage(image, path);
     UnloadImage(image);
     UnloadRenderTexture(target);
