@@ -8,6 +8,18 @@
         "core": "torso",
         "parts": [
           {
+            "id": "hand_left",
+            "part": "shield_hand",
+            "x": 6,
+            "y": 4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 10
+          },
+          {
             "id": "torso",
             "part": "torso",
             "x": 0,
@@ -16,38 +28,26 @@
           {
             "id": "head",
             "part": "head",
-            "x": 0,
-            "y": -14
-          },
-          {
-            "id": "hand_left",
-            "part": "lightning_hammer",
-            "x": -10,
-            "y": -4
+            "x": 2,
+            "y": -10
           },
           {
             "id": "hand_right",
-            "part": "shield_hand",
-            "x": 10,
-            "y": -4
-          },
-          {
-            "id": "legs",
-            "part": "legs",
-            "x": 0,
-            "y": 12
+            "part": "lightning_hammer",
+            "x": 3,
+            "y": -5
           },
           {
             "id": "heart",
             "part": "large_heart",
-            "x": 0,
-            "y": -2
+            "x": 1,
+            "y": -4
           },
           {
             "id": "gland",
             "part": "lightning_gland",
-            "x": 0,
-            "y": 4
+            "x": -1,
+            "y": 2
           }
         ],
         "edges": [
@@ -85,6 +85,18 @@
         "core": "torso",
         "parts": [
           {
+            "id": "hand_left",
+            "part": "bow_hand",
+            "x": 6,
+            "y": 4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 10
+          },
+          {
             "id": "torso",
             "part": "torso",
             "x": 0,
@@ -93,44 +105,32 @@
           {
             "id": "head",
             "part": "judging_eye",
-            "x": 0,
-            "y": -14
-          },
-          {
-            "id": "hand_left",
-            "part": "gungnir",
-            "x": -10,
-            "y": -4
+            "x": 2,
+            "y": -10
           },
           {
             "id": "hand_right",
-            "part": "bow_hand",
-            "x": 10,
-            "y": -4
-          },
-          {
-            "id": "legs",
-            "part": "legs",
-            "x": 0,
-            "y": 12
+            "part": "gungnir",
+            "x": 3,
+            "y": -5
           },
           {
             "id": "heart",
             "part": "large_heart",
-            "x": 0,
-            "y": -2
+            "x": 1,
+            "y": -4
           },
           {
             "id": "gland",
             "part": "mind_gland",
-            "x": 0,
-            "y": 4
+            "x": -1,
+            "y": 2
           },
           {
             "id": "ganglion",
             "part": "ganglion",
-            "x": 0,
-            "y": 7
+            "x": 2,
+            "y": 6
           }
         ],
         "edges": [
@@ -172,6 +172,18 @@
         "core": "torso",
         "parts": [
           {
+            "id": "hand_left",
+            "part": "healing_hand",
+            "x": 6,
+            "y": 4
+          },
+          {
+            "id": "legs",
+            "part": "wings_of_light",
+            "x": 0,
+            "y": 10
+          },
+          {
             "id": "torso",
             "part": "torso",
             "x": 0,
@@ -180,38 +192,26 @@
           {
             "id": "head",
             "part": "keen_head",
-            "x": 0,
-            "y": -14
-          },
-          {
-            "id": "hand_left",
-            "part": "healing_hand",
-            "x": -10,
-            "y": -4
+            "x": 2,
+            "y": -10
           },
           {
             "id": "hand_right",
             "part": "sword_hand",
-            "x": 10,
-            "y": -4
-          },
-          {
-            "id": "legs",
-            "part": "wings_of_light",
-            "x": 0,
-            "y": 12
+            "x": 3,
+            "y": -5
           },
           {
             "id": "heart",
             "part": "large_heart",
-            "x": 0,
-            "y": -2
+            "x": 1,
+            "y": -4
           },
           {
             "id": "gland",
             "part": "radiance_gland",
-            "x": 0,
-            "y": 4
+            "x": -1,
+            "y": 2
           }
         ],
         "edges": [
@@ -249,6 +249,18 @@
         "core": "torso",
         "parts": [
           {
+            "id": "hand_left",
+            "part": "serpent_hand",
+            "x": 6,
+            "y": 4
+          },
+          {
+            "id": "legs",
+            "part": "legs",
+            "x": 0,
+            "y": 10
+          },
+          {
             "id": "torso",
             "part": "torso",
             "x": 0,
@@ -257,44 +269,32 @@
           {
             "id": "head",
             "part": "head",
-            "x": 0,
-            "y": -14
-          },
-          {
-            "id": "hand_left",
-            "part": "hearth_hand",
-            "x": -10,
-            "y": -4
+            "x": 2,
+            "y": -10
           },
           {
             "id": "hand_right",
-            "part": "serpent_hand",
-            "x": 10,
-            "y": -4
-          },
-          {
-            "id": "legs",
-            "part": "legs",
-            "x": 0,
-            "y": 12
+            "part": "hearth_hand",
+            "x": 3,
+            "y": -5
           },
           {
             "id": "heart",
             "part": "large_heart",
-            "x": 0,
-            "y": -2
+            "x": 1,
+            "y": -4
           },
           {
             "id": "gland",
             "part": "venom_gland",
-            "x": 0,
-            "y": 4
+            "x": -1,
+            "y": 2
           },
           {
             "id": "ganglion",
             "part": "ganglion",
-            "x": 0,
-            "y": 7
+            "x": 2,
+            "y": 6
           }
         ],
         "edges": [

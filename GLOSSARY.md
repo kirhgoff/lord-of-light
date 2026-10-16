@@ -56,7 +56,7 @@ A Combatant's life pool, fed by its Hearts; the Combatant dies when it reaches z
 _Avoid_: HP, health
 
 **Body Plan**:
-The shape of a monster Body: a graph of empty External and Internal slots that the Horde generator fills with random Parts.
+The shape of a monster Body: a graph of External and Internal slots. The Horde generator fills each empty slot with a random Part that fits its role; slots with a fixed Part (e.g. the Core, minion bodies) keep it.
 _Avoid_: Template, archetype
 
 **Remains**:

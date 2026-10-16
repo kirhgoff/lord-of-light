@@ -5,46 +5,52 @@
       "core": "torso",
       "slots": [
         {
+          "id": "arm_far",
+          "kind": "external",
+          "role": "attack",
+          "x": 6,
+          "y": 4
+        },
+        {
+          "id": "legs",
+          "kind": "external",
+          "role": "mover",
+          "x": 0,
+          "y": 10
+        },
+        {
           "id": "torso",
           "kind": "external",
+          "part": "torso",
           "x": 0,
           "y": 0
         },
         {
           "id": "head",
           "kind": "external",
-          "x": 0,
-          "y": -14
+          "role": "sense",
+          "x": 2,
+          "y": -10
         },
         {
-          "id": "arm_left",
+          "id": "arm_near",
           "kind": "external",
-          "x": -10,
-          "y": -4
-        },
-        {
-          "id": "arm_right",
-          "kind": "external",
-          "x": 10,
-          "y": -4
-        },
-        {
-          "id": "legs",
-          "kind": "external",
-          "x": 0,
-          "y": 12
+          "role": "attack",
+          "x": 3,
+          "y": -5
         },
         {
           "id": "heart",
           "kind": "internal",
-          "x": 0,
-          "y": -2
+          "role": "heart",
+          "x": 1,
+          "y": -4
         },
         {
           "id": "gland",
           "kind": "internal",
-          "x": 0,
-          "y": 4
+          "x": -1,
+          "y": 2
         }
       ],
       "edges": [
@@ -54,11 +60,11 @@
         ],
         [
           "torso",
-          "arm_left"
+          "arm_far"
         ],
         [
           "torso",
-          "arm_right"
+          "arm_near"
         ],
         [
           "torso",
@@ -79,57 +85,64 @@
       "core": "body",
       "slots": [
         {
+          "id": "hind_legs",
+          "kind": "external",
+          "role": "mover",
+          "x": -8,
+          "y": 9
+        },
+        {
+          "id": "fore_legs",
+          "kind": "external",
+          "role": "mover",
+          "x": 8,
+          "y": 9
+        },
+        {
+          "id": "tail",
+          "kind": "external",
+          "role": "attack",
+          "x": -9,
+          "y": -3
+        },
+        {
           "id": "body",
           "kind": "external",
+          "part": "torso",
           "x": 0,
           "y": 0
         },
         {
           "id": "head",
           "kind": "external",
-          "x": 16,
-          "y": -4
-        },
-        {
-          "id": "fore_legs",
-          "kind": "external",
-          "x": 8,
-          "y": 10
-        },
-        {
-          "id": "hind_legs",
-          "kind": "external",
-          "x": -10,
-          "y": 10
+          "role": "sense",
+          "x": 12,
+          "y": -6
         },
         {
           "id": "weapon",
           "kind": "external",
-          "x": 22,
-          "y": 2
-        },
-        {
-          "id": "tail",
-          "kind": "external",
-          "x": -18,
-          "y": -2
+          "role": "attack",
+          "x": 11,
+          "y": 0
         },
         {
           "id": "heart",
           "kind": "internal",
+          "role": "heart",
           "x": 2,
-          "y": -2
+          "y": -3
         },
         {
           "id": "gland",
           "kind": "internal",
-          "x": -2,
-          "y": 4
+          "x": -3,
+          "y": 2
         },
         {
           "id": "ganglion",
           "kind": "internal",
-          "x": 6,
+          "x": 5,
           "y": 0
         }
       ],
@@ -173,40 +186,45 @@
       "core": "coil",
       "slots": [
         {
+          "id": "tail",
+          "kind": "external",
+          "role": "mover",
+          "x": -9,
+          "y": 6
+        },
+        {
           "id": "coil",
           "kind": "external",
+          "part": "serpent_coil",
           "x": 0,
           "y": 0
         },
         {
           "id": "head",
           "kind": "external",
-          "x": 14,
-          "y": -4
-        },
-        {
-          "id": "tail",
-          "kind": "external",
-          "x": -14,
-          "y": 2
+          "role": "sense",
+          "x": 4,
+          "y": -12
         },
         {
           "id": "fang",
           "kind": "external",
-          "x": 18,
-          "y": 2
+          "role": "attack",
+          "x": 10,
+          "y": -8
         },
         {
           "id": "heart",
           "kind": "internal",
-          "x": 2,
-          "y": 0
+          "role": "heart",
+          "x": 0,
+          "y": -2
         },
         {
           "id": "gland",
           "kind": "internal",
           "x": -2,
-          "y": 2
+          "y": 3
         }
       ],
       "edges": [
@@ -237,44 +255,51 @@
       "core": "mass",
       "slots": [
         {
+          "id": "pseudopods",
+          "kind": "external",
+          "role": "mover",
+          "x": 0,
+          "y": 10
+        },
+        {
+          "id": "lash_far",
+          "kind": "external",
+          "role": "attack",
+          "x": -2,
+          "y": -6
+        },
+        {
           "id": "mass",
           "kind": "external",
+          "part": "gel_mass",
           "x": 0,
           "y": 0
         },
         {
           "id": "eye",
           "kind": "external",
-          "x": 0,
-          "y": -12
+          "role": "sense",
+          "x": 3,
+          "y": -9
         },
         {
-          "id": "pseudopods",
+          "id": "lash_near",
           "kind": "external",
-          "x": 0,
-          "y": 12
-        },
-        {
-          "id": "lash_left",
-          "kind": "external",
-          "x": -12,
-          "y": 0
-        },
-        {
-          "id": "lash_right",
-          "kind": "external",
-          "x": 12,
-          "y": 0
+          "role": "attack",
+          "x": 4,
+          "y": 4
         },
         {
           "id": "heart_a",
           "kind": "internal",
+          "role": "heart",
           "x": -3,
           "y": -2
         },
         {
           "id": "heart_b",
           "kind": "internal",
+          "role": "heart",
           "x": 3,
           "y": 2
         },
@@ -302,11 +327,11 @@
         ],
         [
           "mass",
-          "lash_left"
+          "lash_far"
         ],
         [
           "mass",
-          "lash_right"
+          "lash_near"
         ],
         [
           "mass",
@@ -331,44 +356,52 @@
       "core": "carapace",
       "slots": [
         {
+          "id": "legs",
+          "kind": "external",
+          "role": "mover",
+          "x": 0,
+          "y": 8
+        },
+        {
+          "id": "mandible_far",
+          "kind": "external",
+          "role": "attack",
+          "x": 10,
+          "y": -4
+        },
+        {
           "id": "carapace",
           "kind": "external",
+          "part": "carapace",
           "x": 0,
           "y": 0
         },
         {
           "id": "head",
           "kind": "external",
-          "x": 0,
-          "y": -12
+          "role": "sense",
+          "part": "eye_stalk",
+          "x": 8,
+          "y": -5
         },
         {
-          "id": "legs",
+          "id": "mandible_near",
           "kind": "external",
-          "x": 0,
-          "y": 10
-        },
-        {
-          "id": "mandible_left",
-          "kind": "external",
-          "x": -6,
-          "y": -16
-        },
-        {
-          "id": "mandible_right",
-          "kind": "external",
-          "x": 6,
-          "y": -16
+          "role": "attack",
+          "x": 11,
+          "y": 3
         },
         {
           "id": "stinger",
           "kind": "external",
-          "x": 0,
-          "y": 16
+          "role": "attack",
+          "x": -9,
+          "y": 4
         },
         {
           "id": "heart",
           "kind": "internal",
+          "role": "heart",
           "x": 0,
           "y": -2
         },
@@ -396,11 +429,11 @@
         ],
         [
           "carapace",
-          "mandible_left"
+          "mandible_far"
         ],
         [
           "carapace",
-          "mandible_right"
+          "mandible_near"
         ],
         [
           "carapace",
@@ -425,44 +458,51 @@
       "core": "bladder",
       "slots": [
         {
+          "id": "levitator",
+          "kind": "external",
+          "role": "mover",
+          "x": 0,
+          "y": 10
+        },
+        {
+          "id": "tentacle_far",
+          "kind": "external",
+          "role": "attack",
+          "x": -3,
+          "y": 2
+        },
+        {
+          "id": "tentacle_mid",
+          "kind": "external",
+          "role": "attack",
+          "x": 0,
+          "y": 7
+        },
+        {
           "id": "bladder",
           "kind": "external",
+          "part": "gas_bladder",
           "x": 0,
           "y": 0
         },
         {
           "id": "eye",
           "kind": "external",
+          "role": "sense",
           "x": 0,
-          "y": -12
+          "y": -10
         },
         {
-          "id": "levitator",
+          "id": "tentacle_near",
           "kind": "external",
-          "x": 0,
-          "y": 12
-        },
-        {
-          "id": "tentacle_a",
-          "kind": "external",
-          "x": -10,
-          "y": 6
-        },
-        {
-          "id": "tentacle_b",
-          "kind": "external",
-          "x": 0,
-          "y": 8
-        },
-        {
-          "id": "tentacle_c",
-          "kind": "external",
-          "x": 10,
-          "y": 6
+          "role": "attack",
+          "x": 3,
+          "y": 13
         },
         {
           "id": "heart",
           "kind": "internal",
+          "role": "heart",
           "x": 0,
           "y": -2
         },
@@ -484,15 +524,15 @@
         ],
         [
           "bladder",
-          "tentacle_a"
+          "tentacle_far"
         ],
         [
           "bladder",
-          "tentacle_b"
+          "tentacle_mid"
         ],
         [
           "bladder",
-          "tentacle_c"
+          "tentacle_near"
         ],
         [
           "bladder",
@@ -511,18 +551,23 @@
         {
           "id": "body",
           "kind": "external",
+          "part": "imp_body",
           "x": 0,
           "y": 0
         },
         {
           "id": "claw",
           "kind": "external",
+          "role": "attack",
+          "part": "claw",
           "x": 6,
           "y": 0
         },
         {
           "id": "heart",
           "kind": "internal",
+          "role": "heart",
+          "part": "small_heart",
           "x": 0,
           "y": 0
         }
@@ -543,26 +588,33 @@
       "core": "body",
       "slots": [
         {
+          "id": "wing",
+          "kind": "external",
+          "role": "mover",
+          "part": "bat_wings",
+          "x": -6,
+          "y": -14
+        },
+        {
           "id": "body",
           "kind": "external",
+          "part": "crow_body",
           "x": 0,
           "y": 0
         },
         {
           "id": "beak",
           "kind": "external",
+          "role": "attack",
+          "part": "claw",
           "x": 6,
           "y": -2
         },
         {
-          "id": "wing",
-          "kind": "external",
-          "x": -4,
-          "y": -4
-        },
-        {
           "id": "heart",
           "kind": "internal",
+          "role": "heart",
+          "part": "small_heart",
           "x": 0,
           "y": 0
         }
@@ -589,18 +641,23 @@
         {
           "id": "body",
           "kind": "external",
+          "part": "wisp_core",
           "x": 0,
           "y": 0
         },
         {
           "id": "spark",
           "kind": "external",
+          "role": "attack",
+          "part": "glow_lantern",
           "x": 5,
           "y": 0
         },
         {
           "id": "heart",
           "kind": "internal",
+          "role": "heart",
+          "part": "small_heart",
           "x": 0,
           "y": 0
         }
