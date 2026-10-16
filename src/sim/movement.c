@@ -141,7 +141,7 @@ static int64_t squared(int64_t value)
     return value * value;
 }
 
-static int64_t isqrt(int64_t value)
+int64_t isqrt(int64_t value)
 {
     int64_t root = 0, bit = (int64_t)1 << 62;
     while (bit > value) bit >>= 2;

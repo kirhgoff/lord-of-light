@@ -7,6 +7,7 @@
 #define TICKS_PER_SECOND 20
 #define PATH_NONE (-1)
 
+int64_t isqrt(int64_t value);
 bool tile_is_solid(const Battle *battle, int column, int row);
 int combatant_speed_px_per_second(const Combatant *combatant, const GameData *data);
 bool combatant_move_target(const Combatant *combatant, int *x_millipx, int *y_millipx);
