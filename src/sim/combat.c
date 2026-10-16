@@ -153,8 +153,8 @@ static void apply_charm(Battle *battle, Combatant *victim, const ElementDef *def
 
 static int strip_buffs(Combatant *victim, int count)
 {
-    int *ticks[] = {&victim->damage_bonus_ticks, &victim->haste_ticks, &victim->sight_ticks, &victim->ward_ticks};
-    int *percent[] = {&victim->damage_bonus_percent, &victim->haste_percent, &victim->sight_percent, &victim->ward_percent};
+    int *ticks[] = {&victim->damage_bonus_ticks, &victim->haste_ticks, &victim->vision_ticks, &victim->ward_ticks};
+    int *percent[] = {&victim->damage_bonus_percent, &victim->haste_percent, &victim->vision_percent, &victim->ward_percent};
     int stripped = 0;
     for (int b = 0; b < 4 && stripped < count; b++) {
         if (*ticks[b] == 0) continue;
@@ -326,7 +326,7 @@ void battle_tick_effects(Battle *battle, const GameData *data)
         if (!who->alive) continue;
         if (who->damage_bonus_ticks > 0 && --who->damage_bonus_ticks == 0) who->damage_bonus_percent = 0;
         if (who->haste_ticks > 0 && --who->haste_ticks == 0) who->haste_percent = 0;
-        if (who->sight_ticks > 0 && --who->sight_ticks == 0) who->sight_percent = 0;
+        if (who->vision_ticks > 0 && --who->vision_ticks == 0) who->vision_percent = 0;
         if (who->ward_ticks > 0 && --who->ward_ticks == 0) who->ward_percent = 0;
         if (who->slow_ticks > 0 && --who->slow_ticks == 0) who->slow_percent = 0;
         if (who->charm_ticks > 0 && --who->charm_ticks == 0) who->charm_side = who->side;

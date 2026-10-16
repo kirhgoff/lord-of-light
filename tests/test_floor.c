@@ -149,7 +149,7 @@ static void test_eye_of_far_seeing_extends_vision(void)
     run(1);
     combatant_vision_ranges(&battle.combatants[0], &data, after);
     for (int b = 0; b < 3; b++) CHECK(after[b] == before[b] * 150 / 100);
-    CHECK(battle.combatants[0].sight_ticks == 400);
+    CHECK(battle.combatants[0].vision_ticks == 400);
     battle_free(&battle);
 }
 
@@ -213,13 +213,13 @@ static void test_void_rift_strips_two_buffs_in_order(void)
 {
     load_fixture();
     Combatant *second = &battle.combatants[SECOND];
-    second->damage_bonus_percent = second->haste_percent = second->sight_percent = 50;
-    second->damage_bonus_ticks = second->haste_ticks = second->sight_ticks = 100;
+    second->damage_bonus_percent = second->haste_percent = second->vision_percent = 50;
+    second->damage_bonus_ticks = second->haste_ticks = second->vision_ticks = 100;
     put_trap("void_rift", SECOND);
     run(1);
     CHECK(second->damage_bonus_ticks == 0 && second->damage_bonus_percent == 0);
     CHECK(second->haste_ticks == 0 && second->haste_percent == 0);
-    CHECK(second->sight_ticks == 99 && second->sight_percent == 50);
+    CHECK(second->vision_ticks == 99 && second->vision_percent == 50);
     const Event *strip = last_event(EVENT_EFFECT);
     CHECK(strip && strip->detail == EFFECT_STRIP && strip->amount == 2);
 }
@@ -272,15 +272,15 @@ static void test_buffs_and_trap_events_survive_save_and_load(void)
     load_fixture();
     Combatant *dummy = &battle.combatants[DUMMY];
     dummy->haste_percent = 50, dummy->haste_ticks = 7;
-    dummy->sight_percent = 60, dummy->sight_ticks = 8;
+    dummy->vision_percent = 60, dummy->vision_ticks = 8;
     dummy->ward_percent = 40, dummy->ward_ticks = 9;
     battle_log_event(&battle, (Event){0, EVENT_TRAP, -1, -1, DUMMY, -1, ELEMENT_FROST, 8, 1});
     char *json = battle_save_json(&battle, &data);
     static Battle loaded;
     CHECK(battle_load_json(&loaded, &data, json, err, ERR_SIZE));
     const Combatant *back = &loaded.combatants[DUMMY];
-    CHECK(back->haste_percent == 50 && back->haste_ticks == 7 && back->sight_percent == 60);
-    CHECK(back->sight_ticks == 8 && back->ward_percent == 40 && back->ward_ticks == 9);
+    CHECK(back->haste_percent == 50 && back->haste_ticks == 7 && back->vision_percent == 60);
+    CHECK(back->vision_ticks == 8 && back->ward_percent == 40 && back->ward_ticks == 9);
     CHECK(loaded.log[loaded.log_count - 1].kind == EVENT_TRAP);
     battle_free(&loaded);
     free(json);

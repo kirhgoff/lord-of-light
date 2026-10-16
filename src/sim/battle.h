@@ -79,8 +79,8 @@ typedef struct {
     int damage_bonus_ticks;
     int haste_percent;
     int haste_ticks;
-    int sight_percent;
-    int sight_ticks;
+    int vision_percent;
+    int vision_ticks;
     int ward_percent;
     int ward_ticks;
     Decision decision;

@@ -100,7 +100,7 @@ static int apply_pickup(Combatant *who, const GameData *data, const ArenaObjectD
     return heal_vitality(who, def->heal) + mend_parts(who, data, def->mend) +
            buff(&who->damage_bonus_percent, &who->damage_bonus_ticks, def->damage_bonus_percent, def->effect_ticks) +
            buff(&who->haste_percent, &who->haste_ticks, def->speed_bonus_percent, def->effect_ticks) +
-           buff(&who->sight_percent, &who->sight_ticks, def->vision_bonus_percent, def->effect_ticks) +
+           buff(&who->vision_percent, &who->vision_ticks, def->vision_bonus_percent, def->effect_ticks) +
            buff(&who->ward_percent, &who->ward_ticks, def->ward_percent, def->effect_ticks);
 }
 
