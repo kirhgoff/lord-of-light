@@ -1,46 +1,114 @@
 {
   "pickups": [
     {
-      "id": "health_vial",
-      "name": "Health Vial",
-      "sprite": "health_vial",
-      "heal": 40,
-      "respawn_ticks": 600,
-      "sound": "pickup_health"
+      "id": "soma",
+      "name": "Soma",
+      "sprite": "soma",
+      "sound": "pickup_soma",
+      "heal": 30,
+      "radius": 12,
+      "respawn_ticks": 600
     },
     {
-      "id": "rage_draught",
-      "name": "Rage Draught",
-      "sprite": "rage_draught",
+      "id": "menders_moss",
+      "name": "Mender's Moss",
+      "sprite": "menders_moss",
+      "sound": "pickup_menders_moss",
+      "mend": 15,
+      "radius": 12,
+      "respawn_ticks": 600
+    },
+    {
+      "id": "ember_seed",
+      "name": "Ember Seed",
+      "sprite": "ember_seed",
+      "sound": "pickup_ember_seed",
       "damage_bonus_percent": 50,
       "effect_ticks": 200,
-      "respawn_ticks": 900,
-      "sound": "pickup_rage"
+      "radius": 12,
+      "respawn_ticks": 900
+    },
+    {
+      "id": "quickening_leaf",
+      "name": "Quickening Leaf",
+      "sprite": "quickening_leaf",
+      "sound": "pickup_quickening_leaf",
+      "speed_bonus_percent": 50,
+      "effect_ticks": 200,
+      "radius": 12,
+      "respawn_ticks": 900
+    },
+    {
+      "id": "eye_of_far_seeing",
+      "name": "Eye of Far Seeing",
+      "sprite": "eye_of_far_seeing",
+      "sound": "pickup_eye_of_far_seeing",
+      "vision_bonus_percent": 50,
+      "effect_ticks": 400,
+      "radius": 12,
+      "respawn_ticks": 900
+    },
+    {
+      "id": "ward_stone",
+      "name": "Ward Stone",
+      "sprite": "ward_stone",
+      "sound": "pickup_ward_stone",
+      "ward_percent": 40,
+      "effect_ticks": 200,
+      "radius": 12,
+      "respawn_ticks": 900
     }
   ],
   "traps": [
     {
-      "id": "fire_vent",
-      "name": "Fire Vent",
-      "sprite": "fire_vent",
-      "element": "fire",
-      "damage": 10,
-      "radius": 24,
-      "effect_ticks": 0,
-      "respawn_ticks": 100,
-      "sound": "trap_fire_vent"
+      "id": "spike_pit",
+      "name": "Spike Pit",
+      "sprite": "spike_pit",
+      "sound": "trap_spike_pit",
+      "element": "kinetic",
+      "damage": 15,
+      "radius": 14,
+      "respawn_ticks": 100
     },
     {
-      "id": "frost_snare",
-      "name": "Frost Snare",
-      "sprite": "frost_snare",
+      "id": "frost_rune",
+      "name": "Frost Rune",
+      "sprite": "frost_rune",
+      "sound": "trap_frost_rune",
       "element": "frost",
-      "damage": 4,
-      "radius": 20,
-      "slow_percent": 50,
-      "effect_ticks": 80,
-      "respawn_ticks": 200,
-      "sound": "trap_frost_snare"
+      "damage": 8,
+      "radius": 14,
+      "respawn_ticks": 120
+    },
+    {
+      "id": "spore_pod",
+      "name": "Spore Pod",
+      "sprite": "spore_pod",
+      "sound": "trap_spore_pod",
+      "element": "venom",
+      "damage": 5,
+      "radius": 14,
+      "respawn_ticks": 160
+    },
+    {
+      "id": "lightning_pylon",
+      "name": "Lightning Pylon",
+      "sprite": "lightning_pylon",
+      "sound": "trap_lightning_pylon",
+      "element": "lightning",
+      "damage": 12,
+      "radius": 14,
+      "respawn_ticks": 200
+    },
+    {
+      "id": "void_rift",
+      "name": "Void Rift",
+      "sprite": "void_rift",
+      "sound": "trap_void_rift",
+      "element": "void",
+      "damage": 10,
+      "radius": 14,
+      "respawn_ticks": 200
     }
   ]
 }

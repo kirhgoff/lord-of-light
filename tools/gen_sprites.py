@@ -1133,18 +1133,6 @@ def trap_base(g, p):
     g.ellipse([4, 12, 19, 19], fill=p.deep)
 
 
-def vent(element, armed):
-    p = Palette(element)
-    img = Image.new("RGBA", (WORLD, WORLD), (0, 0, 0, 0))
-    g = ImageDraw.Draw(img)
-    trap_base(g, p)
-    if not armed:
-        flame(g, p, 12, 14, 5)
-        flame(g, p, 7, 14, 3)
-        flame(g, p, 17, 14, 3)
-    return add_outline(img)
-
-
 def snare(element, armed):
     p = Palette(element)
     img = Image.new("RGBA", (WORLD, WORLD), (0, 0, 0, 0))
@@ -1168,14 +1156,111 @@ def generic_trap(element, armed):
     return add_outline(img)
 
 
-TRAP_DRAWERS = {"fire": vent, "frost": snare}
-PICKUP_COLOURS = {"health": (170, 70, 76), "rage": (190, 120, 60)}
+def blank():
+    img = Image.new("RGBA", (WORLD, WORLD), (0, 0, 0, 0))
+    return img, ImageDraw.Draw(img)
+
+
+def soma(bob):
+    return vial((214, 160, 60), bob)
+
+
+def ember_seed(bob):
+    return vial((190, 98, 52), bob, rage=True)
+
+
+def menders_moss(bob):
+    img, g = blank()
+    y = 2 + bob
+    g.ellipse([4, y + 9, 19, y + 18], fill=(70, 110, 50, 255))
+    g.ellipse([7, y + 6, 16, y + 14], fill=(112, 152, 82, 255))
+    g.ellipse([9, y + 4, 14, y + 9], fill=(150, 190, 100, 255))
+    return add_outline(img)
+
+
+def quickening_leaf(bob):
+    img, g = blank()
+    y = 2 + bob
+    g.polygon([(12, y + 2), (19, y + 8), (12, y + 18), (5, y + 8)], fill=(96, 170, 70, 255))
+    g.line([(12, y + 3), (12, y + 17)], fill=(60, 120, 40, 255))
+    return add_outline(img)
+
+
+def eye_of_far_seeing(bob):
+    img, g = blank()
+    y = 2 + bob
+    g.ellipse([3, y + 6, 20, y + 15], fill=(240, 236, 220, 255))
+    g.ellipse([8, y + 6, 15, y + 15], fill=(152, 112, 164, 255))
+    g.ellipse([10, y + 8, 13, y + 12], fill=OUTLINE)
+    return add_outline(img)
+
+
+def ward_stone(bob):
+    img, g = blank()
+    y = 2 + bob
+    g.rounded_rectangle([5, y + 4, 18, y + 18], radius=4, fill=(120, 124, 132, 255))
+    g.line([(12, y + 7), (12, y + 15)], fill=(238, 226, 206, 255))
+    g.line([(9, y + 11), (15, y + 11)], fill=(238, 226, 206, 255))
+    return add_outline(img)
+
+
+PICKUP_DRAWERS = {
+    "soma": soma, "menders_moss": menders_moss, "ember_seed": ember_seed,
+    "quickening_leaf": quickening_leaf, "eye_of_far_seeing": eye_of_far_seeing, "ward_stone": ward_stone,
+}
+
+
+def spike_pit(element, armed):
+    p = Palette(element)
+    img, g = blank()
+    trap_base(g, p)
+    tips = [(7, 13), (12, 11), (17, 13)] if armed else [(7, 5), (12, 3), (17, 5)]
+    for x, y in tips:
+        g.polygon([(x - 2, 16), (x + 2, 16), (x, y)], fill=STEEL + (255,))
+    return add_outline(img)
+
+
+def spore_pod(element, armed):
+    p = Palette(element)
+    img, g = blank()
+    trap_base(g, p)
+    if armed:
+        g.ellipse([7, 6, 17, 16], fill=p.base)
+        g.ellipse([10, 8, 14, 12], fill=p.glow)
+    else:
+        for cx, cy in [(6, 6), (12, 4), (18, 6), (9, 10), (15, 10)]:
+            ell(g, cx, cy, 2, 2, p.glow)
+    return add_outline(img)
+
+
+def lightning_pylon(element, armed):
+    p = Palette(element)
+    img, g = blank()
+    trap_base(g, p)
+    px_rect(g, 10, 4, 4, 11, STEEL + (255,))
+    if armed:
+        ell(g, 12, 4, 2, 2, p.glow)
+    else:
+        g.line([(12, 4), (6, 9), (14, 11), (8, 16)], fill=p.glow)
+        g.line([(12, 4), (18, 9), (10, 11), (16, 16)], fill=p.glow)
+    return add_outline(img)
+
+
+def void_rift(element, armed):
+    p = Palette(element)
+    img, g = blank()
+    g.ellipse([2, 10, 21, 20], fill=p.dark)
+    g.ellipse([5, 12, 18, 18], fill=p.deep)
+    g.ellipse([8, 13, 15, 17], fill=p.glow if not armed else p.base)
+    return add_outline(img)
+
+
+TRAP_DRAWERS = {"kinetic": spike_pit, "frost": snare, "venom": spore_pod, "lightning": lightning_pylon, "void": void_rift}
 
 
 def make_pickup(obj, directory):
-    colour = PICKUP_COLOURS.get(obj["id"].split("_")[0], (120, 140, 160))
-    rage = obj.get("damage_bonus_percent", 0) > 0
-    images = [vial(colour, 0, rage), vial(colour, 1, rage)]
+    drawer = PICKUP_DRAWERS[obj["id"]]
+    images = [drawer(0), drawer(1)]
     for i, img in enumerate(images):
         check_clear_of_edges(f"{obj['id']} {i}", img)
     write_atlas(os.path.join(directory, obj["sprite"]), sheet_of(images), obj_atlas({"idle": [0, 1]}, WORLD, WORLD))
