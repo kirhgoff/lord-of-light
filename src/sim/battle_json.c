@@ -457,6 +457,8 @@ static bool load_remains(Context *ctx, const cJSON *root, Battle *battle)
 static bool load_provenance(Context *ctx, const cJSON *o, Event *event)
 {
     int fallback;
+    if (event->amount <= STANCE_NONE || event->amount >= STANCE_COUNT) return fail_key(ctx, "amount", "decision Stance out of range");
+    if (event->detail < 0 || event->detail >= HURT_COUNT) return fail_key(ctx, "detail", "decision hurt level out of range");
     const cJSON *permille = cJSON_GetObjectItemCaseSensitive(o, "stance_permille");
     if (!read_int(ctx, o, "confidence_permille", 0, 1000, &event->confidence_permille) ||
         !read_int(ctx, o, "latency_ms", 0, EVENT_AMOUNT_LIMIT, &event->latency_ms) ||

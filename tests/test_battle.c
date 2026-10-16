@@ -278,6 +278,10 @@ static void test_decision_provenance_is_validated_and_hits_stay_small(void)
     check_rejected(json, "\"stance_permille\":[0,610,200,0,190]", "\"stance_permille\":[1,2]");
     check_rejected(json, "\"stance_permille\":[0,610,200,0,190]", "\"stance_permille\":[0,610,200,0,1001]");
     check_rejected(json, "\"fallback\":\"low_confidence\"", "\"fallback\":\"sulking\"");
+    check_rejected(json, "\"amount\":1,", "\"amount\":4000,");
+    check_rejected(json, "\"amount\":1,", "\"amount\":0,");
+    check_rejected(json, "\"detail\":1,", "\"detail\":4,");
+    check_rejected(json, "\"detail\":1,", "\"detail\":-1,");
     check_rejected(json, "\"confidence_permille\":415", "\"confidence_permille\":1001");
     CHECK(battle_load_json(&loaded, &data, json, err, ERR_SIZE));
     battle_free(&loaded);
