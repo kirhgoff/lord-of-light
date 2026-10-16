@@ -90,6 +90,8 @@ static void draw_external_parts(const Battle *b, const GameData *data, const Sce
     const Combatant *who = &b->combatants[c];
     bool flip = scene->facing_left[c];
     bool moving = c < scene->prev_count && (who->x_millipx != scene->prev_x[c] || who->y_millipx != scene->prev_y[c]);
+    bool working[MAX_SLOTS];
+    body_working_parts(&who->body, who->parts, working);
     for (int s = 0; s < who->body.slot_count; s++) {
         const BodySlot *slot = &who->body.slots[s];
         if (slot->internal) continue;
@@ -97,7 +99,54 @@ static void draw_external_parts(const Battle *b, const GameData *data, const Sce
         int frame = part_frame(atlas, who, s, &data->parts[slot->part], moving, scene->act_since[c][s],
                                scene->hit_since[c][s], c, tick);
         draw_at_pivot(sheets->parts[slot->part], atlas, frame, origin_x + (float)(flip ? -slot->anchor_x : slot->anchor_x),
-                      origin_y + (float)slot->anchor_y, flip, WHITE);
+                      origin_y + (float)slot->anchor_y, flip, working[s] ? WHITE : GRAY);
+    }
+}
+
+static float flash_strength(const Scene *scene, int c, int slot, int tick)
+{
+    int duration = scene->hit_element[c][slot] == ELEMENT_RADIANCE ? FLASH_TICKS_RADIANCE : FLASH_TICKS;
+    int age = tick - scene->hit_since[c][slot];
+    return age >= 0 && age < duration ? 1.0f - (float)age / (float)duration : 0;
+}
+
+static void draw_internal_parts(const Battle *b, const Scene *scene, const Atlases *atlases, const Sheets *sheets, int c,
+                                float origin_x, float origin_y, int tick)
+{
+    const Body *body = &b->combatants[c].body;
+    bool flip = scene->facing_left[c];
+    for (int s = 0; s < body->slot_count; s++) {
+        const BodySlot *slot = &body->slots[s];
+        if (!slot->internal) continue;
+        const Atlas *atlas = &atlases->parts[slot->part];
+        float x = origin_x + (float)(flip ? -slot->anchor_x : slot->anchor_x);
+        float y = origin_y + (float)slot->anchor_y;
+        Texture2D sheet = sheets->parts[slot->part];
+        if (scene->xray) draw_at_pivot(sheet, atlas, atlas_frame(atlas, FRAMES_IDLE, 0), x, y, flip, Fade(WHITE, 0.5f));
+        float strength = flash_strength(scene, c, s, tick);
+        if (strength <= 0) continue;
+        int frame = atlas_frame(atlas, FRAMES_HURT, 0);
+        bool radiant = scene->hit_element[c][s] == ELEMENT_RADIANCE;
+        if (radiant) BeginBlendMode(BLEND_ADDITIVE);
+        draw_at_pivot(sheet, atlas, frame, x, y, flip, Fade(WHITE, strength));
+        if (radiant) {
+            draw_at_pivot(sheet, atlas, frame, x, y - 1, flip, Fade(WHITE, strength / 2));
+            draw_at_pivot(sheet, atlas, frame, x, y + 1, flip, Fade(WHITE, strength / 2));
+            EndBlendMode();
+        }
+    }
+}
+
+static void draw_remains(const Drawable *drawable, const Battle *b, const Atlases *atlases, const Sheets *sheets)
+{
+    const Remains *remains = &b->remains[drawable->index];
+    for (int i = 0; i < remains->part_count; i++) {
+        int part = remains->parts[i];
+        int dx, dy;
+        remains_offset(drawable->index, i, &dx, &dy);
+        const Atlas *atlas = &atlases->parts[part];
+        draw_at_pivot(sheets->parts[part], atlas, atlas_frame(atlas, FRAMES_BROKEN, 0), floorf(drawable->x) + (float)dx,
+                      floorf(drawable->y) + (float)dy, false, WHITE);
     }
 }
 
@@ -106,7 +155,9 @@ static void draw_combatant(const Drawable *drawable, const Battle *b, const Game
 {
     const Body *body = &b->combatants[drawable->index].body;
     float origin_y = floorf(drawable->y - (float)body_feet_offset(body, atlases));
-    draw_external_parts(b, data, scene, atlases, sheets, drawable->index, floorf(drawable->x), origin_y, tick);
+    float origin_x = floorf(drawable->x);
+    draw_external_parts(b, data, scene, atlases, sheets, drawable->index, origin_x, origin_y, tick);
+    draw_internal_parts(b, scene, atlases, sheets, drawable->index, origin_x, origin_y, tick);
 }
 
 static void draw_drawables(const Battle *b, const GameData *data, const Scene *scene, const Atlases *atlases,
@@ -120,7 +171,7 @@ static void draw_drawables(const Battle *b, const GameData *data, const Scene *s
         case DRAW_OBSTACLE: draw_obstacle(drawable, atlases, sheets); break;
         case DRAW_PICKUP: draw_pickup(drawable, b, atlases, sheets, tick); break;
         case DRAW_TRAP: draw_trap(drawable, b, scene, atlases, sheets, tick); break;
-        case DRAW_REMAINS: break;
+        case DRAW_REMAINS: draw_remains(drawable, b, atlases, sheets); break;
         case DRAW_COMBATANT: draw_combatant(drawable, b, data, scene, atlases, sheets, tick); break;
         }
     }
