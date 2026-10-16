@@ -1,7 +1,7 @@
 # Generated sounds as action attributes
 
 Type: task
-Status: claimed
+Status: resolved
 Blocked by:
 
 ## Question
@@ -18,3 +18,11 @@ Every action has a predefined sound, generated like the placeholder sprites and 
 - The sim only stores the ids; nothing in `src/sim/` plays audio (ADR 0002).
 - Test: every sound id referenced by the shipped data has a WAV that parses with the expected format (like the atlas coverage test); a loader error fixture for an unknown sound id.
 - Previews: `tools/gen_sounds.py --sheet` writes one WAV with every sound in sequence, so a human can listen once.
+
+## Answer
+
+Merged `19-sound-assets` after one review round. `tools/gen_sounds.py` (stdlib, deterministic, `--sheet` local preview, gitignored) writes 41 WAVs to `assets/sounds/` (588 KB): ability sounds `<element>_<order>` shared per pair, `<element>_hit`/`_effect`, `step_feet|levitate|slither|wings`, pickups, traps, cues `cue_death|cue_part_destroyed|cue_spawn_appear`. Data: `Ability.sound`, `ElementDef.hit_sound/effect_sound`, `Part.step_sound` (required when move_speed > 0), `ArenaObjectDef.sound`, `GameData.cues`. The loader checks only the id format `[a-z0-9_]+` (no filesystem access); `test_every_sound_id_has_a_wav` checks the files. Tests exit cleanly (`LOAD_OR_EXIT`) when data can't load.
+
+## Comments
+
+**Review 1 (opus): CHANGES** — silent test-runner segfault on a missing WAV, path traversal in ids, loader depended on CWD, start clicks, Void lacked a reversed swell, 1 MB sheet committed. Fixed in 2d30a1e, 4064792. Loudness spread moved to ticket 20.
