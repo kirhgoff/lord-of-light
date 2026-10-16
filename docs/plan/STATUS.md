@@ -15,8 +15,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 07 Power + Horde | `07-power-and-horde` / `~/Projects/lord-of-light-07-power-and-horde` | sonnet executor running |
-| 10 raylib view | `10-raylib-view` / `~/Projects/lord-of-light-10-raylib-view` | plan accepted; sonnet executor running |
+| 10 raylib view | `10-raylib-view` / `~/Projects/lord-of-light-10-raylib-view` | executor done (11 commits); fable design + opus code review next |
 | 11 Laya decider | `11-laya-decider` / `~/Projects/lord-of-light-11-laya-decider` | plan accepted; sonnet executor running |
 
 ## Done
@@ -29,6 +28,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 - 09 Placeholder sprites — merged after design re-review.
 - 14 Clay+raylib research — merged (`docs/research/clay-raylib.md`).
 - 17 Slot roles — merged after 2 code + 2 design review rounds.
+- 07 Power + Horde — merged after one review round.
 - 06 Tactics + Reflex — merged after 2 review rounds.
 - 08 Pickups + traps — merged after one review round.
 - 05 Combat — merged after one review round (charm-lock winner rule by user decision).
