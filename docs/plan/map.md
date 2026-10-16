@@ -16,6 +16,7 @@ A playable raylib arena: a random Pantheon (from JSON) fights a Power-matched Ho
 
 ## Decisions so far
 
+- [Combat](issues/05-combat-elements.md): data-driven Element effects, 50 % Vitality share, death by Vitality or no working Heart, a side all charmed to the enemy loses.
 - [Sound assets](issues/19-sound-assets.md): generated WAVs named per action in the data; the sim validates id format only, asset tests check the files.
 - [Sprite proportions](issues/18-sprite-proportions.md): minion bodies use their own small Parts (`minion_claw`, `wisp_spark`); shared sprites are tuned by anchors, not per-Deity pivots.
 - [Movement + vision](issues/04-movement-vision.md): 11 px feet footprint, A* on 2x2 footprint anchors (gaps ≥2 tiles), grid LOS blocks diagonal corner crossings, charm flips enemy/ally in both views.

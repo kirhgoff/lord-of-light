@@ -15,7 +15,6 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 05 Combat | `05-combat-elements` / `~/Projects/lord-of-light-05-combat-elements` | plan `docs/plan/plan-05-combat.md` accepted; sonnet executor running |
 
 ## Done
 
@@ -27,13 +26,14 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 - 09 Placeholder sprites — merged after design re-review.
 - 14 Clay+raylib research — merged (`docs/research/clay-raylib.md`).
 - 17 Slot roles — merged after 2 code + 2 design review rounds.
+- 05 Combat — merged after one review round (charm-lock winner rule by user decision).
 - 19 Sound assets — merged after one review round.
 - 18 Sprite proportions — merged after a design review.
 - 04 Movement + vision — merged after 3 review rounds (incl. user decisions on footprint and charm).
 
 ## Next up (once unblocked)
 
-- After 05: 06 Reflex + scheduling, 08 Pickups + traps.
+- Frontier: 06 Reflex + scheduling, 08 Pickups + traps.
 - 20 Sound playback after 05, 10.
 - Later: 16 Save/load keys (after 10).
 
