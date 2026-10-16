@@ -15,6 +15,8 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
+| 16 Save/load keys | `16-save-load-keys` / `~/Projects/lord-of-light-16-save-load-keys` | sonnet executor running |
+| 20 Sound playback | `20-sound-playback` / `~/Projects/lord-of-light-20-sound-playback` | sonnet executor running |
 | 11 Laya decider | `11-laya-decider` / `~/Projects/lord-of-light-11-laya-decider` | plan accepted; sonnet executor running |
 
 ## Done
@@ -38,7 +40,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 ## Next up (once unblocked)
 
-- Frontier: 16 save/load keys, 20 sound playback. 12 Clay UI after 11.
+- 12 Clay UI after 11.
 - 20 Sound playback after 05, 10.
 - Later: 16 Save/load keys (after 10).
 
