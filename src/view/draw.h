@@ -17,11 +17,17 @@ typedef struct {
     Texture2D pillar;
 } Sheets;
 
+#define TOAST_SIZE 320
+#define TOAST_SECONDS 2.0
+
 typedef struct {
     bool paused;
     bool confirm_quit;
+    char toast[TOAST_SIZE];
+    double toast_until;
 } Hud;
 
+void hud_show_toast(Hud *hud, const char *text);
 bool sheets_load(Sheets *sheets, const GameData *data, const Atlases *atlases, char *err, size_t err_size);
 void sheets_unload(Sheets *sheets);
 void draw_frame_contents(const Battle *b, const GameData *data, const Scene *scene, const Atlases *atlases,

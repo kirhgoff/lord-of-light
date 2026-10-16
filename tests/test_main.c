@@ -14,6 +14,7 @@ void run_floor_tests(void);
 void run_view_tests(void);
 void run_power_tests(void);
 void run_sound_tests(void);
+void run_saves_tests(void);
 
 static void test_arena_is_48_by_32(void)
 {
@@ -33,6 +34,7 @@ int main(void)
     run_view_tests();
     run_power_tests();
     run_sound_tests();
+    run_saves_tests();
     if (test_failures) return 1;
     printf("all tests passed\n");
     return 0;
