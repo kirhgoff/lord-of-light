@@ -34,7 +34,10 @@ GAME_OBJECTS := $(BUILD)/obj/src/main_game.o $(VIEW_OBJECTS) $(SIM_OBJECTS) $(LA
 HEADLESS_OBJECTS := $(BUILD)/obj/src/main_headless.o $(SIM_OBJECTS) $(LAYA_OBJECTS) $(SETUP_OBJECT) $(CJSON_OBJECT)
 BALANCE_OBJECTS := $(BUILD)/obj/src/main_balance.o $(SIM_OBJECTS) $(CJSON_OBJECT)
 
-.PHONY: game headless test run clean asan balance screenshots laya-local
+FORMAT_FILES := $(shell git ls-files 'src/*.c' 'src/*.h' 'tests/*.c' 'tests/*.h')
+CLANG_FORMAT := uv tool run --exclude-newer 2026-10-15 clang-format==22.1.8
+
+.PHONY: game headless test run clean asan balance screenshots laya-local format format-check
 
 game: $(BUILD)/game
 headless: $(BUILD)/headless
@@ -108,6 +111,12 @@ screenshots: game
 	done; done
 	$(BUILD)/game --seed 1 --ticks 60 --xray --screenshot $(BUILD)/shots/s1_t60_xray.png
 	$(BUILD)/game --seed 1 --ticks 60 --xray --select 0 --screenshot $(BUILD)/shots/s1_t60_xray_select0.png
+
+format:
+	$(CLANG_FORMAT) -i $(FORMAT_FILES)
+
+format-check:
+	$(CLANG_FORMAT) --dry-run --Werror $(FORMAT_FILES)
 
 clean:
 	rm -rf $(BUILD)
