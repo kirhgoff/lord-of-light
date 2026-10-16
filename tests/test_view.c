@@ -9,6 +9,8 @@
 static GameData data;
 static Battle battle;
 
+#define TARGET (battle.combatant_count - 1)
+
 static void setup_battle(void)
 {
     char err[ERR_SIZE];
@@ -152,10 +154,10 @@ static void test_hit_event_marks_actor_target_and_effect(void)
     setup_battle();
     Scene scene = {0};
     scene_reset(&scene, &battle);
-    Event hit = hit_event(7, 0, 1, 5, 2);
+    Event hit = hit_event(7, 0, 1, TARGET, 2);
     scene_apply_event(&scene, &battle, &hit);
     CHECK(scene.act_since[0][1] == 7);
-    CHECK(scene.hit_since[5][2] == 7 && scene.hit_element[5][2] == ELEMENT_FIRE);
+    CHECK(scene.hit_since[TARGET][2] == 7 && scene.hit_element[TARGET][2] == ELEMENT_FIRE);
     CHECK(live_effects(&scene) == 1 && scene.effects[0].element == ELEMENT_FIRE);
 }
 
@@ -164,9 +166,9 @@ static void test_trap_hit_without_actor_marks_only_the_target(void)
     setup_battle();
     Scene scene = {0};
     scene_reset(&scene, &battle);
-    Event hit = hit_event(3, -1, -1, 5, 0);
+    Event hit = hit_event(3, -1, -1, TARGET, 0);
     scene_apply_event(&scene, &battle, &hit);
-    CHECK(scene.hit_since[5][0] == 3);
+    CHECK(scene.hit_since[TARGET][0] == 3);
     CHECK(scene.act_since[0][0] == NEVER);
 }
 
@@ -200,7 +202,7 @@ static void test_after_step_consumes_only_new_events(void)
     Scene scene = {0};
     scene_reset(&scene, &battle);
     CHECK(scene.seen_events == battle.log_count);
-    battle_log_event(&battle, hit_event(1, 0, 0, 5, 0));
+    battle_log_event(&battle, hit_event(1, 0, 0, TARGET, 0));
     scene_after_step(&scene, &battle);
     CHECK(scene.seen_events == battle.log_count && live_effects(&scene) == 1);
     scene_after_step(&scene, &battle);
@@ -213,7 +215,7 @@ static void test_effect_ring_overwrites_the_oldest(void)
     Scene scene = {0};
     scene_reset(&scene, &battle);
     for (int i = 0; i < MAX_EFFECTS + 3; i++) {
-        Event hit = hit_event(i, 0, 0, 5, 0);
+        Event hit = hit_event(i, 0, 0, TARGET, 0);
         scene_apply_event(&scene, &battle, &hit);
     }
     CHECK(live_effects(&scene) == MAX_EFFECTS);
