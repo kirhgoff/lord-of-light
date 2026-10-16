@@ -15,8 +15,20 @@ static bool fail(char *err, size_t err_size, const char *what, const char *path)
 
 static bool is_save_name(const char *name)
 {
-    size_t length = strlen(name);
-    return length > 5 && strcmp(name + length - 5, ".json") == 0;
+    static const char shape[] = "dddd-dd-dd_dd-dd-dd.json";
+    size_t length = strlen(shape);
+    if (strlen(name) != length) return false;
+    for (size_t i = 0; i < length; i++)
+        if (shape[i] == 'd' ? name[i] < '0' || name[i] > '9' : name[i] != shape[i]) return false;
+    return true;
+}
+
+static bool is_regular_file(const char *dir, const char *name)
+{
+    char path[SAVES_PATH_SIZE];
+    struct stat info;
+    snprintf(path, sizeof path, "%s/%s", dir, name);
+    return stat(path, &info) == 0 && S_ISREG(info.st_mode);
 }
 
 void saves_path_for(const char *dir, time_t when, char *out, size_t size)
@@ -35,7 +47,7 @@ bool saves_newest(const char *dir, char *out, size_t size, char *err, size_t err
     if (!folder) return fail(err, err_size, "cannot open", dir);
     char newest[256] = "";
     for (struct dirent *entry; (entry = readdir(folder));)
-        if (is_save_name(entry->d_name) && strcmp(entry->d_name, newest) > 0) snprintf(newest, sizeof newest, "%s", entry->d_name);
+        if (is_save_name(entry->d_name) && is_regular_file(dir, entry->d_name) && strcmp(entry->d_name, newest) > 0) snprintf(newest, sizeof newest, "%s", entry->d_name);
     closedir(folder);
     if (!newest[0]) {
         if (err_size > 0) snprintf(err, err_size, "no saves in %s", dir);

@@ -61,6 +61,13 @@ static void test_newest_is_the_greatest_json_name(void)
     touch_with("2026-10-16_09-00-00.json", "{}");
     touch_with("2026-02-01_00-00-00.json", "{}");
     touch_with("2099-notes.txt", "x");
+    touch_with("mid.json", "{}");
+    touch_with("notes.json", "{}");
+    char folder[SAVES_PATH_SIZE + 32];
+    snprintf(folder, sizeof folder, "%s/zz.json", dir);
+    CHECK(mkdir(folder, 0777) == 0);
+    snprintf(folder, sizeof folder, "%s/2099-12-31_23-59-59.json", dir);
+    CHECK(mkdir(folder, 0777) == 0);
     char path[SAVES_PATH_SIZE];
     CHECK(saves_newest(dir, path, sizeof path, err, ERR_SIZE));
     CHECK(strstr(path, "2026-10-16_09-00-00.json") != NULL);
@@ -99,6 +106,13 @@ static void test_write_creates_the_folder_and_load_restores_the_battle(void)
     remove_dir();
 }
 
+static char *last_decider_field(char *json)
+{
+    char *last = NULL;
+    for (char *at = json; (at = strstr(at, "\"decider\":")); at += 1) last = at;
+    return last;
+}
+
 static void test_failed_load_leaves_the_running_battle_untouched(void)
 {
     load_data();
@@ -106,8 +120,14 @@ static void test_failed_load_leaves_the_running_battle_untouched(void)
     make_dir();
     battle_setup(&battle, &data, 4);
     for (int t = 0; t < 25; t++) battle_step(&battle, &data, NULL);
+    battle_log_event(&battle, (Event){25, EVENT_HIT, 0, 0, 1, 0, ELEMENT_FIRE, 5, 0, DECIDER_NONE});
     char *before = battle_save_json(&battle, &data);
-    touch_with("2026-01-01_00-00-00.json", "{\"combatants\": [");
+    char *valid = battle_save_json(&battle, &data);
+    char *last_decider = last_decider_field(valid);
+    CHECK(last_decider != NULL);
+    if (last_decider) last_decider[strlen("\"decider\":")] = '9';
+    touch_with("2026-01-01_00-00-00.json", valid);
+    free(valid);
     char path[SAVES_PATH_SIZE];
     CHECK(!saves_load_newest(dir, &battle, &data, path, sizeof path, err, ERR_SIZE));
     CHECK(err[0] != '\0');
