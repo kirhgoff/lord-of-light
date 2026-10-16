@@ -95,10 +95,13 @@ static void run_window(Battle *battle, const GameData *data, Decider *decider, S
 {
     float accumulated = 0;
     while (!WindowShouldClose()) {
+        if (IsKeyPressed(KEY_ESCAPE)) hud->confirm_quit = !hud->confirm_quit;
+        if (hud->confirm_quit && (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_Y))) break;
+        if (hud->confirm_quit && IsKeyPressed(KEY_N)) hud->confirm_quit = false;
         handle_camera_input(view);
         if (IsKeyPressed(KEY_SPACE)) hud->paused = !hud->paused;
         if (IsKeyPressed(KEY_T)) scene->xray = !scene->xray;
-        if (!hud->paused && battle_winner(battle) < 0) advance_ticks(battle, data, decider, scene, &accumulated);
+        if (!hud->paused && !hud->confirm_quit && battle_winner(battle) < 0) advance_ticks(battle, data, decider, scene, &accumulated);
         scene->alpha = accumulated / TICK_SECONDS;
         BeginDrawing();
         draw_frame_contents(battle, data, scene, atlases, sheets, view, hud);
@@ -123,6 +126,7 @@ int main(int argc, char **argv)
 
     if (args.screenshot) SetConfigFlags(FLAG_WINDOW_HIDDEN);
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Lord of Light " GAME_VERSION);
+    SetExitKey(KEY_NULL);
     SetTargetFPS(60);
     sheets_load(&sheets, &data);
     battle_setup(&battle, &data, args.seed);

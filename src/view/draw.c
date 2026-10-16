@@ -4,6 +4,12 @@
 #include <stdio.h>
 
 #define PATH_SIZE 256
+#define HUD_SEGMENT_MAX_WIDTH 120
+#define HUD_SEGMENT_GAP 4
+#define HUD_BAR_HEIGHT 8
+#define HUD_TEXT_SIZE 10
+#define DIALOG_WIDTH 320
+#define DIALOG_HEIGHT 120
 #define FLOOR_COLOUR ((Color){20, 18, 16, 255})
 
 static Texture2D load_sheet(const char *folder, const char *id)
@@ -191,10 +197,73 @@ static void draw_effects(const Scene *scene, const Atlases *atlases, const Sheet
     EndBlendMode();
 }
 
+static Color vitality_colour(const Combatant *who)
+{
+    if (who->charm_side != who->side) return PURPLE;
+    int percent = who->vitality_max > 0 ? who->vitality * 100 / who->vitality_max : 0;
+    return percent > 50 ? GREEN : percent > 25 ? YELLOW : RED;
+}
+
+static void draw_segment(const Combatant *who, int x, int y, int width)
+{
+    DrawText(who->name, x, y, HUD_TEXT_SIZE, who->alive ? RAYWHITE : GRAY);
+    int bar_y = y + HUD_TEXT_SIZE + 2;
+    DrawRectangleLines(x, bar_y, width, HUD_BAR_HEIGHT, who->alive ? RAYWHITE : DARKGRAY);
+    if (!who->alive || who->vitality_max <= 0) return;
+    int filled = (width - 2) * who->vitality / who->vitality_max;
+    DrawRectangle(x + 1, bar_y + 1, filled > 0 ? filled : 0, HUD_BAR_HEIGHT - 2, vitality_colour(who));
+}
+
+static void draw_team_bar(const Battle *b, Side side, int left, int right)
+{
+    int count = 0;
+    for (int c = 0; c < b->combatant_count; c++) count += b->combatants[c].side == side && b->combatants[c].spawner < 0;
+    if (count == 0) return;
+    int width = (right - left) / count - HUD_SEGMENT_GAP;
+    if (width > HUD_SEGMENT_MAX_WIDTH) width = HUD_SEGMENT_MAX_WIDTH;
+    int x = left + HUD_SEGMENT_GAP;
+    for (int c = 0; c < b->combatant_count; c++) {
+        const Combatant *who = &b->combatants[c];
+        if (who->side != side || who->spawner >= 0) continue;
+        draw_segment(who, x, 6, width);
+        x += width + HUD_SEGMENT_GAP;
+    }
+}
+
+static void draw_centred_text(const char *text, int y, int size, Color colour, int screen_width)
+{
+    DrawText(text, (screen_width - MeasureText(text, size)) / 2, y, size, colour);
+}
+
+static void draw_status_label(const Battle *b, const Hud *hud, int screen_width)
+{
+    int winner = battle_winner(b);
+    const char *text = winner == SIDE_PANTHEON ? "Pantheon wins" : winner == SIDE_HORDE ? "Horde wins" : hud->paused ? "PAUSED" : NULL;
+    if (text) draw_centred_text(text, HUD_HEIGHT + 8, 20, RAYWHITE, screen_width);
+}
+
+static void draw_confirm_dialog(int screen_width, int screen_height)
+{
+    DrawRectangle(0, 0, screen_width, screen_height, Fade(BLACK, 0.5f));
+    int left = (screen_width - DIALOG_WIDTH) / 2, top = (screen_height - DIALOG_HEIGHT) / 2;
+    DrawRectangle(left, top, DIALOG_WIDTH, DIALOG_HEIGHT, (Color){40, 36, 32, 255});
+    DrawRectangleLines(left, top, DIALOG_WIDTH, DIALOG_HEIGHT, RAYWHITE);
+    draw_centred_text("Quit the Battle?", top + 28, 24, RAYWHITE, screen_width);
+    draw_centred_text("Enter / Y: quit   Esc / N: stay", top + 76, 16, LIGHTGRAY, screen_width);
+}
+
+static void draw_hud(const Battle *b, const Hud *hud, const Viewport *view)
+{
+    DrawRectangle(0, 0, view->width, HUD_HEIGHT, Fade(BLACK, 0.6f));
+    draw_team_bar(b, SIDE_PANTHEON, 0, view->width / 2);
+    draw_team_bar(b, SIDE_HORDE, view->width / 2, view->width);
+    draw_status_label(b, hud, view->width);
+    DrawText("Space pause  Arrows pan  -/= zoom  T x-ray  Esc quit", 8, view->height - 18, 12, LIGHTGRAY);
+}
+
 void draw_frame_contents(const Battle *b, const GameData *data, const Scene *scene, const Atlases *atlases,
                          const Sheets *sheets, const Viewport *view, const Hud *hud)
 {
-    (void)hud;
     int tick = (int)scene_time(scene, b);
     ClearBackground(FLOOR_COLOUR);
     Camera2D camera = {{(float)view->width / 2, (float)view->height / 2}, {view->centre_x, view->centre_y}, 0, (float)view->zoom};
@@ -203,4 +272,7 @@ void draw_frame_contents(const Battle *b, const GameData *data, const Scene *sce
     draw_drawables(b, data, scene, atlases, sheets, tick);
     draw_effects(scene, atlases, sheets, tick);
     EndMode2D();
+    draw_hud(b, hud, view);
+    /* ticket 12: Clay_Raylib_Render goes here */
+    if (hud->confirm_quit) draw_confirm_dialog(view->width, view->height);
 }
