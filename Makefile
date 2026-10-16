@@ -59,6 +59,8 @@ $(BUILD)/obj/%.o: %.c
 
 $(BUILD)/obj/src/main_game.o $(filter-out $(VIEW_PURE_OBJECTS),$(VIEW_OBJECTS)): STRICT += -I$(RAYLIB_DIR)
 
+$(BUILD)/obj/src/view/ui.o: STRICT += -isystem vendor/clay
+
 $(CJSON_OBJECT): vendor/cjson/cJSON.c
 	@mkdir -p $(@D)
 	$(CC) $(VENDOR_FLAGS) -c $< -o $@

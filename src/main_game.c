@@ -16,6 +16,7 @@
 #include "view/saves.h"
 #include "view/scene.h"
 #include "view/sound.h"
+#include "view/ui.h"
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
@@ -71,11 +72,11 @@ static bool parse_args(int argc, char **argv, Args *args, DeciderSetup *setup)
 }
 
 static void render_to_png(const char *path, const Battle *b, const GameData *data, const Scene *scene,
-                          const Atlases *atlases, const Sheets *sheets, const Viewport *view, const Hud *hud)
+                          const Atlases *atlases, const Sheets *sheets, const Viewport *view, const Hud *hud, const Ui *ui)
 {
     RenderTexture2D target = LoadRenderTexture(view->width, view->height);
     BeginTextureMode(target);
-    draw_frame_contents(b, data, scene, atlases, sheets, view, hud);
+    draw_frame_contents(b, data, scene, atlases, sheets, view, hud, ui);
     EndTextureMode();
     Image image = LoadImageFromTexture(target.texture);
     ImageFlipVertical(&image);
@@ -127,7 +128,7 @@ static void handle_save_keys(Battle *battle, const GameData *data, Scene *scene,
 }
 
 static void run_window(Battle *battle, const GameData *data, Decider *decider, Scene *scene, const Atlases *atlases,
-                       const Sheets *sheets, Viewport *view, Hud *hud, int stop_tick)
+                       const Sheets *sheets, Viewport *view, Hud *hud, Ui *ui, int stop_tick)
 {
     float accumulated = 0;
     while (!WindowShouldClose()) {
@@ -143,8 +144,9 @@ static void run_window(Battle *battle, const GameData *data, Decider *decider, S
         if (battle->tick >= stop_tick) hud->paused = true;
         sound_update(battle, data, view, hud->paused || hud->confirm_quit);
         scene->alpha = accumulated / TICK_SECONDS;
+        ui_update(ui, view->width, view->height);
         BeginDrawing();
-        draw_frame_contents(battle, data, scene, atlases, sheets, view, hud);
+        draw_frame_contents(battle, data, scene, atlases, sheets, view, hud, ui);
         EndDrawing();
     }
 }
@@ -169,6 +171,11 @@ int main(int argc, char **argv)
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Lord of Light " GAME_VERSION);
     SetExitKey(KEY_NULL);
     SetTargetFPS(60);
+    if (!ui_init(WINDOW_WIDTH, WINDOW_HEIGHT)) {
+        fprintf(stderr, "cannot initialise the UI\n");
+        CloseWindow();
+        return 1;
+    }
     if (!sheets_load(&sheets, &data, &atlases, err, ERR_SIZE)) {
         fprintf(stderr, "%s\n", err);
         sheets_unload(&sheets);
@@ -187,6 +194,7 @@ int main(int argc, char **argv)
     Scene scene = {.xray = args.xray};
     scene_reset(&scene, &battle);
     Hud hud = {0};
+    Ui ui = {-1, -1, true};
     int exit_code = 0;
 
     if (args.screenshot) {
@@ -195,9 +203,10 @@ int main(int argc, char **argv)
             battle_step(&battle, &data, setup.decider);
             scene_after_step(&scene, &battle);
         }
-        render_to_png(args.screenshot, &battle, &data, &scene, &atlases, &sheets, &view, &hud);
+        ui_update(&ui, view.width, view.height);
+        render_to_png(args.screenshot, &battle, &data, &scene, &atlases, &sheets, &view, &hud, &ui);
     } else if (sound_init(&data, &battle, err, ERR_SIZE)) {
-        run_window(&battle, &data, setup.decider, &scene, &atlases, &sheets, &view, &hud, setup.replay_path ? setup.source.tick : INT_MAX);
+        run_window(&battle, &data, setup.decider, &scene, &atlases, &sheets, &view, &hud, &ui, setup.replay_path ? setup.source.tick : INT_MAX);
     } else {
         fprintf(stderr, "%s\n", err);
         exit_code = 1;
@@ -206,6 +215,7 @@ int main(int argc, char **argv)
     sound_close();
     sheets_unload(&sheets);
     battle_free(&battle);
+    ui_close();
     CloseWindow();
     return exit_code;
 }
