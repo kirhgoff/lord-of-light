@@ -8,66 +8,75 @@
 #define ARENA_WIDTH_PX (ARENA_WIDTH_TILES * TILE_SIZE)
 #define ARENA_HEIGHT_PX (ARENA_HEIGHT_TILES * TILE_SIZE)
 
-static float clamp_axis(float centre, float screen_size, int zoom, float arena_size)
+static float clamp_axis(float centre, float screen_size, float zoom, float arena_size)
 {
-    float visible = screen_size / (float)zoom;
-    if (visible >= arena_size) return arena_size / 2;
+    float visible = screen_size / zoom;
     if (centre < visible / 2) return visible / 2;
     if (centre > arena_size - visible / 2) return arena_size - visible / 2;
     return centre;
 }
 
+float viewport_cover_zoom(const Viewport *v)
+{
+    float across = (float)v->width / ARENA_WIDTH_PX;
+    float down = (float)v->height / ARENA_HEIGHT_PX;
+    return across > down ? across : down;
+}
+
 void viewport_clamp(Viewport *v)
 {
-    v->centre_x = clamp_axis(v->centre_x, (float)(v->width - v->inset_right), v->zoom, ARENA_WIDTH_PX);
-    v->centre_y = clamp_axis(v->centre_y, (float)(v->height - HUD_HEIGHT), v->zoom, ARENA_HEIGHT_PX);
+    float cover = viewport_cover_zoom(v);
+    float highest = cover > ZOOM_MAX ? cover : ZOOM_MAX;
+    v->zoom = v->zoom < cover ? cover : v->zoom > highest ? highest
+                                                          : v->zoom;
+    v->centre_x = clamp_axis(v->centre_x, (float)v->width, v->zoom, ARENA_WIDTH_PX);
+    v->centre_y = clamp_axis(v->centre_y, (float)v->height, v->zoom, ARENA_HEIGHT_PX);
 }
 
 void viewport_init(Viewport *v, int width, int height)
 {
-    *v = (Viewport){ARENA_WIDTH_PX / 2.0f, ARENA_HEIGHT_PX / 2.0f, ZOOM_DEFAULT, width, height, 0};
+    *v = (Viewport){ARENA_WIDTH_PX / 2.0f, ARENA_HEIGHT_PX / 2.0f, 0, width, height};
     viewport_clamp(v);
 }
 
-void viewport_set_inset(Viewport *v, int inset_right)
+void viewport_resize(Viewport *v, int width, int height)
 {
-    v->inset_right = inset_right;
+    v->width = width;
+    v->height = height;
     viewport_clamp(v);
 }
 
 void viewport_pan(Viewport *v, float dx_screen_px, float dy_screen_px)
 {
-    v->centre_x += dx_screen_px / (float)v->zoom;
-    v->centre_y += dy_screen_px / (float)v->zoom;
+    v->centre_x += dx_screen_px / v->zoom;
+    v->centre_y += dy_screen_px / v->zoom;
     viewport_clamp(v);
 }
 
 void viewport_zoom(Viewport *v, int step)
 {
-    int zoom = v->zoom + step;
-    v->zoom = zoom < ZOOM_MIN ? ZOOM_MIN : zoom > ZOOM_MAX ? ZOOM_MAX
-                                                           : zoom;
+    v->zoom = step > 0 ? floorf(v->zoom) + 1 : ceilf(v->zoom) - 1;
     viewport_clamp(v);
 }
 
 float viewport_screen_x(const Viewport *v, float world_x)
 {
-    return (float)(v->width - v->inset_right) / 2 + (world_x - v->centre_x) * (float)v->zoom;
+    return (float)v->width / 2 + (world_x - v->centre_x) * v->zoom;
 }
 
 float viewport_screen_y(const Viewport *v, float world_y)
 {
-    return (float)HUD_HEIGHT + (float)(v->height - HUD_HEIGHT) / 2 + (world_y - v->centre_y) * (float)v->zoom;
+    return (float)v->height / 2 + (world_y - v->centre_y) * v->zoom;
 }
 
 float viewport_world_x(const Viewport *v, float screen_x)
 {
-    return v->centre_x + (screen_x - (float)(v->width - v->inset_right) / 2) / (float)v->zoom;
+    return v->centre_x + (screen_x - (float)v->width / 2) / v->zoom;
 }
 
 float viewport_world_y(const Viewport *v, float screen_y)
 {
-    return v->centre_y + (screen_y - (float)HUD_HEIGHT - (float)(v->height - HUD_HEIGHT) / 2) / (float)v->zoom;
+    return v->centre_y + (screen_y - (float)v->height / 2) / v->zoom;
 }
 
 static void snapshot_positions(Scene *s, const Battle *b)

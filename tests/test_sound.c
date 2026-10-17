@@ -64,9 +64,9 @@ static void test_place_volume_is_full_inside_and_falls_off_to_zero_one_half_widt
 static void test_place_volume_counts_vertical_distance_and_diagonals(void)
 {
     Viewport view = zoomed_view();
-    CHECK(near(sound_place(400, 256 + 84, &view).volume, 1));
-    CHECK(near(sound_place(400, 256 + 84 + 80, &view).volume, 0.5f));
-    CHECK(near(sound_place(400 + 160 + 96, 256 + 84 + 128, &view).volume, 0));
+    CHECK(near(sound_place(400, 256 + 90, &view).volume, 1));
+    CHECK(near(sound_place(400, 256 + 90 + 80, &view).volume, 0.5f));
+    CHECK(near(sound_place(400 + 160 + 96, 256 + 90 + 128, &view).volume, 0));
 }
 
 static void test_zooming_out_hears_more_and_quieter_pan(void)
