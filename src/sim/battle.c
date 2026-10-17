@@ -67,7 +67,8 @@ void body_working_parts(const Body *body, const PartState *parts, bool working[M
     while (head < tail) {
         int at = queue[head++];
         for (int e = 0; e < body->edge_count; e++) {
-            int next = body->edges[e].a == at ? body->edges[e].b : body->edges[e].b == at ? body->edges[e].a : -1;
+            int next = body->edges[e].a == at ? body->edges[e].b : body->edges[e].b == at ? body->edges[e].a
+                                                                                          : -1;
             if (next < 0 || working[next] || parts[next].integrity <= 0) continue;
             working[next] = true;
             queue[tail++] = next;

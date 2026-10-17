@@ -45,7 +45,8 @@ void viewport_pan(Viewport *v, float dx_screen_px, float dy_screen_px)
 void viewport_zoom(Viewport *v, int step)
 {
     int zoom = v->zoom + step;
-    v->zoom = zoom < ZOOM_MIN ? ZOOM_MIN : zoom > ZOOM_MAX ? ZOOM_MAX : zoom;
+    v->zoom = zoom < ZOOM_MIN ? ZOOM_MIN : zoom > ZOOM_MAX ? ZOOM_MAX
+                                                           : zoom;
     viewport_clamp(v);
 }
 

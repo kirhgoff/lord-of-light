@@ -32,7 +32,8 @@
 #define LINEUP_SPRITE_WIDTH 120
 #define PARTS_TEXT_SIZE 512
 
-enum { FONT_BODY, FONT_COUNT };
+enum { FONT_BODY,
+       FONT_COUNT };
 
 static const Clay_Color LINEUP_BACKGROUND = {20, 18, 16, 255};
 static const Clay_Color END_BACKGROUND = {0, 0, 0, 190};
@@ -189,8 +190,7 @@ static void battle_log(const Battle *b, const GameData *data)
     Clay_Color colours[LOG_LINES];
     int count = collect_log_lines(b, data, lines, colours);
     CLAY({.id = CLAY_ID("BattleLog"),
-          .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = CLAY_PADDING_ALL(6), .childGap = 2,
-                     .layoutDirection = CLAY_TOP_TO_BOTTOM},
+          .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = CLAY_PADDING_ALL(6), .childGap = 2, .layoutDirection = CLAY_TOP_TO_BOTTOM},
           .clip = {.vertical = true, .childOffset = Clay_GetScrollOffset()}}) {
         for (int i = count - 1; i >= 0; i--) text(lines[i], colours[i]);
     }
@@ -233,8 +233,7 @@ static void detail(const Battle *b, const GameData *data, int c, const char (*la
     char label[LABEL_SIZE];
     combatant_label(b, c, label, sizeof label);
     CLAY({.id = CLAY_ID("Detail"),
-          .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(DETAIL_HEIGHT)}, .padding = CLAY_PADDING_ALL(DETAIL_PADDING),
-                     .childGap = 3, .layoutDirection = CLAY_TOP_TO_BOTTOM},
+          .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIXED(DETAIL_HEIGHT)}, .padding = CLAY_PADDING_ALL(DETAIL_PADDING), .childGap = 3, .layoutDirection = CLAY_TOP_TO_BOTTOM},
           .backgroundColor = DETAIL_BACKGROUND,
           .clip = {.vertical = true}}) {
         text(frame_string("%s%s", label, b->combatants[c].alive ? "" : " (dead)"), YELLOW_COLOUR);
@@ -284,7 +283,8 @@ static void overlay_part_line(const Combatant *who, const GameData *data, int sl
 {
     const Part *part = &data->parts[who->body.slots[slot].part];
     int integrity = who->parts[slot].integrity;
-    Clay_Color colour = integrity <= 0 ? RED_COLOUR : working ? TEXT_COLOUR : DIM_COLOUR;
+    Clay_Color colour = integrity <= 0 ? RED_COLOUR : working ? TEXT_COLOUR
+                                                              : DIM_COLOUR;
     text(frame_string("%s %d/%d", part->name, integrity > 0 ? integrity : 0, part->integrity), colour);
 }
 
@@ -349,8 +349,7 @@ static void report_lines(const Battle *b, const GameData *data, const BattleRepo
 static void death_log(const Battle *b, const GameData *data)
 {
     CLAY({.id = CLAY_ID("DeathLog"),
-          .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIT(0, DEATH_LOG_HEIGHT)}, .childGap = 2,
-                     .layoutDirection = CLAY_TOP_TO_BOTTOM},
+          .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIT(0, DEATH_LOG_HEIGHT)}, .childGap = 2, .layoutDirection = CLAY_TOP_TO_BOTTOM},
           .clip = {.vertical = true, .childOffset = Clay_GetScrollOffset()}}) {
         char line[EVENT_LINE_SIZE];
         for (int e = 0; e < b->log_count; e++)
@@ -366,8 +365,7 @@ static void end_screen(const Ui *ui, const Battle *b, const GameData *data)
           .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)},
                      .childAlignment = {.x = CLAY_ALIGN_X_CENTER, .y = CLAY_ALIGN_Y_CENTER}},
           .backgroundColor = END_BACKGROUND}) {
-        CLAY({.layout = {.sizing = {CLAY_SIZING_FIXED(END_SCREEN_WIDTH), CLAY_SIZING_FIT(0)}, .padding = CLAY_PADDING_ALL(16),
-                         .childGap = 6, .layoutDirection = CLAY_TOP_TO_BOTTOM},
+        CLAY({.layout = {.sizing = {CLAY_SIZING_FIXED(END_SCREEN_WIDTH), CLAY_SIZING_FIT(0)}, .padding = CLAY_PADDING_ALL(16), .childGap = 6, .layoutDirection = CLAY_TOP_TO_BOTTOM},
               .backgroundColor = DETAIL_BACKGROUND}) {
             sized_text(report.winner == SIDE_PANTHEON ? CLAY_STRING("Pantheon wins") : CLAY_STRING("Horde wins"), YELLOW_COLOUR,
                        FONT_BIG);
@@ -414,8 +412,7 @@ static void lineup_entry(const Battle *b, const GameData *data, int c)
 
 static void lineup_side(const Battle *b, const GameData *data, Side side, Clay_String title)
 {
-    CLAY({.layout = {.sizing = {CLAY_SIZING_PERCENT(0.5f), CLAY_SIZING_GROW(0)}, .padding = CLAY_PADDING_ALL(16), .childGap = 8,
-                     .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
+    CLAY({.layout = {.sizing = {CLAY_SIZING_PERCENT(0.5f), CLAY_SIZING_GROW(0)}, .padding = CLAY_PADDING_ALL(16), .childGap = 8, .layoutDirection = CLAY_TOP_TO_BOTTOM}}) {
         sized_text(title, YELLOW_COLOUR, FONT_BIG);
         for (int c = 0; c < b->combatant_count; c++)
             if (b->combatants[c].side == side && b->combatants[c].spawner < 0) lineup_entry(b, data, c);
@@ -425,8 +422,7 @@ static void lineup_side(const Battle *b, const GameData *data, Side side, Clay_S
 static void lineup(const Battle *b, const GameData *data)
 {
     CLAY({.id = CLAY_ID("Lineup"),
-          .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = CLAY_PADDING_ALL(8),
-                     .childAlignment = {.x = CLAY_ALIGN_X_CENTER}, .layoutDirection = CLAY_TOP_TO_BOTTOM},
+          .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = CLAY_PADDING_ALL(8), .childAlignment = {.x = CLAY_ALIGN_X_CENTER}, .layoutDirection = CLAY_TOP_TO_BOTTOM},
           .backgroundColor = LINEUP_BACKGROUND}) {
         CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}}}) {
             lineup_side(b, data, SIDE_PANTHEON, frame_string("The %s Pantheon", data->pantheons[b->pantheon].name));

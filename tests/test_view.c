@@ -178,8 +178,7 @@ static void test_facing_follows_horizontal_movement(void)
 
 static Event hit_event(int tick, int actor, int actor_part, int target, int target_part)
 {
-    return (Event){.tick = tick, .kind = EVENT_HIT, .actor = actor, .actor_part = actor_part, .target = target,
-                   .target_part = target_part, .element = ELEMENT_FIRE};
+    return (Event){.tick = tick, .kind = EVENT_HIT, .actor = actor, .actor_part = actor_part, .target = target, .target_part = target_part, .element = ELEMENT_FIRE};
 }
 
 static int live_effects(const Scene *scene)
@@ -383,7 +382,8 @@ static void test_tile_hash_covers_every_variant(void)
             int h = tile_hash(c, r);
             CHECK(h >= 0 && h < 256);
             variants[h % 4]++;
-            if (h % 3 == 0) pillars++; else rocks++;
+            if (h % 3 == 0) pillars++;
+            else rocks++;
         }
     for (int v = 0; v < 4; v++) CHECK(variants[v] > 0);
     CHECK(pillars > 0 && rocks > 0);

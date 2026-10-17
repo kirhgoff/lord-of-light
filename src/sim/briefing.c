@@ -20,7 +20,7 @@ static const char *const BAND_WORDS[3] = {"close", "near", "far"};
 static const char *const ELEMENT_WORDS[ELEMENT_COUNT] = {"Kinetic", "Fire", "Frost", "Lightning", "Radiance", "Venom", "Mind", "Void"};
 
 static const char *const STANCE_KEYS[STANCE_COUNT] = {NULL, "fight the nearest enemy", "retreat from the enemy", "support the hurt ally",
-                                                       "collect the pickup"};
+                                                      "collect the pickup"};
 
 typedef struct {
     char *out;
@@ -127,7 +127,8 @@ static void join_list(char *out, const char (*items)[LIST_MAX], int count)
 {
     out[0] = '\0';
     for (int i = 0; i < count; i++) {
-        const char *separator = i == 0 ? "" : i == count - 1 ? " and " : ", ";
+        const char *separator = i == 0 ? "" : i == count - 1 ? " and "
+                                                             : ", ";
         strcat(out, separator);
         strcat(out, items[i]);
     }

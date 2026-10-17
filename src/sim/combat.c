@@ -10,7 +10,8 @@ static int64_t squared(int64_t value)
 
 static int clamp_percent(int value)
 {
-    return value < -100 ? -100 : value > 100 ? 100 : value;
+    return value < -100 ? -100 : value > 100 ? 100
+                                             : value;
 }
 
 static int percent_of(int value, int percent)

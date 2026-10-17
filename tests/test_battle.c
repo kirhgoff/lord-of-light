@@ -108,8 +108,7 @@ static void test_step_advances_tick_and_moves_only_with_orders(void)
 
 static Event decision_event_with_provenance(void)
 {
-    Event event = {.tick = 0, .kind = EVENT_DECISION, .actor = 2, .actor_part = -1, .target = -1, .target_part = -1,
-                   .element = ELEMENT_FIRE, .amount = STANCE_FIGHT, .detail = HURT_WOUNDED, .decider = DECIDER_REFLEX};
+    Event event = {.tick = 0, .kind = EVENT_DECISION, .actor = 2, .actor_part = -1, .target = -1, .target_part = -1, .element = ELEMENT_FIRE, .amount = STANCE_FIGHT, .detail = HURT_WOUNDED, .decider = DECIDER_REFLEX};
     event.confidence_permille = 415;
     event.answer_ms = 612;
     event.fallback = FALLBACK_LOW_CONFIDENCE;
@@ -341,8 +340,7 @@ static void test_seed_zero_differs_from_one(void)
 
 static void test_core_connectivity_two_paths(void)
 {
-    Body body = {.slot_count = 4, .core = 0, .edge_count = 4,
-                 .edges = {{0, 1}, {0, 2}, {1, 3}, {2, 3}}};
+    Body body = {.slot_count = 4, .core = 0, .edge_count = 4, .edges = {{0, 1}, {0, 2}, {1, 3}, {2, 3}}};
     PartState parts[MAX_SLOTS] = {0};
     for (int s = 0; s < 4; s++) parts[s].integrity = 10;
     bool working[MAX_SLOTS];

@@ -115,8 +115,7 @@ static int part_with_ability(OrderKind kind)
 
 static void log_event(EventKind kind, int actor, int actor_part, int target, int element, int detail)
 {
-    Event e = {.kind = kind, .actor = actor, .actor_part = actor_part, .target = target, .target_part = 0,
-               .element = element, .detail = detail};
+    Event e = {.kind = kind, .actor = actor, .actor_part = actor_part, .target = target, .target_part = 0, .element = element, .detail = detail};
     battle_log_event(&battle, e);
 }
 

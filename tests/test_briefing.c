@@ -345,8 +345,7 @@ static void test_request_record_carries_the_reflex_answer_in_criteria_keys(void)
             check_record_matches_reflex(actors[a], &seen);
         }
     }
-    const char *const enemies[][2] = {{"Norse", "Thor"}, {"Norse", "Odin"}, {"Egyptian", "Ra"}, {"Egyptian", "Set"}, {"Hindu", "Kali"},
-                                      {"Hindu", "Shiva"}, {"Greek", "Hades"}, {"Celtic", "Morrigan"}, {"Celtic", "Brigid"}};
+    const char *const enemies[][2] = {{"Norse", "Thor"}, {"Norse", "Odin"}, {"Egyptian", "Ra"}, {"Egyptian", "Set"}, {"Hindu", "Kali"}, {"Hindu", "Shiva"}, {"Greek", "Hades"}, {"Celtic", "Morrigan"}, {"Celtic", "Brigid"}};
     for (size_t e = 0; e < sizeof enemies / sizeof enemies[0]; e++) {
         fresh();
         int zeus = add_deity("Greek", "Zeus", SIDE_PANTHEON, 500, 200);
