@@ -16,6 +16,7 @@ typedef struct {
 typedef struct {
     DeciderKind choice;
     bool jev_available;
+    const char *jev_key_problem;
     char jev_key[LAYA_KEY_LEN];
     const char *dump_requests_path;
     const char *replay_path;

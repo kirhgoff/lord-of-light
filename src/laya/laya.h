@@ -34,7 +34,12 @@ LayaTransport *laya_curl_transport(int timeout_ms, const char *bearer_key);
 
 #define LAYA_KEY_LEN 256
 
-bool laya_parse_key(const char *text, char *key, size_t size);
+typedef enum { LAYA_KEY_OK,
+               LAYA_KEY_EMPTY,
+               LAYA_KEY_TOO_LONG,
+               LAYA_KEY_INVALID } LayaKeyStatus;
+
+LayaKeyStatus laya_parse_key(const char *text, char *key, size_t size);
 
 typedef struct {
     Decider base;
@@ -44,6 +49,7 @@ typedef struct {
     int url_count;
     char model[LAYA_MODEL_LEN];
     bool in_flight[MAX_COMBATANTS];
+    bool stale[MAX_COMBATANTS];
     LayaQuestions asked[MAX_COMBATANTS];
     bool has_reply[MAX_COMBATANTS];
     LayaReply reply[MAX_COMBATANTS];

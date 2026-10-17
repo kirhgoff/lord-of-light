@@ -35,14 +35,16 @@ static void drain_replies(LayaDecider *laya)
     LayaReply reply;
     while (laya->transport->poll(laya->transport, &reply)) {
         int c = reply.id;
-        if (c < 0 || c >= MAX_COMBATANTS || resend_to_next_url(laya, c, reply.failure)) {
-            free(reply.text);
+        bool valid = c >= 0 && c < MAX_COMBATANTS;
+        if (valid && laya->stale[c]) laya->stale[c] = false;
+        else if (valid && !resend_to_next_url(laya, c, reply.failure)) {
+            free(laya->reply[c].text);
+            laya->reply[c] = reply;
+            laya->has_reply[c] = true;
+            laya->in_flight[c] = false;
             continue;
         }
-        free(laya->reply[c].text);
-        laya->reply[c] = reply;
-        laya->has_reply[c] = true;
-        laya->in_flight[c] = false;
+        free(reply.text);
     }
 }
 
@@ -92,15 +94,18 @@ static bool laya_decide(Decider *self, const Battle *battle, const GameData *dat
     return false;
 }
 
-bool laya_parse_key(const char *text, char *key, size_t size)
+LayaKeyStatus laya_parse_key(const char *text, char *key, size_t size)
 {
     while (isspace((unsigned char)*text)) text++;
     size_t length = strlen(text);
     while (length > 0 && isspace((unsigned char)text[length - 1])) length--;
-    if (length == 0 || length >= size) return false;
+    if (length == 0) return LAYA_KEY_EMPTY;
+    if (length >= size) return LAYA_KEY_TOO_LONG;
+    for (size_t i = 0; i < length; i++)
+        if (isspace((unsigned char)text[i]) || iscntrl((unsigned char)text[i])) return LAYA_KEY_INVALID;
     memcpy(key, text, length);
     key[length] = '\0';
-    return true;
+    return LAYA_KEY_OK;
 }
 
 void laya_decider_init(LayaDecider *laya, LayaTransport *transport, const LayaEndpoint *endpoint)
@@ -117,6 +122,15 @@ void laya_decider_init(LayaDecider *laya, LayaTransport *transport, const LayaEn
 
 void laya_decider_reset(LayaDecider *laya)
 {
+    for (int c = 0; c < MAX_COMBATANTS; c++) {
+        free(laya->reply[c].text);
+        laya->reply[c].text = NULL;
+        free(laya->body[c]);
+        laya->body[c] = NULL;
+        laya->has_reply[c] = false;
+        laya->stale[c] = laya->in_flight[c];
+        laya->in_flight[c] = false;
+    }
     laya->offline_until_tick = 0;
     laya->offline_reason = FALLBACK_NONE;
     memset(laya->briefing, 0, sizeof laya->briefing);

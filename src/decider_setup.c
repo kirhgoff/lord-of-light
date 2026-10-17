@@ -67,8 +67,12 @@ static bool open_recording(DeciderSetup *setup, char *err, size_t err_size)
 static void load_jev_key(DeciderSetup *setup)
 {
     char *text = read_text_file(JEV_KEY_PATH);
-    setup->jev_available = text && laya_parse_key(text, setup->jev_key, sizeof setup->jev_key);
+    LayaKeyStatus status = text ? laya_parse_key(text, setup->jev_key, sizeof setup->jev_key) : LAYA_KEY_EMPTY;
     free(text);
+    setup->jev_available = status == LAYA_KEY_OK;
+    setup->jev_key_problem = status == LAYA_KEY_TOO_LONG  ? JEV_KEY_PATH " is too long"
+                             : status == LAYA_KEY_INVALID ? JEV_KEY_PATH " has whitespace or control characters"
+                                                          : "cannot read " JEV_KEY_PATH;
 }
 
 static bool open_networked(LayaDecider *decider, bool *open, LayaTransport *transport, const LayaEndpoint *endpoint, char *err, size_t err_size)
@@ -91,7 +95,7 @@ static bool open_laya(DeciderSetup *setup, const GameData *data, char *err, size
 static bool open_jev(DeciderSetup *setup, const GameData *data, char *err, size_t err_size)
 {
     if (setup->jev_open) return true;
-    if (!setup->jev_available) return snprintf(err, err_size, "cannot read %s", JEV_KEY_PATH), false;
+    if (!setup->jev_available) return snprintf(err, err_size, "%s", setup->jev_key_problem), false;
     const char *urls[1] = {data->laya.jev_url};
     LayaEndpoint endpoint = {DECIDER_JEV, urls, 1, data->laya.jev_model};
     return open_networked(&setup->jev_decider, &setup->jev_open, laya_curl_transport(data->laya.timeout_ms, setup->jev_key), &endpoint, err, err_size);

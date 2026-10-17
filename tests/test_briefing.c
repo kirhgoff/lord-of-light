@@ -438,7 +438,7 @@ static void test_only_a_given_model_goes_into_the_request(void)
     char *modelled = laya_request_json(&battle, &data, zeus, text, "jev-latest", &asked);
     cJSON *plain_request = cJSON_Parse(plain), *modelled_request = cJSON_Parse(modelled);
     CHECK(!cJSON_HasObjectItem(plain_request, "model"));
-    CHECK(strcmp(text_of(modelled_request, "model"), "jev-latest") == 0);
+    CHECK(cJSON_IsString(cJSON_GetObjectItemCaseSensitive(modelled_request, "model")) && strcmp(text_of(modelled_request, "model"), "jev-latest") == 0);
     cJSON_Delete(plain_request);
     cJSON_Delete(modelled_request);
     free(plain);
