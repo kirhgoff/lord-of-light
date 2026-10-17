@@ -454,8 +454,10 @@ static void decider_option(const Ui *ui, DeciderKind kind, int key)
     bool unavailable = kind == DECIDER_JEV && !ui->jev_available;
     Clay_Color colour = unavailable ? DIM_COLOUR : ui->decider == kind ? YELLOW_COLOUR
                                                                        : TEXT_COLOUR;
-    text(frame_string("[%d] %s", key, decider_name(kind)), colour);
-    if (unavailable) text(CLAY_STRING("(no .jev_key)"), DIM_COLOUR);
+    CLAY({.layout = {.sizing = {CLAY_SIZING_FIT(0), CLAY_SIZING_FIT(0)}, .childGap = 6}}) {
+        text(frame_string(ui->decider == kind ? "> [%d] %s" : "[%d] %s", key, decider_name(kind)), colour);
+        if (unavailable) text(CLAY_STRING("(no .jev_key)"), DIM_COLOUR);
+    }
 }
 
 static void decider_picker(const Ui *ui)
