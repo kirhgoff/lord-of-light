@@ -64,9 +64,9 @@ static void test_place_volume_is_full_inside_and_falls_off_to_zero_one_half_widt
 static void test_place_volume_counts_vertical_distance_and_diagonals(void)
 {
     Viewport view = zoomed_view();
-    CHECK(near(sound_place(400, 256 + 84, &view).volume, 1));
-    CHECK(near(sound_place(400, 256 + 84 + 80, &view).volume, 0.5f));
-    CHECK(near(sound_place(400 + 160 + 96, 256 + 84 + 128, &view).volume, 0));
+    CHECK(near(sound_place(400, 256 + 90, &view).volume, 1));
+    CHECK(near(sound_place(400, 256 + 90 + 80, &view).volume, 0.5f));
+    CHECK(near(sound_place(400 + 160 + 96, 256 + 90 + 128, &view).volume, 0));
 }
 
 static void test_zooming_out_hears_more_and_quieter_pan(void)
@@ -135,7 +135,7 @@ static void test_hit_plays_ability_at_actor_then_hit_sound_at_target(void)
     for (int a = 0; a < part->ability_count; a++)
         if (part->abilities[a].order == ORDER_STRIKE || part->abilities[a].order == ORDER_CAST) ability = &part->abilities[a];
     int target = battle.combatant_count - 1;
-    log_event(EVENT_HIT, 0, slot, target, ability->element, 5);
+    log_event(EVENT_HIT, 0, slot, target, (int)ability->element, 5);
     int n = sound_collect(&tracker, &battle, &data, cues, OUT_MAX);
     CHECK(n == 2);
     CHECK(strcmp(cues[0].id, ability->sound) == 0 && cues[0].category == SOUND_ABILITY && cues[0].x == combatant_x(0));
@@ -285,7 +285,7 @@ static void test_chain_hits_of_one_action_play_the_ability_once(void)
     const Part *part = &data.parts[battle.combatants[0].body.slots[slot].part];
     int element = -1;
     for (int a = 0; a < part->ability_count; a++)
-        if (part->abilities[a].order == ORDER_STRIKE || part->abilities[a].order == ORDER_CAST) element = part->abilities[a].element;
+        if (part->abilities[a].order == ORDER_STRIKE || part->abilities[a].order == ORDER_CAST) element = (int)part->abilities[a].element;
     log_event(EVENT_HIT, 0, slot, 1, element, 5);
     log_event(EVENT_HIT, 0, slot, 2, element, 5);
     int n = sound_collect(&tracker, &battle, &data, cues, OUT_MAX);
@@ -310,7 +310,7 @@ static void test_cast_only_part_plays_its_cast_sound(void)
     CHECK(cast_part >= 0);
     battle.combatants[0].body.slots[0].part = cast_part;
     const Ability *cast = &data.parts[cast_part].abilities[0];
-    log_event(EVENT_HIT, 0, 0, 1, cast->element, 5);
+    log_event(EVENT_HIT, 0, 0, 1, (int)cast->element, 5);
     CHECK(sound_collect(&tracker, &battle, &data, cues, OUT_MAX) == 2);
     CHECK(strcmp(cues[0].id, cast->sound) == 0);
 }

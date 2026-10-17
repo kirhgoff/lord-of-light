@@ -136,7 +136,7 @@ static void join_list(char *out, const char (*items)[LIST_MAX], int count)
 
 static void say_abilities(Writer *writer, const Combatant *me, const GameData *data, const Subject *self)
 {
-    AttackKind attacks[MAX_SLOTS * MAX_ABILITIES];
+    AttackKind attacks[MAX_SLOTS * MAX_ABILITIES] = {0};
     int count = working_attacks(me, data, attacks);
     if (count == 0) {
         say(writer, "%s cannot attack.", self->text);
@@ -151,7 +151,7 @@ static void say_abilities(Writer *writer, const Combatant *me, const GameData *d
 
 static void say_resistances(Writer *writer, const GameData *data, const Combatant *me, const Combatant *focus)
 {
-    AttackKind attacks[MAX_SLOTS * MAX_ABILITIES];
+    AttackKind attacks[MAX_SLOTS * MAX_ABILITIES] = {0};
     Element elements[ELEMENT_COUNT];
     int distinct = distinct_attack_elements(attacks, working_attacks(me, data, attacks), elements);
     if (distinct < 2) return;
@@ -288,15 +288,15 @@ static bool some_pickup_is_seen(const Perception *perception)
 static void plan_questions(const GameData *data, const Combatant *me, const Perception *perception,
                            const Perceived *focus, LayaQuestions *asked)
 {
-    AttackKind attacks[MAX_SLOTS * MAX_ABILITIES];
+    AttackKind attacks[MAX_SLOTS * MAX_ABILITIES] = {0};
     Element elements[ELEMENT_COUNT];
     int distinct = distinct_attack_elements(attacks, working_attacks(me, data, attacks), elements);
     *asked = (LayaQuestions){.fixed_element = -1};
     if (focus && distinct >= 2) {
         asked->element_count = distinct;
-        for (int e = 0; e < distinct; e++) asked->elements[e] = elements[e];
+        for (int e = 0; e < distinct; e++) asked->elements[e] = (int)elements[e];
     } else if (focus && distinct == 1) {
-        asked->fixed_element = elements[0];
+        asked->fixed_element = (int)elements[0];
     }
     asked->stance_offered[STANCE_FIGHT] = asked->stance_offered[STANCE_RETREAT] = true;
     asked->stance_offered[STANCE_SUPPORT] = combatant_has_working_support(me, data) && some_ally_is_hurt(me, perception);
@@ -345,7 +345,7 @@ char *laya_request_json(const Battle *battle, const GameData *data, int combatan
              "%s fights unless near death, then retreats to a healer. %s collects a healing pickup when wounded and the pickup is nearer "
              "than any enemy. %s supports an ally who is near death when %s can heal. Choose what %s does now.",
              headed.text, headed.text, headed.text, self.text, self.text);
-    const char *stance_keys[STANCE_COUNT];
+    const char *stance_keys[STANCE_COUNT] = {0};
     Stance stances[STANCE_COUNT];
     add_question(questions, "stance", instructions, stance_keys, offered_stances(asked, stance_keys, stances));
     char *text = cJSON_PrintUnformatted(root);

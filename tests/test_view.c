@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include "check.h"
@@ -96,16 +97,45 @@ static void test_all_atlases_load_for_the_real_data(void)
     if (!loaded) printf("  %s\n", err);
 }
 
-static void test_viewport_starts_centred_and_clamped(void)
+static bool near(float a, float b)
+{
+    return a - b < 0.001f && b - a < 0.001f;
+}
+
+static void test_viewport_starts_at_cover_zoom_centred(void)
 {
     Viewport v;
     viewport_init(&v, WIDTH, HEIGHT);
-    CHECK(v.zoom == 1);
+    CHECK(near(v.zoom, 1280.0f / 768));
     CHECK(v.centre_x == 384 && v.centre_y == 256);
+}
+
+static void test_cover_zoom_follows_the_tighter_axis(void)
+{
+    Viewport v;
+    viewport_init(&v, 1920, 1080);
+    CHECK(near(viewport_cover_zoom(&v), 2.5f));
+    viewport_init(&v, 900, 900);
+    CHECK(near(viewport_cover_zoom(&v), 900.0f / 512));
+    viewport_init(&v, WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT);
+    CHECK(near(viewport_cover_zoom(&v), 1024.0f / 768));
+}
+
+static void test_viewport_zoom_steps_to_whole_numbers(void)
+{
+    Viewport v;
+    viewport_init(&v, WIDTH, HEIGHT);
     viewport_zoom(&v, 1);
-    CHECK(v.zoom == 2);
-    CHECK(v.centre_x >= 320 && v.centre_x <= 448);
-    CHECK(v.centre_y >= 168 && v.centre_y <= 344);
+    CHECK(near(v.zoom, 2));
+    viewport_zoom(&v, 1);
+    CHECK(near(v.zoom, 3));
+    viewport_zoom(&v, 1);
+    CHECK(near(v.zoom, 4));
+    viewport_zoom(&v, -1);
+    viewport_zoom(&v, -1);
+    CHECK(near(v.zoom, 2));
+    viewport_zoom(&v, -1);
+    CHECK(near(v.zoom, 1280.0f / 768));
 }
 
 static void test_viewport_zoom_stays_within_limits(void)
@@ -115,7 +145,20 @@ static void test_viewport_zoom_stays_within_limits(void)
     for (int i = 0; i < 10; i++) viewport_zoom(&v, 1);
     CHECK(v.zoom == ZOOM_MAX);
     for (int i = 0; i < 10; i++) viewport_zoom(&v, -1);
-    CHECK(v.zoom == ZOOM_MIN);
+    CHECK(near(v.zoom, viewport_cover_zoom(&v)));
+    viewport_init(&v, 3840, 2160);
+    for (int i = 0; i < 10; i++) viewport_zoom(&v, 1);
+    CHECK(near(v.zoom, 5));
+    viewport_init(&v, 4000, 2000);
+    viewport_zoom(&v, 1);
+    CHECK(near(v.zoom, 4000.0f / 768));
+}
+
+static bool arena_covers_window(const Viewport *v)
+{
+    return viewport_screen_x(v, 0) <= 0.01f && viewport_screen_y(v, 0) <= 0.01f &&
+           viewport_screen_x(v, ARENA_WIDTH_TILES * TILE_SIZE) >= (float)v->width - 0.01f &&
+           viewport_screen_y(v, ARENA_HEIGHT_TILES * TILE_SIZE) >= (float)v->height - 0.01f;
 }
 
 static void test_viewport_pan_stops_at_the_arena_edge(void)
@@ -124,9 +167,48 @@ static void test_viewport_pan_stops_at_the_arena_edge(void)
     viewport_init(&v, WIDTH, HEIGHT);
     viewport_zoom(&v, 1);
     viewport_pan(&v, 10000, 10000);
-    CHECK(v.centre_x == 448 && v.centre_y == 344);
+    CHECK(near(v.centre_x, 768 - 320) && near(v.centre_y, 512 - 180));
+    CHECK(arena_covers_window(&v));
     viewport_pan(&v, -10000, -10000);
-    CHECK(v.centre_x == 320 && v.centre_y == 168);
+    CHECK(near(v.centre_x, 320) && near(v.centre_y, 180));
+    CHECK(arena_covers_window(&v));
+}
+
+static void test_arena_covers_the_window_at_any_size(void)
+{
+    static const int sizes[][2] = {{1280, 720}, {1920, 1080}, {900, 900}, {WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT}, {700, 1400}};
+    for (int i = 0; i < 5; i++) {
+        Viewport v;
+        viewport_init(&v, sizes[i][0], sizes[i][1]);
+        CHECK(arena_covers_window(&v));
+        viewport_pan(&v, -5000, 5000);
+        CHECK(arena_covers_window(&v));
+        viewport_zoom(&v, 1);
+        CHECK(arena_covers_window(&v));
+    }
+}
+
+static void test_resize_keeps_the_centre_world_point(void)
+{
+    Viewport v;
+    viewport_init(&v, WIDTH, HEIGHT);
+    viewport_zoom(&v, 1);
+    viewport_zoom(&v, 1);
+    viewport_pan(&v, 40, -30);
+    float x = v.centre_x, y = v.centre_y;
+    viewport_resize(&v, 1100, 800);
+    CHECK(near(v.centre_x, x) && near(v.centre_y, y));
+    CHECK(v.width == 1100 && v.height == 800);
+    CHECK(arena_covers_window(&v));
+}
+
+static void test_resize_raises_zoom_to_the_new_cover(void)
+{
+    Viewport v;
+    viewport_init(&v, WIDTH, HEIGHT);
+    viewport_resize(&v, 1920, 1080);
+    CHECK(near(v.zoom, 2.5f));
+    CHECK(arena_covers_window(&v));
 }
 
 static void test_viewport_centre_maps_to_screen_centre(void)
@@ -136,8 +218,8 @@ static void test_viewport_centre_maps_to_screen_centre(void)
     viewport_zoom(&v, 1);
     viewport_pan(&v, 40, -30);
     CHECK(viewport_screen_x(&v, v.centre_x) == WIDTH / 2);
-    CHECK(viewport_screen_y(&v, v.centre_y) == HUD_HEIGHT + (HEIGHT - HUD_HEIGHT) / 2);
-    CHECK(viewport_screen_x(&v, v.centre_x + 10) == WIDTH / 2 + 10 * v.zoom);
+    CHECK(viewport_screen_y(&v, v.centre_y) == HEIGHT / 2);
+    CHECK(near(viewport_screen_x(&v, v.centre_x + 10), WIDTH / 2 + 10 * v.zoom));
 }
 
 static void test_position_interpolates_between_ticks(void)
@@ -442,21 +524,14 @@ static void test_viewport_world_inverts_screen(void)
 {
     Viewport v;
     viewport_init(&v, WIDTH, HEIGHT);
-    viewport_zoom(&v, 1);
     viewport_pan(&v, 40, -30);
+    CHECK(!near(v.zoom, floorf(v.zoom)));
     for (float wx = 100; wx < 700; wx += 150)
         for (float wy = 150; wy < 400; wy += 80) {
-            float dx = viewport_world_x(&v, viewport_screen_x(&v, wx)) - wx;
-            float dy = viewport_world_y(&v, viewport_screen_y(&v, wy)) - wy;
-            CHECK(dx > -0.01f && dx < 0.01f && dy > -0.01f && dy < 0.01f);
+            CHECK(near(viewport_world_x(&v, viewport_screen_x(&v, wx)), wx));
+            CHECK(near(viewport_world_y(&v, viewport_screen_y(&v, wy)), wy));
         }
     CHECK(viewport_world_x(&v, (float)WIDTH / 2) == v.centre_x);
-    viewport_set_inset(&v, 360);
-    for (float wx = 100; wx < 700; wx += 150) {
-        float dx = viewport_world_x(&v, viewport_screen_x(&v, wx)) - wx;
-        CHECK(dx > -0.01f && dx < 0.01f);
-    }
-    CHECK(viewport_screen_x(&v, v.centre_x) == (float)(WIDTH - 360) / 2);
 }
 
 static void test_pick_hits_the_front_combatant(void)
@@ -500,7 +575,12 @@ void run_view_tests(void)
     test_effect_frame_expires();
     test_position_interpolates_between_ticks();
     test_facing_follows_horizontal_movement();
-    test_viewport_starts_centred_and_clamped();
+    test_viewport_starts_at_cover_zoom_centred();
+    test_cover_zoom_follows_the_tighter_axis();
+    test_viewport_zoom_steps_to_whole_numbers();
+    test_arena_covers_the_window_at_any_size();
+    test_resize_keeps_the_centre_world_point();
+    test_resize_raises_zoom_to_the_new_cover();
     test_viewport_zoom_stays_within_limits();
     test_viewport_pan_stops_at_the_arena_edge();
     test_viewport_centre_maps_to_screen_centre();

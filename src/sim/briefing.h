@@ -4,7 +4,7 @@
 #include "battle.h"
 
 #define BRIEFING_MAX 1200
-#define LAYA_REPLY_MAX (1024 * 1024)
+#define LAYA_REPLY_MAX ((size_t)1024 * 1024)
 
 typedef struct {
     bool stance_offered[STANCE_COUNT];

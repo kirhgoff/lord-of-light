@@ -9,9 +9,9 @@
 
 #define HUD_HEIGHT 48
 #define PANEL_WIDTH 440
-#define ZOOM_MIN 1
 #define ZOOM_MAX 4
-#define ZOOM_DEFAULT 1
+#define WINDOW_MIN_WIDTH 1024
+#define WINDOW_MIN_HEIGHT 640
 #define PAN_SCREEN_PX_PER_SECOND 600
 #define TICK_SECONDS (1.0f / TICKS_PER_SECOND)
 #define IDLE_FRAME_TICKS 10
@@ -31,15 +31,15 @@
 typedef struct {
     float centre_x;
     float centre_y;
-    int zoom;
+    float zoom;
     int width;
     int height;
-    int inset_right;
 } Viewport;
 
 void viewport_init(Viewport *v, int width, int height);
 void viewport_clamp(Viewport *v);
-void viewport_set_inset(Viewport *v, int inset_right);
+float viewport_cover_zoom(const Viewport *v);
+void viewport_resize(Viewport *v, int width, int height);
 void viewport_pan(Viewport *v, float dx_screen_px, float dy_screen_px);
 void viewport_zoom(Viewport *v, int step);
 float viewport_screen_x(const Viewport *v, float world_x);
