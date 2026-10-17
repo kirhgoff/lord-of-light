@@ -13,6 +13,9 @@ typedef struct {
     bool follow_log;
     bool restart_allowed;
     bool intro;
+    bool pick_decider;
+    bool jev_available;
+    DeciderKind decider;
 } Ui;
 
 bool ui_init(int width, int height);

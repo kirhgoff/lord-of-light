@@ -20,7 +20,7 @@ build/game --seed 42                       # another Battle
 build/game --decider laya                  # Laya picks Stance + Appraisals
 ```
 
-The game decides with the Reflex unless you pass `--decider laya`. Laya servers are listed in `data/laya.json`: first the LAN host, then `127.0.0.1:8765`. To run one locally:
+The game decides with the Reflex unless you pass `--decider laya`. Laya servers are listed in `data/laya.json`: first `127.0.0.1:8765`, then the LAN host. To run one locally:
 
 ```sh
 make laya-local                            # laya-serve on 127.0.0.1:8765, CPU
@@ -47,7 +47,7 @@ If Laya is unreachable or slow, the Reflex takes over.
 
 ```
 build/game [--seed N] [--ticks N --screenshot out.png] [--xray] [--select N]
-           [--decider laya|reflex] [--replay dump.json]
+           [--decider laya|reflex|jev] [--lineup] [--replay dump.json]
 ```
 
 `--replay` plays a dumped Battle back from its log of Decisions.

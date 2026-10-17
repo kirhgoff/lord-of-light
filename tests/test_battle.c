@@ -108,7 +108,7 @@ static void test_step_advances_tick_and_moves_only_with_orders(void)
 
 static Event decision_event_with_provenance(void)
 {
-    Event event = {.tick = 0, .kind = EVENT_DECISION, .actor = 2, .actor_part = -1, .target = -1, .target_part = -1, .element = ELEMENT_FIRE, .amount = STANCE_FIGHT, .detail = HURT_WOUNDED, .decider = DECIDER_REFLEX};
+    Event event = {.tick = 0, .kind = EVENT_DECISION, .actor = 2, .actor_part = -1, .target = -1, .target_part = -1, .element = ELEMENT_FIRE, .amount = STANCE_FIGHT, .detail = HURT_WOUNDED, .decider = DECIDER_JEV};
     event.confidence_permille = 415;
     event.answer_ms = 612;
     event.fallback = FALLBACK_LOW_CONFIDENCE;
@@ -147,7 +147,7 @@ static void test_round_trip_is_identical(void)
     CHECK(memcmp(loaded.obstacle, battle.obstacle, sizeof battle.obstacle) == 0);
     CHECK(loaded.combatants[3].next_decision_tick == 77 && loaded.combatants[3].next_waiting_tick == 88 && loaded.log[1].decider == DECIDER_REFLEX);
     const Event *back = &loaded.log[2];
-    CHECK(back->confidence_permille == 415 && back->answer_ms == 612 && back->fallback == FALLBACK_LOW_CONFIDENCE);
+    CHECK(back->decider == DECIDER_JEV && back->confidence_permille == 415 && back->answer_ms == 612 && back->fallback == FALLBACK_LOW_CONFIDENCE);
     CHECK(back->stance_permille[STANCE_FIGHT] == 610 && back->stance_permille[STANCE_RETREAT] == 200 && back->stance_permille[STANCE_COLLECT] == 190);
     CHECK(loaded.log_count == 3 && loaded.log[0].amount == 12 && loaded.log[0].detail == -4 && loaded.log[0].tick == 30 && loaded.rng == battle.rng);
     free(json);
@@ -237,7 +237,7 @@ static void test_load_rejects_bad_input(void)
     check_rejected(json, "\"pickups\":[{", "\"pickups\":[5,{");
     check_rejected(json, "\"log\":[{", "\"log\":[5,{");
     check_rejected(json, "\"hurt_level\":0", "\"hurt_level\":4");
-    check_rejected(json, "\"decider\":0", "\"decider\":3");
+    check_rejected(json, "\"decider\":0", "\"decider\":4");
     check_rejected(json, "\"next_decision_tick\":0", "\"next_decision_tick\":-1");
     check_rejected(json, "\"next_waiting_tick\":0", "\"next_waiting_tick\":-1");
     check_rejected(json, "\"decision\":{\"stance\"", "\"decisionx\":{\"stance\"");

@@ -30,12 +30,26 @@ typedef struct {
 
 Fallback laya_classify_transfer(const TransferOutcome *outcome);
 
-LayaTransport *laya_curl_transport(int timeout_ms);
+LayaTransport *laya_curl_transport(int timeout_ms, const char *bearer_key);
+
+#define LAYA_KEY_LEN 256
+
+typedef enum { LAYA_KEY_OK,
+               LAYA_KEY_EMPTY,
+               LAYA_KEY_TOO_LONG,
+               LAYA_KEY_INVALID } LayaKeyStatus;
+
+LayaKeyStatus laya_parse_key(const char *text, char *key, size_t size);
 
 typedef struct {
     Decider base;
     LayaTransport *transport;
+    DeciderKind source;
+    char urls[LAYA_MAX_URLS][LAYA_URL_LEN];
+    int url_count;
+    char model[LAYA_MODEL_LEN];
     bool in_flight[MAX_COMBATANTS];
+    int stale_replies[MAX_COMBATANTS];
     LayaQuestions asked[MAX_COMBATANTS];
     bool has_reply[MAX_COMBATANTS];
     LayaReply reply[MAX_COMBATANTS];
@@ -49,7 +63,14 @@ typedef struct {
     int truncated_count;
 } LayaDecider;
 
-void laya_decider_init(LayaDecider *laya, LayaTransport *transport);
+typedef struct {
+    DeciderKind source;
+    const char *const *urls;
+    int url_count;
+    const char *model;
+} LayaEndpoint;
+
+void laya_decider_init(LayaDecider *laya, LayaTransport *transport, const LayaEndpoint *endpoint);
 void laya_decider_close(LayaDecider *laya);
 void laya_decider_reset(LayaDecider *laya);
 

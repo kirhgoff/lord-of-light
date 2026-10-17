@@ -182,11 +182,14 @@ DecisionStats battle_decision_stats(const Battle *battle)
         const Event *event = &battle->log[e];
         if (event->kind != EVENT_DECISION) continue;
         stats.fallback[event->fallback]++;
-        if (event->decider == DECIDER_LAYA) stats.laya++, confidence_sum += event->confidence_permille;
-        else stats.reflex++;
+        stats.laya += event->decider == DECIDER_LAYA;
+        stats.jev += event->decider == DECIDER_JEV;
+        stats.reflex += event->decider != DECIDER_LAYA && event->decider != DECIDER_JEV;
+        if (event->decider == DECIDER_LAYA || event->decider == DECIDER_JEV) confidence_sum += event->confidence_permille;
         if (event->answer_ms > 0) answer_sum += event->answer_ms, answer_count++;
     }
-    stats.mean_confidence_permille = stats.laya ? (int)(confidence_sum / stats.laya) : 0;
+    int asked = stats.laya + stats.jev;
+    stats.mean_confidence_permille = asked ? (int)(confidence_sum / asked) : 0;
     stats.mean_answer_ms = answer_count ? (int)(answer_sum / answer_count) : 0;
     return stats;
 }

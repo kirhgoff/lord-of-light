@@ -215,7 +215,7 @@ static void decision_lines(const Battle *b, int c)
     int last = battle_last_decision(b, c);
     if (last < 0) return;
     const Event *e = &b->log[last];
-    text(frame_string("%s   fallback %s   confidence %d.%03d   answer %d ms", e->decider == DECIDER_LAYA ? "Laya" : "Reflex",
+    text(frame_string("%s   fallback %s   confidence %d.%03d   answer %d ms", decider_name(e->decider),
                       fallback_id(e->fallback), e->confidence_permille / 1000, e->confidence_permille % 1000, e->answer_ms),
          DIM_COLOUR);
 }
@@ -365,13 +365,13 @@ static void report_lines(const Battle *b, const GameData *data, const BattleRepo
                              : CLAY_STRING("Top Element by damage: none"),
          TEXT_COLOUR);
     const DecisionStats *d = &r->decisions;
-    int total = d->laya + d->reflex;
-    text(frame_string("Decisions: Laya %d (%d%%), Reflex %d (%d%%)", d->laya, total ? d->laya * 100 / total : 0, d->reflex,
-                      total ? d->reflex * 100 / total : 0),
+    int total = d->laya + d->jev + d->reflex;
+    text(frame_string("Decisions: Laya %d (%d%%), Jev %d (%d%%), Reflex %d (%d%%)", d->laya, total ? d->laya * 100 / total : 0, d->jev,
+                      total ? d->jev * 100 / total : 0, d->reflex, total ? d->reflex * 100 / total : 0),
          TEXT_COLOUR);
-    text(d->laya ? frame_string("Laya mean confidence %d.%03d, mean answer %d ms", d->mean_confidence_permille / 1000,
-                                d->mean_confidence_permille % 1000, d->mean_answer_ms)
-                 : CLAY_STRING("Laya mean confidence n/a"),
+    text(d->laya + d->jev ? frame_string("Mean confidence %d.%03d, mean answer %d ms", d->mean_confidence_permille / 1000,
+                                         d->mean_confidence_permille % 1000, d->mean_answer_ms)
+                          : CLAY_STRING("Mean confidence n/a"),
          TEXT_COLOUR);
 }
 
@@ -449,7 +449,28 @@ static void lineup_side(const Battle *b, const GameData *data, Side side, Clay_S
     }
 }
 
-static void lineup(const Battle *b, const GameData *data)
+static void decider_option(const Ui *ui, DeciderKind kind, int key)
+{
+    bool unavailable = kind == DECIDER_JEV && !ui->jev_available;
+    Clay_Color colour = unavailable ? DIM_COLOUR : ui->decider == kind ? YELLOW_COLOUR
+                                                                       : TEXT_COLOUR;
+    CLAY({.layout = {.sizing = {CLAY_SIZING_FIT(0), CLAY_SIZING_FIT(0)}, .childGap = 6}}) {
+        text(frame_string(ui->decider == kind ? "> [%d] %s" : "[%d] %s", key, decider_name(kind)), colour);
+        if (unavailable) text(CLAY_STRING("(no .jev_key)"), DIM_COLOUR);
+    }
+}
+
+static void decider_picker(const Ui *ui)
+{
+    CLAY({.layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_FIT(0)}, .childGap = 14, .childAlignment = {.x = CLAY_ALIGN_X_CENTER}}}) {
+        text(CLAY_STRING("Decider:"), DIM_COLOUR);
+        decider_option(ui, DECIDER_REFLEX, 1);
+        decider_option(ui, DECIDER_LAYA, 2);
+        decider_option(ui, DECIDER_JEV, 3);
+    }
+}
+
+static void lineup(const Ui *ui, const Battle *b, const GameData *data)
 {
     CLAY({.id = CLAY_ID("Lineup"),
           .layout = {.sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = CLAY_PADDING_ALL(8), .childAlignment = {.x = CLAY_ALIGN_X_CENTER}, .layoutDirection = CLAY_TOP_TO_BOTTOM},
@@ -458,6 +479,7 @@ static void lineup(const Battle *b, const GameData *data)
             lineup_side(b, data, SIDE_PANTHEON, frame_string("The %s Pantheon", data->pantheons[b->pantheon].name));
             lineup_side(b, data, SIDE_HORDE, CLAY_STRING("The Horde"));
         }
+        if (ui->pick_decider) decider_picker(ui);
         text(CLAY_STRING("Enter / Space: begin the Battle   Esc: quit"), DIM_COLOUR);
     }
 }
@@ -474,7 +496,7 @@ void ui_draw(const Ui *ui, const Battle *b, const GameData *data, const Scene *s
 {
     Clay_BeginLayout();
     if (ui->intro) {
-        lineup(b, data);
+        lineup(ui, b, data);
     } else if (battle_winner(b) >= 0) {
         end_screen(ui, b, data);
     } else if (scene->xray) {

@@ -1,5 +1,7 @@
 {
-  "urls": ["http://192.168.0.3:8000", "http://127.0.0.1:8765"],
+  "urls": ["http://127.0.0.1:8765", "http://192.168.0.3:8000"],
+  "jev_url": "https://api.typesafe.ai",
+  "jev_model": "jev-latest",
   "timeout_ms": 8000,
   "min_stance_confidence_permille": 200
 }

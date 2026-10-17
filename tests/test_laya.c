@@ -88,14 +88,27 @@ static void start(uint32_t seed, int url_count)
 {
     char err[ERR_SIZE];
     LOAD_OR_EXIT(load_game_data(&data, "data", err, ERR_SIZE), err);
-    data.laya.url_count = url_count;
     battle_setup(&battle, &data, seed);
     memset(&fake, 0, sizeof fake);
     fake.base = (LayaTransport){fake_send, fake_poll, fake_close};
     fake.stance_confidence = 0.5;
-    laya_decider_init(&laya, &fake.base);
+    const char *urls[LAYA_MAX_URLS];
+    for (int i = 0; i < url_count; i++) urls[i] = data.laya.urls[i];
+    laya_decider_init(&laya, &fake.base, &(LayaEndpoint){DECIDER_LAYA, urls, url_count, NULL});
     laya.clock_ms = fake_clock;
     fake_now_ms = 0;
+}
+
+static void start_jev(uint32_t seed)
+{
+    start(seed, 1);
+    laya_decider_close(&laya);
+    memset(&fake, 0, sizeof fake);
+    fake.base = (LayaTransport){fake_send, fake_poll, fake_close};
+    fake.stance_confidence = 0.5;
+    const char *urls[1] = {data.laya.jev_url};
+    laya_decider_init(&laya, &fake.base, &(LayaEndpoint){DECIDER_JEV, urls, 1, data.laya.jev_model});
+    laya.clock_ms = fake_clock;
 }
 
 static void finish(void)
@@ -163,9 +176,56 @@ static void test_laya_asks_once_then_decides(void)
         CHECK(laya.briefing[c][0] != '\0');
         cJSON *request = cJSON_Parse(body_sent_for(c));
         CHECK(strcmp(cJSON_GetObjectItemCaseSensitive(request, "state")->valuestring, laya.briefing[c]) == 0);
+        CHECK(!cJSON_HasObjectItem(request, "model"));
         cJSON_Delete(request);
     }
     finish();
+}
+
+static void test_jev_asks_its_own_url_with_its_model_and_is_named(void)
+{
+    start_jev(3);
+    int count = battle.combatant_count;
+    run(2);
+    CHECK(strcmp(url_sent_for(0, 0), "https://api.typesafe.ai") == 0);
+    cJSON *request = cJSON_Parse(body_sent_for(0));
+    const cJSON *model = cJSON_GetObjectItemCaseSensitive(request, "model");
+    CHECK(cJSON_IsString(model) && strcmp(model->valuestring, "jev-latest") == 0);
+    cJSON_Delete(request);
+    CHECK(decisions_by(DECIDER_JEV, FALLBACK_NONE, count) == count);
+    CHECK(decisions_by(DECIDER_LAYA, FALLBACK_NONE, count) == 0);
+    finish();
+}
+
+static void test_a_jev_battle_replays_from_its_log(void)
+{
+    start_jev(3);
+    run(200);
+    char *original = battle_save_json(&battle, &data);
+    CHECK(battle_decision_stats(&battle).jev > 0);
+    memset(&again, 0, sizeof again);
+    battle_setup(&again, &data, 3);
+    ReplayDecider replay;
+    replay_decider_init(&replay, battle.log, battle.log_count);
+    for (int t = 0; t < 200; t++) battle_step(&again, &data, &replay.base);
+    char *replayed = battle_save_json(&again, &data);
+    CHECK(strcmp(original, replayed) == 0);
+    free(original);
+    free(replayed);
+    battle_free(&again);
+    finish();
+}
+
+static void test_key_text_is_trimmed_and_must_fit(void)
+{
+    char key[8];
+    CHECK(laya_parse_key("  sk-1234\n", key, sizeof key) == LAYA_KEY_OK && strcmp(key, "sk-1234") == 0);
+    CHECK(laya_parse_key(" \n", key, sizeof key) == LAYA_KEY_EMPTY);
+    CHECK(laya_parse_key("12345678", key, sizeof key) == LAYA_KEY_TOO_LONG);
+    CHECK(laya_parse_key("sk 12", key, sizeof key) == LAYA_KEY_INVALID);
+    CHECK(laya_parse_key("sk\x01"
+                         "12",
+                         key, sizeof key) == LAYA_KEY_INVALID);
 }
 
 static void test_a_pending_request_is_not_asked_again(void)
@@ -354,6 +414,60 @@ static void test_a_laya_battle_replays_from_its_log(void)
     finish();
 }
 
+static void test_replies_to_an_earlier_battle_are_dropped_after_a_reset(void)
+{
+    start(3, 1);
+    fake.hold_replies = true;
+    run(1);
+    CHECK(fake.sent > 0);
+    battle_setup(&battle, &data, 4);
+    laya_decider_reset(&laya);
+    fake.hold_replies = false;
+    fake_now_ms += 60000;
+    run(1);
+    CHECK(decisions_by(DECIDER_LAYA, FALLBACK_NONE, battle.combatant_count) == 0);
+    run(1);
+    CHECK(decisions_by(DECIDER_LAYA, FALLBACK_NONE, battle.combatant_count) > 0);
+    for (int e = 0; e < battle.log_count; e++) CHECK(battle.log[e].answer_ms < 60000);
+    finish();
+}
+
+static void restart_battle(uint32_t seed)
+{
+    battle_setup(&battle, &data, seed);
+    laya_decider_reset(&laya);
+}
+
+static void check_no_reply_reaches_the_battle(void)
+{
+    fake.hold_replies = false;
+    run(1);
+    CHECK(decisions_by(DECIDER_LAYA, FALLBACK_NONE, battle.combatant_count) == 0);
+}
+
+static void test_replies_survive_two_resets_in_a_row_as_stale(void)
+{
+    start(3, 1);
+    fake.hold_replies = true;
+    run(1);
+    restart_battle(4);
+    restart_battle(5);
+    check_no_reply_reaches_the_battle();
+    finish();
+}
+
+static void test_replies_to_every_earlier_battle_are_dropped(void)
+{
+    start(3, 1);
+    fake.hold_replies = true;
+    run(1);
+    restart_battle(4);
+    run(1);
+    restart_battle(5);
+    check_no_reply_reaches_the_battle();
+    finish();
+}
+
 static void test_transfer_outcomes_are_classified(void)
 {
     CHECK(laya_classify_transfer(&(TransferOutcome){.curl_ok = true, .connected = true, .http_status = 200}) == FALLBACK_NONE);
@@ -407,6 +521,12 @@ void run_laya_tests(void)
 {
     test_reset_forgets_the_back_off_and_briefings();
     test_laya_asks_once_then_decides();
+    test_replies_to_an_earlier_battle_are_dropped_after_a_reset();
+    test_replies_survive_two_resets_in_a_row_as_stale();
+    test_replies_to_every_earlier_battle_are_dropped();
+    test_jev_asks_its_own_url_with_its_model_and_is_named();
+    test_a_jev_battle_replays_from_its_log();
+    test_key_text_is_trimmed_and_must_fit();
     test_transfer_outcomes_are_classified();
     test_timeout_backs_off_too();
     test_a_pending_request_is_not_asked_again();

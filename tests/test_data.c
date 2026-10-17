@@ -70,7 +70,8 @@ static void test_valid_load(void)
     CHECK(data.elements[ELEMENT_LIGHTNING].chain_targets > 0);
     CHECK(data.elements[ELEMENT_VENOM].internal_first);
     CHECK(data.power.damage > 0);
-    CHECK(data.laya.url_count == 2 && strncmp(data.laya.urls[0], "http://", 7) == 0);
+    CHECK(data.laya.url_count == 2 && strncmp(data.laya.urls[0], "http://127.0.0.1", 16) == 0);
+    CHECK(strcmp(data.laya.jev_url, "https://api.typesafe.ai") == 0 && strcmp(data.laya.jev_model, "jev-latest") == 0);
     CHECK(data.laya.timeout_ms == 8000 && data.laya.min_stance_confidence_permille == 200);
 }
 
@@ -264,6 +265,8 @@ static void test_other_file_errors(void)
                 "min_stance_confidence_permille: must be between 0 and 1000");
     check_error(load_laya(&data, FIXTURE("laya_missing_urls.json"), err, ERR_SIZE), "urls: missing");
     check_error(load_laya(&data, FIXTURE("laya_empty_url.json"), err, ERR_SIZE), "urls[1]: must be 1 to 127 characters");
+    check_error(load_laya(&data, FIXTURE("laya_empty_jev_url.json"), err, ERR_SIZE), "jev_url: must be 1 to 127 characters");
+    check_error(load_laya(&data, FIXTURE("laya_missing_jev_model.json"), err, ERR_SIZE), "jev_model: missing");
 }
 
 static void test_sound_errors(void)
