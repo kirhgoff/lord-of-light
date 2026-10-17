@@ -139,7 +139,7 @@ What one Part is told to do until the next Decision: strike, cast, block, move t
 _Avoid_: Command, action
 
 **Decider**:
-Whatever produces Decisions: either Laya or the Reflex.
+Whatever produces Decisions: Laya, Jev or the Reflex.
 _Avoid_: AI, brain, mind (Mind is an Element)
 
 **Briefing**:
@@ -149,6 +149,9 @@ _Avoid_: Prompt, state, observation
 **Laya**:
 The external decision model, reached through its System 1 interface, that answers Appraisals and chooses a Stance from a Combatant's Briefing.
 _Avoid_: LLM
+
+**Jev**:
+TypeSafe's hosted System One model, used as a Decider through the same interface and Briefing as Laya; needs a key in `.jev_key`.
 
 **Reflex**:
 The built-in, deterministic Decider that derives Stance and Appraisals straight from the Battle state; used in tests, when Laya is unreachable or unsure, and while a Combatant waits for its next Decision.
