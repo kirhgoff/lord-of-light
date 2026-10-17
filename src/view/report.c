@@ -94,8 +94,8 @@ static bool decision_text(const Battle *b, const Event *e, char *out, size_t siz
 {
     char actor[LABEL_SIZE];
     combatant_label(b, e->actor, actor, sizeof actor);
-    if (e->decider == DECIDER_LAYA) {
-        snprintf(out, size, "Laya: %s will %s (%d.%03d)", actor, stance_id((Stance)e->amount), e->confidence_permille / 1000,
+    if (e->decider == DECIDER_LAYA || e->decider == DECIDER_JEV) {
+        snprintf(out, size, "%s: %s will %s (%d.%03d)", decider_name(e->decider), actor, stance_id((Stance)e->amount), e->confidence_permille / 1000,
                  e->confidence_permille % 1000);
         return true;
     }

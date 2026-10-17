@@ -15,9 +15,10 @@ typedef struct {
 
 int briefing_write(const Battle *battle, const GameData *data, int combatant, char *out, size_t size);
 
-char *laya_request_json(const Battle *battle, const GameData *data, int combatant, const char *briefing, LayaQuestions *asked);
+char *laya_request_json(const Battle *battle, const GameData *data, int combatant, const char *briefing, const char *model,
+                        LayaQuestions *asked);
 char *laya_request_record_json(const Battle *battle, const GameData *data, int combatant, const Event *reflex);
 Event laya_decision(const Battle *battle, const GameData *data, int combatant, const LayaQuestions *asked, const char *reply_text,
-                    Fallback failure, int answer_ms, bool *truncated);
+                    DeciderKind source, Fallback failure, int answer_ms, bool *truncated);
 
 #endif

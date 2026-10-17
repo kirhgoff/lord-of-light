@@ -35,6 +35,7 @@ void replay_decider_init(ReplayDecider *replay, const Event *log, int count);
 
 typedef struct {
     int laya;
+    int jev;
     int reflex;
     int fallback[FALLBACK_COUNT];
     int mean_confidence_permille;

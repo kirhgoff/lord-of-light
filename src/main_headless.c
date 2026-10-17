@@ -34,7 +34,7 @@ static bool parse_seed(const char *text, uint32_t *seed)
 
 static int usage(void)
 {
-    fprintf(stderr, "usage: headless [--seed N] [--load state.json] [--ticks T] [--dump out.json] [--decider laya|reflex] [--replay dump.json] [--dump-requests requests.jsonl]\n");
+    fprintf(stderr, "usage: headless [--seed N] [--load state.json] [--ticks T] [--dump out.json] [--decider laya|jev|reflex] [--replay dump.json] [--dump-requests requests.jsonl]\n");
     return 2;
 }
 
@@ -56,9 +56,9 @@ static bool same_battle(const Battle *a, const Battle *b, const GameData *data)
 static void print_decision_stats(const Battle *battle, int truncated)
 {
     DecisionStats stats = battle_decision_stats(battle);
-    printf("Decisions: %d Laya, %d Reflex (unreachable %d, timeout %d, malformed %d, low confidence %d, waiting %d); "
+    printf("Decisions: %d Laya, %d Jev, %d Reflex (unreachable %d, timeout %d, malformed %d, low confidence %d, waiting %d); "
            "mean confidence %d.%03d; mean answer time %d ms; truncated %d\n",
-           stats.laya, stats.reflex, stats.fallback[FALLBACK_UNREACHABLE], stats.fallback[FALLBACK_TIMEOUT],
+           stats.laya, stats.jev, stats.reflex, stats.fallback[FALLBACK_UNREACHABLE], stats.fallback[FALLBACK_TIMEOUT],
            stats.fallback[FALLBACK_MALFORMED], stats.fallback[FALLBACK_LOW_CONFIDENCE], stats.fallback[FALLBACK_WAITING],
            stats.mean_confidence_permille / 1000, stats.mean_confidence_permille % 1000, stats.mean_answer_ms, truncated);
 }
@@ -109,7 +109,7 @@ int main(int argc, char **argv)
         battle_setup(&battle, &data, seed);
     }
 
-    bool real_time = setup.laya && !setup.replay_path;
+    bool real_time = decider_setup_networked(&setup) && !setup.replay_path;
     for (long t = 0; t < ticks && battle_winner(&battle) < 0; t++) {
         battle_step(&battle, &data, setup.decider);
         if (real_time) wait_one_tick();
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
     }
     printf("Winner: %s after %d ticks\n", winner_name(battle_winner(&battle)), battle.tick);
     if (setup.replay_path) printf("Replay: %s\n", replay_diverged ? "diverged" : "identical");
-    if (setup.laya || setup.replay_path) print_decision_stats(&battle, setup.laya_decider.truncated_count);
+    if (decider_setup_networked(&setup) || setup.replay_path) print_decision_stats(&battle, setup.laya_decider.truncated_count + setup.jev_decider.truncated_count);
     decider_setup_close(&setup);
     battle_free(&battle);
     return replay_diverged ? 1 : 0;

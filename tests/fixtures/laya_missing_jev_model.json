@@ -1,0 +1,6 @@
+{
+  "urls": ["http://127.0.0.1:8765"],
+  "jev_url": "https://api.typesafe.ai",
+  "timeout_ms": 8000,
+  "min_stance_confidence_permille": 200
+}

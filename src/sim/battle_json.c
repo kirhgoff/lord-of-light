@@ -19,6 +19,12 @@ const char *stance_id(Stance stance)
     return STANCE_IDS[stance];
 }
 
+const char *decider_name(DeciderKind decider)
+{
+    static const char *const NAMES[DECIDER_COUNT] = {"none", "Reflex", "Laya", "Jev"};
+    return NAMES[decider];
+}
+
 const char *fallback_id(Fallback fallback)
 {
     return FALLBACK_IDS[fallback];

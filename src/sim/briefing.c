@@ -1,6 +1,7 @@
 #include "briefing.h"
 
 #include <ctype.h>
+#include <math.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -320,7 +321,8 @@ static void add_question(cJSON *questions, const char *id, const char *instructi
     for (int k = 0; k < count; k++) cJSON_AddStringToObject(criteria, keys[k], "");
 }
 
-char *laya_request_json(const Battle *battle, const GameData *data, int combatant, const char *briefing, LayaQuestions *asked)
+char *laya_request_json(const Battle *battle, const GameData *data, int combatant, const char *briefing, const char *model,
+                        LayaQuestions *asked)
 {
     const Combatant *me = &battle->combatants[combatant];
     Perception perception;
@@ -331,6 +333,7 @@ char *laya_request_json(const Battle *battle, const GameData *data, int combatan
     char instructions[SENTENCE_MAX * 4];
     cJSON *root = cJSON_CreateObject();
     cJSON_AddStringToObject(root, "state", briefing);
+    if (model) cJSON_AddStringToObject(root, "model", model);
     cJSON *questions = cJSON_AddObjectToObject(root, "questions");
     snprintf(instructions, sizeof instructions, "How hurt is %s?", self.text);
     add_question(questions, "hurt", instructions, HURT_WORDS, HURT_COUNT);
@@ -358,7 +361,7 @@ char *laya_request_record_json(const Battle *battle, const GameData *data, int c
     char briefing[BRIEFING_MAX + 1];
     LayaQuestions asked;
     briefing_write(battle, data, combatant, briefing, sizeof briefing);
-    char *body = laya_request_json(battle, data, combatant, briefing, &asked);
+    char *body = laya_request_json(battle, data, combatant, briefing, NULL, &asked);
     cJSON *record = cJSON_CreateObject();
     cJSON_AddNumberToObject(record, "tick", battle->tick);
     cJSON_AddNumberToObject(record, "combatant", combatant);
@@ -414,8 +417,19 @@ static void read_stance_probabilities(const cJSON *answer, const char *const *ke
         event->stance_permille[stances[k]] = clamp_permille(number_or_zero(probabilities, keys[k]));
 }
 
+static int stance_confidence_permille(const cJSON *answer, const char *const *keys, int count)
+{
+    const cJSON *reported = cJSON_GetObjectItemCaseSensitive(answer, "x_jev_confidence");
+    if (cJSON_IsNumber(reported)) return clamp_permille(reported->valuedouble);
+    if (count < 2) return 1000;
+    const cJSON *probabilities = cJSON_GetObjectItemCaseSensitive(answer, "probabilities");
+    double highest = 0;
+    for (int k = 0; k < count; k++) highest = fmax(highest, number_or_zero(probabilities, keys[k]));
+    return clamp_permille((count * highest - 1) / (count - 1));
+}
+
 Event laya_decision(const Battle *battle, const GameData *data, int combatant, const LayaQuestions *asked, const char *reply_text,
-                    Fallback failure, int answer_ms, bool *truncated)
+                    DeciderKind source, Fallback failure, int answer_ms, bool *truncated)
 {
     *truncated = false;
     if (failure != FALLBACK_NONE) return reflex_fallback(battle, data, combatant, failure, answer_ms);
@@ -437,9 +451,9 @@ Event laya_decision(const Battle *battle, const GameData *data, int combatant, c
     const cJSON *usage = cJSON_GetObjectItemCaseSensitive(reply, "usage");
     *truncated = cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(usage, "truncated"));
     Event event = decision_event(combatant, stances[stance], (HurtLevel)hurt,
-                                 asked->element_count > 0 ? asked->elements[element] : asked->fixed_element, DECIDER_LAYA);
+                                 asked->element_count > 0 ? asked->elements[element] : asked->fixed_element, source);
     event.answer_ms = answer_ms;
-    event.confidence_permille = clamp_permille(number_or_zero(stance_answer, "x_jev_confidence"));
+    event.confidence_permille = stance_confidence_permille(stance_answer, stance_keys, stance_count);
     read_stance_probabilities(stance_answer, stance_keys, stances, stance_count, &event);
     cJSON_Delete(reply);
     if (event.confidence_permille < data->laya.min_stance_confidence_permille) {

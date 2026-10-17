@@ -64,6 +64,7 @@ typedef enum { HURT_UNHURT,
 typedef enum { DECIDER_NONE,
                DECIDER_REFLEX,
                DECIDER_LAYA,
+               DECIDER_JEV,
                DECIDER_COUNT } DeciderKind;
 
 typedef struct {
@@ -183,6 +184,7 @@ void body_working_parts(const Body *body, const PartState *parts, bool working[M
 
 const char *stance_id(Stance stance);
 const char *fallback_id(Fallback fallback);
+const char *decider_name(DeciderKind decider);
 
 char *battle_save_json(const Battle *battle, const GameData *data);
 bool battle_load_json(Battle *battle, const GameData *data, const char *json, char *err, size_t err_size);

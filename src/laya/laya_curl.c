@@ -19,6 +19,7 @@ typedef struct {
 typedef struct {
     LayaTransport base;
     int timeout_ms;
+    char authorization[LAYA_KEY_LEN + sizeof "Authorization: Bearer "];
     pthread_t worker;
     pthread_mutex_t lock;
     pthread_cond_t wake;
@@ -65,6 +66,7 @@ static LayaReply perform(CURL *curl, const Request *request, CurlTransport *tran
 {
     Download download = {0};
     struct curl_slist *headers = curl_slist_append(NULL, "Content-Type: application/json");
+    if (transport->authorization[0]) headers = curl_slist_append(headers, transport->authorization);
     curl_easy_setopt(curl, CURLOPT_URL, request->url);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request->body);
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
@@ -161,13 +163,14 @@ static void curl_close(LayaTransport *self)
     free(transport);
 }
 
-LayaTransport *laya_curl_transport(int timeout_ms)
+LayaTransport *laya_curl_transport(int timeout_ms, const char *bearer_key)
 {
     if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) return NULL;
     CurlTransport *transport = calloc(1, sizeof *transport);
     if (!transport) return NULL;
     transport->base = (LayaTransport){curl_send, curl_poll, curl_close};
     transport->timeout_ms = timeout_ms;
+    if (bearer_key) snprintf(transport->authorization, sizeof transport->authorization, "Authorization: Bearer %s", bearer_key);
     pthread_mutex_init(&transport->lock, NULL);
     pthread_cond_init(&transport->wake, NULL);
     if (pthread_create(&transport->worker, NULL, work, transport) != 0) {

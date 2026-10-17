@@ -199,7 +199,7 @@ static void canned_reply(const char *choice, const char *confidence, const char 
 static char *request_for(int c, LayaQuestions *asked)
 {
     briefing_of(c);
-    return laya_request_json(&battle, &data, c, text, asked);
+    return laya_request_json(&battle, &data, c, text, NULL, asked);
 }
 
 static const cJSON *question(const cJSON *request, const char *id)
@@ -370,7 +370,7 @@ static void test_request_record_has_no_reflex_element_when_none_is_asked(void)
 
 static Event decide_reply(int zeus, const LayaQuestions *asked, const char *text_reply, Fallback failure, int answer_ms, bool *truncated)
 {
-    return laya_decision(&battle, &data, zeus, asked, text_reply, failure, answer_ms, truncated);
+    return laya_decision(&battle, &data, zeus, asked, text_reply, DECIDER_LAYA, failure, answer_ms, truncated);
 }
 
 static void test_a_good_reply_becomes_a_laya_decision(void)
@@ -390,6 +390,59 @@ static void test_a_good_reply_becomes_a_laya_decision(void)
     CHECK(memcmp(event.stance_permille, expected, sizeof expected) == 0);
     canned_reply("collect the pickup", "0.415", "false");
     CHECK(decide_reply(zeus, &asked, reply, FALLBACK_NONE, 1, &truncated).amount == STANCE_COLLECT);
+}
+
+static void drop_stance_confidence(const char *value)
+{
+    char field[64];
+    snprintf(field, sizeof field, ",\"x_jev_confidence\":%s", value);
+    char *at = strstr(reply, field);
+    CHECK(at != NULL);
+    if (at) memmove(at, at + strlen(field), strlen(at + strlen(field)) + 1);
+}
+
+static void test_confidence_is_the_margin_when_the_reply_has_none(void)
+{
+    int dagda, apollo;
+    int zeus = zeus_with_company(&dagda, &apollo);
+    LayaQuestions asked;
+    free(request_for(zeus, &asked));
+    bool truncated;
+    canned_reply("fight the nearest enemy", "0.9", "false");
+    CHECK(decide_reply(zeus, &asked, reply, FALLBACK_NONE, 1, &truncated).confidence_permille == 900);
+    canned_reply("fight the nearest enemy", "0.9", "false");
+    drop_stance_confidence("0.9");
+    Event margin = decide_reply(zeus, &asked, reply, FALLBACK_NONE, 1, &truncated);
+    CHECK(margin.confidence_permille == 415 && margin.fallback == FALLBACK_NONE && margin.amount == STANCE_FIGHT);
+}
+
+static void test_the_source_names_the_decider(void)
+{
+    int dagda, apollo;
+    int zeus = zeus_with_company(&dagda, &apollo);
+    LayaQuestions asked;
+    free(request_for(zeus, &asked));
+    canned_reply("fight the nearest enemy", "0.9", "false");
+    bool truncated;
+    Event event = laya_decision(&battle, &data, zeus, &asked, reply, DECIDER_JEV, FALLBACK_NONE, 1, &truncated);
+    CHECK(event.decider == DECIDER_JEV);
+}
+
+static void test_only_a_given_model_goes_into_the_request(void)
+{
+    int dagda, apollo;
+    int zeus = zeus_with_company(&dagda, &apollo);
+    LayaQuestions asked;
+    briefing_of(zeus);
+    char *plain = laya_request_json(&battle, &data, zeus, text, NULL, &asked);
+    char *modelled = laya_request_json(&battle, &data, zeus, text, "jev-latest", &asked);
+    cJSON *plain_request = cJSON_Parse(plain), *modelled_request = cJSON_Parse(modelled);
+    CHECK(!cJSON_HasObjectItem(plain_request, "model"));
+    CHECK(strcmp(text_of(modelled_request, "model"), "jev-latest") == 0);
+    cJSON_Delete(plain_request);
+    cJSON_Delete(modelled_request);
+    free(plain);
+    free(modelled);
 }
 
 static void test_low_confidence_keeps_the_reflex_stance(void)
@@ -510,6 +563,9 @@ void run_briefing_request_tests(void)
     test_request_record_carries_the_reflex_answer_in_criteria_keys();
     test_request_record_has_no_reflex_element_when_none_is_asked();
     test_a_good_reply_becomes_a_laya_decision();
+    test_confidence_is_the_margin_when_the_reply_has_none();
+    test_the_source_names_the_decider();
+    test_only_a_given_model_goes_into_the_request();
     test_low_confidence_keeps_the_reflex_stance();
     test_unusable_replies_fall_back_to_the_reflex();
     test_transport_failures_fall_back_to_the_reflex();

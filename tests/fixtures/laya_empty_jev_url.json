@@ -1,0 +1,7 @@
+{
+  "urls": ["http://127.0.0.1:8765"],
+  "jev_url": "",
+  "jev_model": "jev-latest",
+  "timeout_ms": 8000,
+  "min_stance_confidence_permille": 200
+}

@@ -175,10 +175,13 @@ typedef struct {
 
 #define LAYA_MAX_URLS 4
 #define LAYA_URL_LEN 128
+#define LAYA_MODEL_LEN 64
 
 typedef struct {
     char urls[LAYA_MAX_URLS][LAYA_URL_LEN];
     int url_count;
+    char jev_url[LAYA_URL_LEN];
+    char jev_model[LAYA_MODEL_LEN];
     int timeout_ms;
     int min_stance_confidence_permille;
 } LayaSettings;

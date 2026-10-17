@@ -886,10 +886,16 @@ static bool read_laya_urls(Context *ctx, const cJSON *root, LayaSettings *laya)
     return true;
 }
 
+static bool read_nonempty_string(Context *ctx, const cJSON *root, const char *key, char *out, size_t size)
+{
+    if (!get_string(ctx, root, "", key, out, size, true)) return false;
+    return out[0] != '\0' || fail(ctx, key, "must be 1 to %d characters", (int)size - 1);
+}
+
 static bool laya_from_root(Context *ctx, const cJSON *root, GameData *data)
 {
     LayaSettings *laya = &data->laya;
-    return read_laya_urls(ctx, root, laya) && get_int(ctx, root, "", "timeout_ms", &laya->timeout_ms, true) && check_range(ctx, "", "timeout_ms", laya->timeout_ms, 1, 60000) && get_int(ctx, root, "", "min_stance_confidence_permille", &laya->min_stance_confidence_permille, true) && check_range(ctx, "", "min_stance_confidence_permille", laya->min_stance_confidence_permille, 0, 1000);
+    return read_laya_urls(ctx, root, laya) && read_nonempty_string(ctx, root, "jev_url", laya->jev_url, sizeof laya->jev_url) && read_nonempty_string(ctx, root, "jev_model", laya->jev_model, sizeof laya->jev_model) && get_int(ctx, root, "", "timeout_ms", &laya->timeout_ms, true) && check_range(ctx, "", "timeout_ms", laya->timeout_ms, 1, 60000) && get_int(ctx, root, "", "min_stance_confidence_permille", &laya->min_stance_confidence_permille, true) && check_range(ctx, "", "min_stance_confidence_permille", laya->min_stance_confidence_permille, 0, 1000);
 }
 
 static bool read_deity(Context *ctx, const cJSON *obj, const char *path, const GameData *data,
