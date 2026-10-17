@@ -1,7 +1,7 @@
 # Quality gates and Linux CI
 
 Type: task
-Status: claimed
+Status: resolved
 Blocked by: none
 
 ## Question
@@ -24,3 +24,7 @@ Out of scope: Valgrind (ASan covers it), Flawfinder/RATS (no banned functions in
 - `make clean && make game headless test asan` passes with zero warnings on macOS, and also in an `ubuntu:24.04` container (podman) with the same apt packages CI installs.
 - `make format-check tidy cppcheck` pass.
 - The CI workflow runs green on the PR.
+
+## Answer
+
+Merged (PR #2) after one review round. STRICT adds -Wpedantic -Wshadow -Wcast-align -Wconversion -Wsign-conversion; Linux build via uname; clang-format/clang-tidy pinned 22.1.8 via uv, cppcheck from brew/apt; CI on ubuntu-24.04 (build, asan, lint); index-based pre-commit hook. Found a glibc-only snprintf aliasing bug in data.c join_key/join_index (Linux CI is its guard).

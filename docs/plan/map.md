@@ -16,6 +16,9 @@ A playable raylib arena: a random Pantheon (from JSON) fights a Power-matched Ho
 
 ## Decisions so far
 
+- [Quality gates](issues/23-quality-gates.md): strict warnings, pinned clang-format/tidy, cppcheck, Linux CI on every PR.
+- [Resizable Arena](issues/24-resizable-arena.md): fractional zoom never below cover; tech panel overlays the Arena.
+- [Jev vs Laya](issues/25-jev-vs-laya-bench.md): Jev is as fast as local Laya and far more confident; driving the game with it needs the `confidence` fallback.
 - [Clay UI](issues/12-clay-ui.md): T tech view with compact overlays and a stateless Battle Log panel; end-screen report; R for seed + 1.
 - [Laya Decider](issues/11-laya-decider.md): Laya picks Stance + Appraisals per Combatant over a worker thread; the Reflex covers waits, low confidence and outages; replay from the log.
 - [Sound playback](issues/20-sound-playback.md): pure placement/mapping module + thin raylib player; per-category gains; silent without an audio device.

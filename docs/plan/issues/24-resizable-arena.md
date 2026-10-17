@@ -1,7 +1,7 @@
 # Resizable window, full-window Arena, overlay tech panel
 
 Type: task
-Status: claimed
+Status: resolved
 Blocked by: none
 
 ## Question
@@ -17,3 +17,7 @@ Blocked by: none
 - `make test`, `make asan`, `make game` green, zero warnings.
 - `make screenshots` still produces its shots; also take screenshots at 1280×720, 1920×1080 and 1024×1024 (the minimum window is 1024×640) (a `--size WxH` flag on `build/game` is fine if needed) with the tech view on and off, and list their paths in the hand-back.
 - Saves/loads still work (check whether the save stores the zoom; if it does, keep loading old saves working).
+
+## Answer
+
+Merged (PR #1) after two code + one design review rounds. Fractional zoom with a cover-zoom floor; min window 1024x640; tech panel is a 75 % overlay; `--size WxH`.

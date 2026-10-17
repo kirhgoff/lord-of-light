@@ -9,18 +9,18 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 3. When it hands back, spawn a separate reviewer (model: opus) with `docs/plan/reviewer-brief.md`. CHANGES → send findings back to the executor, re-review if non-trivial.
 4. The user pre-approved merging (2026-10-16) once review passes and these checks are green; ask only on design decisions. Verify yourself (`make test` and `make asan` in the worktree, `git log --format='%h %G? %s' main..<branch>` all `G`), then on main: `git merge --no-ff <branch>` (signed, trailer), set the ticket `Status: resolved` with an `## Answer`, add a line to map.md "Decisions so far", update this file, commit.
 5. Parallel branches each register tests in `tests/test_main.c`; merge conflicts there are expected — keep both sides.
-6. Remove the merged worktree: `remove-worktree --force lord-of-light-NN-slug` (user approved --force for worktrees whose branch is merged into main; it refuses otherwise because there is no remote).
+6. Remove the merged worktree: `remove-worktree --force lord-of-light-NN-slug` (user approved --force for worktrees whose branch is merged into main; it refuses otherwise).
 
 ## In flight
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
-| 23 Quality gates + Linux CI | `23-quality-gates`, PR #2 | review passed, CI green, awaiting merge |
-| 24 Resizable window + overlay tech panel | `24-resizable-arena`, PR #1 | review passed, awaiting merge |
-| 25 Jev vs Laya benchmark | `25-jev-vs-laya-bench`, PR #3 | review passed, awaiting merge |
 
 ## Done
 
+- 23 Quality gates + Linux CI — merged (PR #2) after one review round.
+- 24 Resizable window + overlay tech panel — merged (PR #1) after two code + one design review rounds.
+- 25 Jev vs Laya benchmark — merged (PR #3) after one review round.
 - 01 Skeleton — merged.
 - 13 Laya behaviour — merged; led to ADR 0003 (Stance + Appraisals).
 - 02 Data schema — merged after 2 review rounds.
