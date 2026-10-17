@@ -49,7 +49,7 @@ typedef struct {
     int url_count;
     char model[LAYA_MODEL_LEN];
     bool in_flight[MAX_COMBATANTS];
-    bool stale[MAX_COMBATANTS];
+    int stale_replies[MAX_COMBATANTS];
     LayaQuestions asked[MAX_COMBATANTS];
     bool has_reply[MAX_COMBATANTS];
     LayaReply reply[MAX_COMBATANTS];

@@ -432,6 +432,42 @@ static void test_replies_to_an_earlier_battle_are_dropped_after_a_reset(void)
     finish();
 }
 
+static void restart_battle(uint32_t seed)
+{
+    battle_setup(&battle, &data, seed);
+    laya_decider_reset(&laya);
+}
+
+static void check_no_reply_reaches_the_battle(void)
+{
+    fake.hold_replies = false;
+    run(1);
+    CHECK(decisions_by(DECIDER_LAYA, FALLBACK_NONE, battle.combatant_count) == 0);
+}
+
+static void test_replies_survive_two_resets_in_a_row_as_stale(void)
+{
+    start(3, 1);
+    fake.hold_replies = true;
+    run(1);
+    restart_battle(4);
+    restart_battle(5);
+    check_no_reply_reaches_the_battle();
+    finish();
+}
+
+static void test_replies_to_every_earlier_battle_are_dropped(void)
+{
+    start(3, 1);
+    fake.hold_replies = true;
+    run(1);
+    restart_battle(4);
+    run(1);
+    restart_battle(5);
+    check_no_reply_reaches_the_battle();
+    finish();
+}
+
 static void test_transfer_outcomes_are_classified(void)
 {
     CHECK(laya_classify_transfer(&(TransferOutcome){.curl_ok = true, .connected = true, .http_status = 200}) == FALLBACK_NONE);
@@ -486,6 +522,8 @@ void run_laya_tests(void)
     test_reset_forgets_the_back_off_and_briefings();
     test_laya_asks_once_then_decides();
     test_replies_to_an_earlier_battle_are_dropped_after_a_reset();
+    test_replies_survive_two_resets_in_a_row_as_stale();
+    test_replies_to_every_earlier_battle_are_dropped();
     test_jev_asks_its_own_url_with_its_model_and_is_named();
     test_a_jev_battle_replays_from_its_log();
     test_key_text_is_trimmed_and_must_fit();

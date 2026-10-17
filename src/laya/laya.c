@@ -36,7 +36,7 @@ static void drain_replies(LayaDecider *laya)
     while (laya->transport->poll(laya->transport, &reply)) {
         int c = reply.id;
         bool valid = c >= 0 && c < MAX_COMBATANTS;
-        if (valid && laya->stale[c]) laya->stale[c] = false;
+        if (valid && laya->stale_replies[c] > 0) laya->stale_replies[c]--;
         else if (valid && !resend_to_next_url(laya, c, reply.failure)) {
             free(laya->reply[c].text);
             laya->reply[c] = reply;
@@ -128,7 +128,7 @@ void laya_decider_reset(LayaDecider *laya)
         free(laya->body[c]);
         laya->body[c] = NULL;
         laya->has_reply[c] = false;
-        laya->stale[c] = laya->in_flight[c];
+        laya->stale_replies[c] += laya->in_flight[c];
         laya->in_flight[c] = false;
     }
     laya->offline_until_tick = 0;
