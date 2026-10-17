@@ -137,6 +137,9 @@ static void test_decision_lines_show_laya_and_fallbacks_only(void)
     log_at(0, (Event){.kind = EVENT_DECISION, .actor = agni, .amount = STANCE_RETREAT, .decider = DECIDER_LAYA, .confidence_permille = 420});
     CHECK(event_line(&battle, &data, &battle.log[3], line, sizeof line) > 0);
     CHECK(has(line, "Laya:") && has(line, "retreat") && has(line, "0.420"));
+    log_at(0, (Event){.kind = EVENT_DECISION, .actor = agni, .amount = STANCE_RETREAT, .decider = DECIDER_JEV, .confidence_permille = 420});
+    CHECK(event_line(&battle, &data, &battle.log[4], line, sizeof line) > 0 && has(line, "Jev:"));
+    CHECK(event_line(&battle, &data, &battle.log[2], line, sizeof line) > 0 && !has(line, "Laya"));
 }
 
 static void test_last_decision_finds_newest(void)

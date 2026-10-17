@@ -100,7 +100,7 @@ static bool decision_text(const Battle *b, const Event *e, char *out, size_t siz
         return true;
     }
     if (e->fallback == FALLBACK_NONE || e->fallback == FALLBACK_WAITING) return false;
-    snprintf(out, size, "Reflex for %s: Laya %s", actor, fallback_id(e->fallback));
+    snprintf(out, size, "Reflex for %s: %s", actor, fallback_id(e->fallback));
     return true;
 }
 
