@@ -15,6 +15,7 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 
 | Ticket | Branch / worktree | State |
 |---|---|---|
+| 26 Decider picker | `26-decider-picker` at `~/Projects/lord-of-light-26-decider-picker` | executor running |
 
 ## Done
 
@@ -46,8 +47,6 @@ Updated after every step by the orchestrating session. Map: `map.md`. Tickets: `
 ## Next up (once unblocked)
 
 - Nothing else open on the map.
-- 20 Sound playback after 05, 10.
-- Later: 16 Save/load keys (after 10).
 
 ## Open questions for the user
 
