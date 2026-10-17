@@ -1,15 +1,24 @@
 #ifndef DECIDER_SETUP_H
 #define DECIDER_SETUP_H
 
+#include <stdio.h>
+
 #include "laya/laya.h"
 #include "sim/decide.h"
 
 typedef struct {
+    Decider base;
+    FILE *out;
+} RecordingDecider;
+
+typedef struct {
     bool laya;
+    const char *dump_requests_path;
     const char *replay_path;
     Decider reflex;
     LayaDecider laya_decider;
     ReplayDecider replay;
+    RecordingDecider recording;
     Battle source;
     Decider *decider;
 } DeciderSetup;
